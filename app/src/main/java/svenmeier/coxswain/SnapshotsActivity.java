@@ -93,7 +93,7 @@ public class SnapshotsActivity extends AbstractActivity implements CompoundButto
         chartView = findViewById(R.id.chart);
         chartView.setScaleYEnabled(false);
         chartView.getDescription().setEnabled(false);
-        chartView.getLegend().setTextColor(ContextCompat.getColor(this, R.color.design_default_color_primary));
+        chartView.getLegend().setTextColor(ContextCompat.getColor(this, R.color.primary));
         chartView.getLegend().setTextSize(LEGEND_TEXT_SIZE);
         chartView.getLegend().setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         chartView.getLegend().setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);

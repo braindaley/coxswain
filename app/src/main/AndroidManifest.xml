@@ -24,16 +24,30 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <!-- export TCX -->
     <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <!-- bluetooth heart rate -->
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- sensor heart rate -->
     <uses-permission
         android:name="android.permission.BODY_SENSORS"/>
     <!-- export Calendar for >23 only -->
     <uses-permission-sdk-23 android:name="android.permission.READ_CALENDAR"/>
     <uses-permission-sdk-23 android:name="android.permission.WRITE_CALENDAR"/>
+
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.WRITE_SPEED" />
+    <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
+    <uses-permission android:name="android.permission.health.WRITE_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.WRITE_POWER" />
 
     <application
         android:name=".Coxswain"
@@ -42,12 +56,12 @@
         android:label="@string/app_name"
         android:theme="@style/LightTheme"
         tools:replace="allowBackup"
-        android:requestLegacyExternalStorage="true"
         >
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -101,12 +115,14 @@
             android:label="@string/app_name"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:parentActivityName=".MainActivity"
+            android:exported="false"
             >
         </activity>
         <activity
             android:name=".SnapshotsActivity"
             android:label="@string/app_name"
             android:parentActivityName=".MainActivity"
+            android:exported="false"
             >
         </activity>
         <activity
@@ -117,7 +133,8 @@
             android:parentActivityName=".MainActivity"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
-            android:taskAffinity=".WorkoutActivity">
+            android:taskAffinity=".WorkoutActivity"
+            android:exported="false">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
@@ -128,7 +145,8 @@
             android:name=".SettingsActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity"
+            android:exported="false">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
@@ -139,23 +157,36 @@
             android:name=".util.PermissionActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false">
         </activity>
         <activity
             android:name=".bluetooth.BluetoothActivity"
             android:launchMode="singleTop"
-            android:theme="@style/DialogTheme">
+            android:theme="@style/DialogTheme"
+            android:exported="false">
+        </activity>
+
+        <activity
+            android:name=".google.HealthConnectPermissionsActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="androidx.health.connect.action.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
 
         <service
             android:name=".GymService"
             android:enabled="true"
-            android:foregroundServiceType="location"
+            android:exported="false"
+            android:foregroundServiceType="health|connectedDevice|location"
             >
         </service>
         <service
             android:name=".CompactService"
-            android:permission="android.permission.BIND_JOB_SERVICE"/>
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true"/>
         <!-- needed for API 24+ for content observers registered by Propoid -->
         <provider
             android:name=".GymContentProvider"

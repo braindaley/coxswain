@@ -222,7 +222,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
             Coxswain.initNotification(GymService.this, builder, "Gym");
 
             PendingIntent intent = PendingIntent.getService(getApplicationContext(), 0,
-                    createIntent(getApplicationContext(), CONNECTOR_NONE), PendingIntent.FLAG_UPDATE_CURRENT);
+                    createIntent(getApplicationContext(), CONNECTOR_NONE), Coxswain.pendingIntentFlag(PendingIntent.FLAG_UPDATE_CURRENT));
             builder.addAction(0, getString(R.string.gym_notification_disconnect),intent);
 
             startForeground(NOTIFICATION_ID, builder.build());
@@ -237,7 +237,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
                 return;
             }
 
-            builder.setContentIntent(PendingIntent.getActivity(service, 1, new Intent(service, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT));
+            builder.setContentIntent(PendingIntent.getActivity(service, 1, new Intent(service, MainActivity.class), Coxswain.pendingIntentFlag(PendingIntent.FLAG_UPDATE_CURRENT)));
             builder.setContentText(text);
             builder.setProgress(0, 0, false);
             builder.setOnlyAlertOnce(true);
@@ -264,7 +264,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
                 return;
             }
 
-            builder.setContentIntent(PendingIntent.getActivity(service, 1, new Intent(service, WorkoutActivity.class), PendingIntent.FLAG_UPDATE_CURRENT));
+            builder.setContentIntent(PendingIntent.getActivity(service, 1, new Intent(service, WorkoutActivity.class), Coxswain.pendingIntentFlag(PendingIntent.FLAG_UPDATE_CURRENT)));
             builder.setContentText(text);
             builder.setProgress(100, progress, false);
             builder.setOnlyAlertOnce(text.equals(this.text));

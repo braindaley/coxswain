@@ -19,7 +19,7 @@ import static junit.framework.Assert.assertEquals;
 /**
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = svenmeier.coxswain.BuildConfig.class)
+@Config(sdk = 28)
 public class Json2ProgramTest {
 
 	@Test

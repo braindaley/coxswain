@@ -3,21 +3,34 @@ plugins {
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 if (project.hasProperty("coxswain-private") && new File(project.property("coxswain-private")).exists()) {
     apply from: project.property("coxswain-private")
 }
 
 android {
-    compileSdkVersion 30
+    namespace 'svenmeier.coxswain'
+    compileSdk 37
 
     defaultConfig {
         applicationId "svenmeier.coxswain"
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdk 26
+        targetSdk 37
 
         versionCode Integer.parseInt(project.property("coxswain-versionCode"))
         versionName project.property("coxswain-versionName")
+    }
+    buildFeatures {
+        buildConfig true
+    }
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
     buildTypes {
         debug {
@@ -26,34 +39,41 @@ android {
         release {
             debuggable false
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    testOptions {
+        unitTests.all {
+            jvmArgs(
+                "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+                "--add-opens", "java.base/java.util=ALL-UNNAMED",
+                "--add-opens", "java.base/java.io=ALL-UNNAMED",
+                "--add-opens", "java.base/java.net=ALL-UNNAMED",
+                "--add-opens", "java.base/jdk.internal.reflect=ALL-UNNAMED"
+            )
         }
     }
     productFlavors {
     }
 }
 
-ext {
-    supportLibraryVersion = '1.0.0'
-    playFitServicesVersion = '20.0.0'
-    playAuthServicesVersion = '19.0.0'
-}
-
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
     implementation files('aars/antpluginlib_3-8-0.aar')
-    implementation "androidx.gridlayout:gridlayout:$supportLibraryVersion"
-    implementation "androidx.legacy:legacy-support-v13:$supportLibraryVersion"
-    implementation "androidx.legacy:legacy-preference-v14:$supportLibraryVersion"
-    implementation 'com.google.android.material:material:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0'
-    implementation "com.google.android.gms:play-services-fitness:$playFitServicesVersion"
-    implementation "com.google.android.gms:play-services-auth:$playAuthServicesVersion"
+    implementation "androidx.gridlayout:gridlayout:1.0.0"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.preference:preference:1.2.1"
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation "com.google.android.gms:play-services-fitness:21.2.0"
+    implementation "com.google.android.gms:play-services-auth:21.2.0"
+    implementation 'androidx.health.connect:connect-client:1.1.0'
+    implementation 'com.google.guava:guava:33.2.1-android'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     testImplementation 'junit:junit:4.13'
-    testImplementation('org.robolectric:robolectric:4.3.1') {
-        exclude group: 'commons-logging', module: 'commons-logging'
-        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-    }
+    testImplementation 'org.robolectric:robolectric:4.14.1'
     implementation project(':propoid-core')
     implementation project(':propoid-db')
     implementation project(':propoid-ui')

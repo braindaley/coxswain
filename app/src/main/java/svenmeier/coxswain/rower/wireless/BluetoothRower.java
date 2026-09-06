@@ -137,7 +137,11 @@ public class BluetoothRower extends Rower {
 
 		@Override
 		public void open() {
-			acquirePermissions(Manifest.permission.ACCESS_FINE_LOCATION);
+			if (Build.VERSION.SDK_INT >= 31) {
+				acquirePermissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT);
+			} else {
+				acquirePermissions(Manifest.permission.ACCESS_FINE_LOCATION);
+			}
 		}
 
 		@Override
@@ -147,7 +151,11 @@ public class BluetoothRower extends Rower {
 
 		@Override
 		protected void onPermissionsApproved() {
-			push(new LocationServices());
+			if (Build.VERSION.SDK_INT >= 31) {
+				push(new Bluetooth());
+			} else {
+				push(new LocationServices());
+			}
 		}
 	}
 

@@ -22,7 +22,11 @@ import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.Window;
+
 import androidx.annotation.LayoutRes;
+import androidx.core.view.WindowCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -58,6 +62,9 @@ public class AbstractActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
+
+        Window window = getWindow();
+        WindowCompat.setDecorFitsSystemWindows(window, true);
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }

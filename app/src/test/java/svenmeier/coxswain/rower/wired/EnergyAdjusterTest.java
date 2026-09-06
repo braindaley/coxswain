@@ -18,7 +18,10 @@ public class EnergyAdjusterTest {
 		// needs distance to adjust
 		measurement.setDistance(1);
 
-		assertEquals(out, new EnergyAdjuster(weight).adjust(measurement, in));
+		EnergyAdjuster adjuster = new EnergyAdjuster(measurement, weight);
+		adjuster.setEnergy(in);
+
+		assertEquals(out, measurement.getEnergy());
 	}
 
 	@Test

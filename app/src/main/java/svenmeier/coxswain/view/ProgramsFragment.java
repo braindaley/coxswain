@@ -117,34 +117,29 @@ public class ProgramsFragment extends Fragment {
 
                     popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         public boolean onMenuItemClick(MenuItem menuItem) {
-                            switch (menuItem.getItemId()) {
-                                case R.id.action_select:
-                                    gym.select(item);
-                                    return true;
-                                case R.id.action_new:
-                                    Program newProgram = gym.newProgram();
-
-                                    startActivity(ProgramActivity.createIntent(getActivity(), newProgram));
-                                    return true;
-                                case R.id.action_edit:
-                                    startActivity(ProgramActivity.createIntent(getActivity(), item));
-                                    return true;
-                                case R.id.action_export:
-                                    ExportProgramDialogFragment.create(item).show(getParentFragmentManager(), "export");
-
-                                    return true;
-                                case R.id.action_duplicate:
-                                    Program duplicatedProgram = gym.duplicateProgram(item);
-
-                                    startActivity(ProgramActivity.createIntent(getActivity(), duplicatedProgram));
-
-                                    return true;
-                                case R.id.action_delete:
-                                    DeleteDialogFragment.create(item).show(getParentFragmentManager(), "delete");
-
-                                    return true;
-                                default:
-                                    return false;
+                            int id = menuItem.getItemId();
+                            if (id == R.id.action_select) {
+                                gym.select(item);
+                                return true;
+                            } else if (id == R.id.action_new) {
+                                Program newProgram = gym.newProgram();
+                                startActivity(ProgramActivity.createIntent(getActivity(), newProgram));
+                                return true;
+                            } else if (id == R.id.action_edit) {
+                                startActivity(ProgramActivity.createIntent(getActivity(), item));
+                                return true;
+                            } else if (id == R.id.action_export) {
+                                ExportProgramDialogFragment.create(item).show(getParentFragmentManager(), "export");
+                                return true;
+                            } else if (id == R.id.action_duplicate) {
+                                Program duplicatedProgram = gym.duplicateProgram(item);
+                                startActivity(ProgramActivity.createIntent(getActivity(), duplicatedProgram));
+                                return true;
+                            } else if (id == R.id.action_delete) {
+                                DeleteDialogFragment.create(item).show(getParentFragmentManager(), "delete");
+                                return true;
+                            } else {
+                                return false;
                             }
                         }
                     });

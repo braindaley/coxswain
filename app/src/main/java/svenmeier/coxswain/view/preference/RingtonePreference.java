@@ -26,10 +26,9 @@ public class RingtonePreference extends ResultPreference {
 	}
 
 	private void init(Context context, AttributeSet attrs) {
-
-		TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.Preference);
-
-		this.defaultValue = array.getString(R.styleable.Preference_android_defaultValue);
+		TypedArray array = context.obtainStyledAttributes(attrs, new int[]{android.R.attr.defaultValue});
+		this.defaultValue = array.getString(0);
+		array.recycle();
 	}
 
 	public RingtonePreference(Context context, AttributeSet attrs) {

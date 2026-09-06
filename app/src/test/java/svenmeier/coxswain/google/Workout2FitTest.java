@@ -26,7 +26,7 @@ import static org.junit.Assert.assertFalse;
  * Test for {@link Workout2Fit}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = svenmeier.coxswain.BuildConfig.class)
+@Config(sdk = 28)
 public class Workout2FitTest {
 
 	private static final long Mon_Jun_15_2015 = 1434326400000l;

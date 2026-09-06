@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link TCX2Workout}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = svenmeier.coxswain.BuildConfig.class)
+@Config(sdk = 28)
 public class TCX2WorkoutTest {
 
 	private static final long Mon_Jun_15_2015 = 1434326400000l;

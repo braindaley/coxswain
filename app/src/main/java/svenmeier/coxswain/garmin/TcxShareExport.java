@@ -58,7 +58,7 @@ public class TcxShareExport extends TcxExport {
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-			IntentSender sender = PendingIntent.getBroadcast(context, 0, ShareReceiver.newIntent(context), PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender();
+			IntentSender sender = PendingIntent.getBroadcast(context, 0, ShareReceiver.newIntent(context), Coxswain.pendingIntentFlagMutable(PendingIntent.FLAG_UPDATE_CURRENT)).getIntentSender();
 
 			Intent chooserIntent = Intent.createChooser(shareIntent, context.getString(R.string.garmin_export), sender);
 			chooserIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);

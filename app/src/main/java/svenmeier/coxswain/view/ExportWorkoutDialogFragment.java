@@ -15,6 +15,7 @@ import svenmeier.coxswain.R;
 import svenmeier.coxswain.io.CalendarExport;
 import svenmeier.coxswain.garmin.TcxExport;
 import svenmeier.coxswain.google.FitExport;
+import svenmeier.coxswain.google.HealthConnectExport;
 import svenmeier.coxswain.gym.Workout;
 
 public class ExportWorkoutDialogFragment extends DialogFragment {
@@ -27,7 +28,7 @@ public class ExportWorkoutDialogFragment extends DialogFragment {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-		String[] exports = new String[]{getString(R.string.calendar_export), getString(R.string.garmin_export), getString(R.string.garmin_export_share), getString(R.string.googlefit_export)};
+		String[] exports = new String[]{getString(R.string.calendar_export), getString(R.string.garmin_export), getString(R.string.garmin_export_share), getString(R.string.googlefit_export), getString(R.string.healthconnect_export)};
 
 		builder.setTitle(R.string.action_export)
 				.setItems(exports, new DialogInterface.OnClickListener() {
@@ -44,6 +45,9 @@ public class ExportWorkoutDialogFragment extends DialogFragment {
 								break;
 							case 3:
 								export = new FitExport(getActivity());
+								break;
+							case 4:
+								export = new HealthConnectExport(getActivity());
 								break;
 							default:
 								throw new IndexOutOfBoundsException();

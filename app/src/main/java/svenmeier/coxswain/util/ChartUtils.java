@@ -15,7 +15,7 @@ public class ChartUtils {
 
 		TypedValue typedValue = new TypedValue();
 
-		TypedArray a = context.obtainStyledAttributes(typedValue.data, new int[] { R.attr.editTextColor });
+		TypedArray a = context.obtainStyledAttributes(typedValue.data, new int[] { android.R.attr.textColorPrimary });
 		int color = a.getColor(0, 0);
 		a.recycle();
 

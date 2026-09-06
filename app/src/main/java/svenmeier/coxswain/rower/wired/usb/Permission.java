@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 
+import svenmeier.coxswain.Coxswain;
+
 /**
  * Request permission to use a {@link UsbDevice}.
  * <p>
@@ -37,7 +39,7 @@ public class Permission extends BroadcastReceiver {
 	public void request(UsbDevice device) {
 		UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
-		manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
+		manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), Coxswain.pendingIntentFlag(0)));
 	}
 
 	public void onReceive(Context context, Intent intent) {

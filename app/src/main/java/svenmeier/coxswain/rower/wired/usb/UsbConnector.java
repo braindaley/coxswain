@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 
+import svenmeier.coxswain.Coxswain;
+
 import java.util.Collection;
 
 /**
@@ -44,7 +46,7 @@ public class UsbConnector extends BroadcastReceiver {
 	 */
 	public void connect(UsbDevice device) {
 
-		PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(DEVICE_CONNECT), 0);
+		PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(DEVICE_CONNECT), Coxswain.pendingIntentFlag(0));
 
 		manager.requestPermission(device, intent);
 		

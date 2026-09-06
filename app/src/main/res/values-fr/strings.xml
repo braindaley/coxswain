@@ -130,6 +130,7 @@
 
     <string name="googlefit_failed">Google Fit non disponible</string>
     <string name="googlefit_export">Google Fit</string>
+    <string name="healthconnect_export">Google Health Connect</string>
     <string name="googlefit_export_permissions_manual">Permission demandée, exporter SVP manuellement</string>
     <string name="googlefit_export_starting">Export vers Google Fit</string>
     <string name="googlefit_export_finished">Exporté vers Google Fit</string>

@@ -222,33 +222,27 @@ public class WorkoutsFragment extends Fragment implements Gym.Listener {
 
                     popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         public boolean onMenuItemClick(MenuItem menuItem) {
-                            switch (menuItem.getItemId()) {
-                                case R.id.action_delete:
-                                    DeleteDialogFragment.create(item).show(getParentFragmentManager(), "delete");
-
-                                    return true;
-                                case R.id.action_evaluate:
-                                    item.evaluate.set(!item.evaluate.get());
-
-                                    gym.mergeWorkout(item);
-
-                                    return true;
-                                case R.id.action_export:
-                                    ExportWorkoutDialogFragment.create(item).show(getParentFragmentManager(), "export");
-
-                                    return true;
-                                case R.id.action_repeat:
-                                    gym.repeat(item);
-
-                                    WorkoutActivity.start(getActivity());
-                                    return true;
-                                case R.id.action_challenge:
-                                    gym.challenge(item);
-
-                                    WorkoutActivity.start(getActivity());
-                                    return true;
-                                default:
-                                    return false;
+                            int id = menuItem.getItemId();
+                            if (id == R.id.action_delete) {
+                                DeleteDialogFragment.create(item).show(getParentFragmentManager(), "delete");
+                                return true;
+                            } else if (id == R.id.action_evaluate) {
+                                item.evaluate.set(!item.evaluate.get());
+                                gym.mergeWorkout(item);
+                                return true;
+                            } else if (id == R.id.action_export) {
+                                ExportWorkoutDialogFragment.create(item).show(getParentFragmentManager(), "export");
+                                return true;
+                            } else if (id == R.id.action_repeat) {
+                                gym.repeat(item);
+                                WorkoutActivity.start(getActivity());
+                                return true;
+                            } else if (id == R.id.action_challenge) {
+                                gym.challenge(item);
+                                WorkoutActivity.start(getActivity());
+                                return true;
+                            } else {
+                                return false;
                             }
                         }
                     });

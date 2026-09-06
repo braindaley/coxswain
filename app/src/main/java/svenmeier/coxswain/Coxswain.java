@@ -42,11 +42,22 @@ public class Coxswain extends Application {
 		}
 	}
 
+	public static int pendingIntentFlag(int flag) {
+		if (Build.VERSION.SDK_INT >= 31) { // Build.VERSION_CODES.S
+			return flag | 0x04000000; // PendingIntent.FLAG_IMMUTABLE
+		}
+		return flag;
+	}
+
+	public static int pendingIntentFlagMutable(int flag) {
+		if (Build.VERSION.SDK_INT >= 31) { // Build.VERSION_CODES.S
+			return flag | 0x02000000; // PendingIntent.FLAG_MUTABLE
+		}
+		return flag;
+	}
+
 	public static File getExternalFilesDir(Context context) {
-		// for API 29 only possible with android:requestLegacyExternalStorage="true"
-		//
-		// in future we have to use context.getExternalFilesDir(null);
-		return Environment.getExternalStoragePublicDirectory(Coxswain.TAG);
+		return context.getExternalFilesDir(null);
 	}
 
 	@Override
