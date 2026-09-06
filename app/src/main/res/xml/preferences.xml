@@ -204,6 +204,12 @@
     <PreferenceCategory
         android:title="@string/preference_integration_title"
     >
+        <Preference
+            android:key="preference_health_connect"
+            android:title="Google Health Connect"
+            android:summary="Manage permissions and sync status with Health Connect"
+        />
+
         <CheckBoxPreference
             android:key="@string/preference_integration_intent"
             android:title="@string/preference_integration_intent_title"

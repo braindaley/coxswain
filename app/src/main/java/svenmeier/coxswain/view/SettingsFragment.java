@@ -36,6 +36,7 @@ import java.util.Map;
 import svenmeier.coxswain.Coxswain;
 import svenmeier.coxswain.Gym;
 import svenmeier.coxswain.R;
+import svenmeier.coxswain.google.HealthConnectBridge;
 import svenmeier.coxswain.util.PermissionBlock;
 import svenmeier.coxswain.view.preference.ResultPreference;
 
@@ -121,6 +122,27 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 return true;
             }
         });
+
+        Preference healthConnect = findPreference("preference_health_connect");
+        if (healthConnect != null) {
+            healthConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    try {
+                        Intent intent = HealthConnectBridge.getSettingsIntent();
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        try {
+                            Intent legacyIntent = new Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS");
+                            startActivity(legacyIntent);
+                        } catch (Exception e2) {
+                            Toast.makeText(getActivity(), "Could not open Health Connect settings", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    return true;
+                }
+            });
+        }
     }
 
     public static final String LOG_FILE = "coxswain.log";
