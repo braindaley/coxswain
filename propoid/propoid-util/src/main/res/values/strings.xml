@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name" translatable="false">propoid-util</string>
+    <string name="preference_test" translatable="false">preference_test</string>
+</resources>
