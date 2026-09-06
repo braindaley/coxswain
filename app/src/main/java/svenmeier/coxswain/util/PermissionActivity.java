@@ -37,6 +37,7 @@ public class PermissionActivity extends Activity implements ActivityCompat.OnReq
 
 		Intent intent = new Intent();
 		intent.setAction(ACTION);
+		intent.setPackage(getPackageName());
 		intent.putExtra(PERMISSIONS, permissions);
 		intent.putExtra(GRANTED, granted);
 		sendBroadcast(intent);

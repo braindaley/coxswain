@@ -25,6 +25,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Process;
 import android.util.Log;
 
@@ -103,7 +104,11 @@ public class UsbRower extends Rower implements Runnable {
                 }
             }
         };
-        context.registerReceiver(receiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.registerReceiver(receiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            context.registerReceiver(receiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
+        }
 
         if (Preference.getBoolean(context, R.string.preference_hardware_legacy).get()) {
             protocol = new Protocol3(transfer, trace);

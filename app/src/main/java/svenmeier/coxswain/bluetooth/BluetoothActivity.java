@@ -142,6 +142,7 @@ public class BluetoothActivity extends AppCompatActivity implements CompoundButt
 
 		Intent intent = new Intent();
 		intent.setAction(ACTION_SELECTED);
+		intent.setPackage(getPackageName());
 		intent.putExtra(SERVICE_FILTER, serviceFilter);
 		intent.putExtra(DEVICE_ADDRESS, address);
 		intent.putExtra(DEVICE_REMEMBER, rememberCheckBox.isChecked());
@@ -289,7 +290,11 @@ public class BluetoothActivity extends AppCompatActivity implements CompoundButt
 			filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 			filter.addAction(LocationManager.MODE_CHANGED_ACTION);
 			filter.addAction(ACTION_CANCEL);
-			registerReceiver(this, filter);
+			if (Build.VERSION.SDK_INT >= 33) {
+				registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				registerReceiver(this, filter);
+			}
 		}
 
 		@Override
@@ -372,6 +377,7 @@ public class BluetoothActivity extends AppCompatActivity implements CompoundButt
 	public static void cancel(Context context) {
 		Intent intent = new Intent();
 		intent.setAction(ACTION_CANCEL);
+		intent.setPackage(context.getPackageName());
 		context.sendBroadcast(intent);
 
 	}

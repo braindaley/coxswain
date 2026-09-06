@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import androidx.core.content.ContextCompat;
 
@@ -52,7 +53,7 @@ public class PermissionBlock {
 		IntentFilter filter = PermissionActivity.start(context, permissions);
 
 		receiver = new BroadcastReceiverImpl();
-		context.registerReceiver(receiver, filter);
+		ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
 	}
 
 	private void unregister() {

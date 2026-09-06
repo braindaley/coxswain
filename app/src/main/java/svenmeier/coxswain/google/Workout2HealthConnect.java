@@ -36,16 +36,16 @@ public class Workout2HealthConnect {
         ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(start);
 
         // 1. Exercise Session
-        // Signature from error: Instant, ZoneOffset, Instant, ZoneOffset, Metadata, int, String, String, List, List, ExerciseRoute
+        Metadata sessionMetadata = Metadata.manualEntry((Device) null);
         records.add(new ExerciseSessionRecord(
                 start,
                 zoneOffset,
                 end,
                 zoneOffset,
-                Metadata.manualEntry((Device) null),
+                sessionMetadata,
                 ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE,
                 workout.programName("UNKNOWN"),
-                (String) null, // Notes
+                null, // Notes
                 Collections.emptyList(), // Segments
                 Collections.emptyList(), // Laps
                 null // Route
@@ -63,11 +63,25 @@ public class Workout2HealthConnect {
 
         for (int i = 0; i < size; i += step) {
             Snapshot snapshot = snapshots.get(i);
-            Instant time = start.plusMillis(i * 1000L); // Roughly 1s intervals
+            Instant time = start.plusMillis(i * 1000L);
+            
+            // Health Connect requires heart rate > 0
+            int pulse = snapshot.pulse.get();
+            if (pulse > 0) {
+                hrSamples.add(new HeartRateRecord.Sample(time, (long) pulse));
+            }
 
-            hrSamples.add(new HeartRateRecord.Sample(time, (long) snapshot.pulse.get()));
-            speedSamples.add(new SpeedRecord.Sample(time, Velocity.metersPerSecond((double) snapshot.speed.get() / 100.0)));
-            powerSamples.add(new PowerRecord.Sample(time, Power.watts((double) snapshot.power.get())));
+            // Health Connect requires speed >= 0
+            int speed = snapshot.speed.get();
+            if (speed >= 0) {
+                speedSamples.add(new SpeedRecord.Sample(time, Velocity.metersPerSecond((double) speed / 100.0)));
+            }
+
+            // Health Connect requires power >= 0
+            int power = snapshot.power.get();
+            if (power >= 0) {
+                powerSamples.add(new PowerRecord.Sample(time, Power.watts((double) power)));
+            }
         }
 
         if (!hrSamples.isEmpty()) {
@@ -81,24 +95,30 @@ public class Workout2HealthConnect {
         }
 
         // 5. Total Calories
-        records.add(new TotalCaloriesBurnedRecord(
-                start,
-                zoneOffset,
-                end,
-                zoneOffset,
-                Energy.kilocalories((double) workout.energy.get()),
-                Metadata.manualEntry((Device) null)
-        ));
+        int energy = workout.energy.get();
+        if (energy >= 0) {
+            records.add(new TotalCaloriesBurnedRecord(
+                    start,
+                    zoneOffset,
+                    end,
+                    zoneOffset,
+                    Energy.kilocalories((double) energy),
+                    Metadata.manualEntry((Device) null)
+            ));
+        }
 
         // 6. Distance
-        records.add(new DistanceRecord(
-                start,
-                zoneOffset,
-                end,
-                zoneOffset,
-                Length.meters((double) workout.distance.get()),
-                Metadata.manualEntry((Device) null)
-        ));
+        int distance = workout.distance.get();
+        if (distance >= 0) {
+            records.add(new DistanceRecord(
+                    start,
+                    zoneOffset,
+                    end,
+                    zoneOffset,
+                    Length.meters((double) distance),
+                    Metadata.manualEntry((Device) null)
+            ));
+        }
 
         return records;
     }

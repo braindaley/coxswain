@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId "svenmeier.coxswain"
-        minSdk 26
+        minSdk 34
         targetSdk 37
 
         versionCode Integer.parseInt(project.property("coxswain-versionCode"))

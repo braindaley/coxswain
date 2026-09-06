@@ -174,7 +174,11 @@ public class BluetoothRower extends Rower {
 
 					IntentFilter filter = new IntentFilter();
 					filter.addAction(LocationManager.MODE_CHANGED_ACTION);
-					context.registerReceiver(this, filter);
+					if (Build.VERSION.SDK_INT >= 33) {
+						context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+					} else {
+						context.registerReceiver(this, filter);
+					}
 					registered = true;
 
 					return;
@@ -249,7 +253,11 @@ public class BluetoothRower extends Rower {
 			IntentFilter filter = new IntentFilter();
 			filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 			filter.addAction(LocationManager.MODE_CHANGED_ACTION);
-			context.registerReceiver(this, filter);
+			if (Build.VERSION.SDK_INT >= 33) {
+				context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				context.registerReceiver(this, filter);
+			}
 			registered = true;
 
 			if (adapter.isEnabled() == false) {
@@ -300,7 +308,11 @@ public class BluetoothRower extends Rower {
 
 			String name = context.getString(R.string.bluetooth_rower);
 			IntentFilter filter = BluetoothActivity.start(context, name, BlueWriter.SERVICE_FITNESS_MACHINE.toString());
-			context.registerReceiver(this, filter);
+			if (Build.VERSION.SDK_INT >= 33) {
+				context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				context.registerReceiver(this, filter);
+			}
 			registered = true;
 		}
 

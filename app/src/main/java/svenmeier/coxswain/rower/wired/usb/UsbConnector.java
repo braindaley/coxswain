@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 
 import svenmeier.coxswain.Coxswain;
 
@@ -28,7 +29,11 @@ public class UsbConnector extends BroadcastReceiver {
 
 		manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
-		context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT));
+		if (Build.VERSION.SDK_INT >= 33) {
+			context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT), Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT));
+		}
 	}
 
 	public void destroy() {

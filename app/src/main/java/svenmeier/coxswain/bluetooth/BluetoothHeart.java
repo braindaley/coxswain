@@ -142,7 +142,11 @@ public class BluetoothHeart extends Heart {
 
 					IntentFilter filter = new IntentFilter();
 					filter.addAction(LocationManager.MODE_CHANGED_ACTION);
-					context.registerReceiver(this, filter);
+					if (Build.VERSION.SDK_INT >= 33) {
+						context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+					} else {
+						context.registerReceiver(this, filter);
+					}
 					registered = true;
 
 					return;
@@ -217,7 +221,11 @@ public class BluetoothHeart extends Heart {
 			IntentFilter filter = new IntentFilter();
 			filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 			filter.addAction(LocationManager.MODE_CHANGED_ACTION);
-			context.registerReceiver(this, filter);
+			if (Build.VERSION.SDK_INT >= 33) {
+				context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				context.registerReceiver(this, filter);
+			}
 			registered = true;
 
 			if (adapter.isEnabled() == false) {
@@ -268,7 +276,11 @@ public class BluetoothHeart extends Heart {
 
 			String name = context.getString(R.string.bluetooth_heart);
 			IntentFilter filter = BluetoothActivity.start(context, name, BlueWriter.SERVICE_HEART_RATE.toString());
-			context.registerReceiver(this, filter);
+			if (Build.VERSION.SDK_INT >= 33) {
+				context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				context.registerReceiver(this, filter);
+			}
 			registered = true;
 		}
 

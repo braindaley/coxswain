@@ -10,14 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.health.connect.client.HealthConnectClient;
-import androidx.health.connect.client.PermissionController;
-import androidx.health.connect.client.records.DistanceRecord;
-import androidx.health.connect.client.records.ExerciseSessionRecord;
-import androidx.health.connect.client.records.HeartRateRecord;
-import androidx.health.connect.client.records.PowerRecord;
 import androidx.health.connect.client.records.Record;
-import androidx.health.connect.client.records.SpeedRecord;
-import androidx.health.connect.client.records.TotalCaloriesBurnedRecord;
 import androidx.health.connect.client.response.InsertRecordsResponse;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -39,27 +32,35 @@ public class HealthConnectExport extends Export<Workout> {
 
     private final Handler handler = new Handler();
     private final Gym gym;
-    private final HealthConnectClient client;
+    private HealthConnectClient client;
 
     private static final Set<String> PERMISSIONS;
     static {
         PERMISSIONS = new HashSet<>();
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(ExerciseSessionRecord.class));
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(HeartRateRecord.class));
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(SpeedRecord.class));
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(PowerRecord.class));
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(TotalCaloriesBurnedRecord.class));
-        PERMISSIONS.add(HealthConnectBridge.getWritePermission(DistanceRecord.class));
+        PERMISSIONS.add("android.permission.health.WRITE_EXERCISE");
+        PERMISSIONS.add("android.permission.health.WRITE_HEART_RATE");
+        PERMISSIONS.add("android.permission.health.WRITE_SPEED");
+        PERMISSIONS.add("android.permission.health.WRITE_POWER");
+        PERMISSIONS.add("android.permission.health.WRITE_TOTAL_CALORIES_BURNED");
+        PERMISSIONS.add("android.permission.health.WRITE_DISTANCE");
     }
 
     public HealthConnectExport(Context context) {
         super(context);
         this.gym = Gym.instance(context);
-        this.client = HealthConnectClient.getOrCreate(context);
+        try {
+            this.client = HealthConnectClient.getOrCreate(context);
+        } catch (Exception e) {
+            Log.e(Coxswain.TAG, "Health Connect not available", e);
+        }
     }
 
     @Override
     public void start(Workout workout, boolean automatic) {
+        if (client == null) {
+            toast("Health Connect not available on this device");
+            return;
+        }
         checkPermissions(workout);
     }
 
@@ -68,7 +69,8 @@ public class HealthConnectExport extends Export<Workout> {
         Futures.addCallback(grantedFuture, new FutureCallback<Set<String>>() {
             @Override
             public void onSuccess(Set<String> granted) {
-                if (granted.containsAll(PERMISSIONS)) {
+                // We require at least Exercise permission to do anything useful
+                if (granted.contains("android.permission.health.WRITE_EXERCISE")) {
                     export(workout);
                 } else {
                     requestPermissions();
@@ -77,7 +79,7 @@ public class HealthConnectExport extends Export<Workout> {
 
             @Override
             public void onFailure(@NonNull Throwable t) {
-                toast(context.getString(R.string.googlefit_export_failed));
+                toast("Permission check failed: " + t.getMessage());
             }
         }, ContextCompat.getMainExecutor(context));
     }
@@ -85,13 +87,25 @@ public class HealthConnectExport extends Export<Workout> {
     private void requestPermissions() {
         if (context instanceof Activity) {
             try {
-                Intent intent = PermissionController.createRequestPermissionResultContract().createIntent(context, PERMISSIONS);
+                Intent intent = HealthConnectBridge.createPermissionIntent(context, PERMISSIONS);
+                Log.d(Coxswain.TAG, "Starting Health Connect permission request: " + intent.getAction());
                 ((Activity) context).startActivityForResult(intent, 0);
             } catch (Exception e) {
-                toast(context.getString(R.string.googlefit_export_failed));
+                Log.e(Coxswain.TAG, "Permission request failed, trying settings", e);
+                openSettings();
             }
         } else {
             toast(context.getString(R.string.googlefit_export_permissions_manual));
+        }
+    }
+
+    private void openSettings() {
+        try {
+            Intent intent = HealthConnectBridge.getSettingsIntent();
+            context.startActivity(intent);
+            toast("Please grant Coxswain permissions in Health Connect settings");
+        } catch (Exception e) {
+            toast("Could not open Health Connect settings");
         }
     }
 
@@ -101,17 +115,22 @@ public class HealthConnectExport extends Export<Workout> {
         List<Snapshot> snapshots = gym.getSnapshots(workout).list();
         List<Record> records = new Workout2HealthConnect().map(workout, snapshots);
 
+        if (records.isEmpty()) {
+            toast("No data to export");
+            return;
+        }
+
         ListenableFuture<InsertRecordsResponse> insertFuture = HealthConnectBridge.insertRecordsAsync(client, records);
         Futures.addCallback(insertFuture, new FutureCallback<InsertRecordsResponse>() {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
-                toast(context.getString(R.string.googlefit_export_finished));
+                toast("Successfully exported to Health Connect!");
             }
 
             @Override
             public void onFailure(@NonNull Throwable t) {
                 Log.e(Coxswain.TAG, "Health Connect export failed", t);
-                toast(context.getString(R.string.googlefit_export_failed));
+                toast("Export failed: " + t.getMessage());
             }
         }, ContextCompat.getMainExecutor(context));
     }

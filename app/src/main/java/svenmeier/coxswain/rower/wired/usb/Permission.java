@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 
 import svenmeier.coxswain.Coxswain;
 
@@ -28,7 +29,11 @@ public class Permission extends BroadcastReceiver {
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(ACTION_USB_PERMISSION);
 		filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-		context.registerReceiver(this, filter);
+		if (Build.VERSION.SDK_INT >= 33) {
+			context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			context.registerReceiver(this, filter);
+		}
 	}
 
 	public void destroy() {
