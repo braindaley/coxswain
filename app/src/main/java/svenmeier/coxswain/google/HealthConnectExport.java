@@ -95,7 +95,7 @@ public class HealthConnectExport extends Export<Workout> {
                 openSettings();
             }
         } else {
-            toast(context.getString(R.string.googlefit_export_permissions_manual));
+            toast(context.getString(R.string.healthconnect_export_permissions_manual));
         }
     }
 
@@ -110,7 +110,7 @@ public class HealthConnectExport extends Export<Workout> {
     }
 
     private void export(Workout workout) {
-        toast(context.getString(R.string.googlefit_export_starting));
+        toast(context.getString(R.string.healthconnect_export_starting));
 
         List<Snapshot> snapshots = gym.getSnapshots(workout).list();
         List<Record> records = new Workout2HealthConnect().map(workout, snapshots);
@@ -124,13 +124,13 @@ public class HealthConnectExport extends Export<Workout> {
         Futures.addCallback(insertFuture, new FutureCallback<InsertRecordsResponse>() {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
-                toast("Successfully exported to Health Connect!");
+                toast(context.getString(R.string.healthconnect_export_finished));
             }
 
             @Override
             public void onFailure(@NonNull Throwable t) {
                 Log.e(Coxswain.TAG, "Health Connect export failed", t);
-                toast("Export failed: " + t.getMessage());
+                toast(context.getString(R.string.healthconnect_export_failed) + ": " + t.getMessage());
             }
         }, ContextCompat.getMainExecutor(context));
     }

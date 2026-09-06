@@ -131,13 +131,11 @@
     <string name="garmin_import_finished">Workout imported</string>
     <string name="garmin_import_failed">Import of workout failed</string>
 
-    <string name="googlefit_failed">Google Fit not available</string>
-    <string name="googlefit_export">Google Fit</string>
-    <string name="healthconnect_export">Google Health Connect</string>
-    <string name="googlefit_export_permissions_manual">Permission required, please start export manually</string>
-    <string name="googlefit_export_starting">Exporting to Google Fit</string>
-    <string name="googlefit_export_finished">Exported to Google Fit</string>
-    <string name="googlefit_export_failed">Export to Google Fit failed</string>
+    <string name="healthconnect_export" translatable="false">Google Health Connect</string>
+    <string name="healthconnect_export_permissions_manual" translatable="false">Permission required, please start export manually</string>
+    <string name="healthconnect_export_starting" translatable="false">Exporting to Google Health Connect</string>
+    <string name="healthconnect_export_finished" translatable="false">Exported to Google Health Connect</string>
+    <string name="healthconnect_export_failed" translatable="false">Export to Google Health Connect failed</string>
 
     <string name="sensors_heart_rejected">No access to heart rate sensor</string>
     <string name="sensors_heart_not_found">No Heart rate sensor found</string>
