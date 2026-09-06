@@ -46,7 +46,7 @@ public class UsbConnector extends BroadcastReceiver {
 	 */
 	public void connect(UsbDevice device) {
 
-		PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(DEVICE_CONNECT), Coxswain.pendingIntentFlag(0));
+		PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(DEVICE_CONNECT), Coxswain.pendingIntentFlagMutable(0));
 
 		manager.requestPermission(device, intent);
 		

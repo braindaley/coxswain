@@ -21,6 +21,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.hardware.usb.UsbDevice;
 import android.os.Build;
 import android.os.Handler;
@@ -225,7 +226,15 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
                     createIntent(getApplicationContext(), CONNECTOR_NONE), Coxswain.pendingIntentFlag(PendingIntent.FLAG_UPDATE_CURRENT));
             builder.addAction(0, getString(R.string.gym_notification_disconnect),intent);
 
-            startForeground(NOTIFICATION_ID, builder.build());
+            if (Build.VERSION.SDK_INT >= 34) {
+                int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+                if (rower instanceof BluetoothRower) {
+                    type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
+                }
+                startForeground(NOTIFICATION_ID, builder.build(), type);
+            } else {
+                startForeground(NOTIFICATION_ID, builder.build());
+            }
         }
 
         public void connected() {

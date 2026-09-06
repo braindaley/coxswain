@@ -150,15 +150,18 @@ public class UsbRower extends Rower implements Runnable {
     }
 
     private boolean initConnection() {
+        Log.d(Coxswain.TAG, "connecting to " + device.getDeviceName());
         trace.comment(String.format("connecting to %s", device.getDeviceName()));
 
         UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         this.connection = manager.openDevice(device);
         if (this.connection == null) {
+            Log.e(Coxswain.TAG, "cannot open connection " + device.getDeviceName());
             trace.comment(String.format("cannot open connection %s", device.getDeviceName()));
             return false;
         }
 
+        Log.d(Coxswain.TAG, "usb device has " + device.getInterfaceCount() + " interfaces");
         for (int i = 0; i < device.getInterfaceCount(); i++) {
             UsbInterface anInterface = device.getInterface(i);
             int interfaceId = anInterface.getId();
@@ -166,6 +169,7 @@ public class UsbRower extends Rower implements Runnable {
             UsbEndpoint out = null;
             UsbEndpoint in = null;
 
+            Log.d(Coxswain.TAG, "interface " + interfaceId + " has " + anInterface.getEndpointCount() + " endpoints");
             for (int e = 0; e < anInterface.getEndpointCount(); e++) {
                 UsbEndpoint endpoint = anInterface.getEndpoint(e);
 
@@ -180,17 +184,21 @@ public class UsbRower extends Rower implements Runnable {
 
             if (out != null && in != null) {
                 if (this.connection.claimInterface(anInterface, true)) {
+                    Log.i(Coxswain.TAG, "claimed interface " + interfaceId);
                     trace.comment(String.format("claimed interface %s", interfaceId));
                     transfer = new UsbTransfer(connection, in, out);
                     return true;
                 } else {
+                    Log.e(Coxswain.TAG, "cannot claim interface " + interfaceId);
                     trace.comment(String.format("cannot claim interface %s", interfaceId));
                 }
             } else {
+                Log.w(Coxswain.TAG, "no bulk endpoints on interface " + interfaceId);
                 trace.comment(String.format("no bulk endpoints %s", interfaceId));
             }
         }
 
+        Log.e(Coxswain.TAG, "no suitable interface found");
         trace.comment("no interface");
         this.connection.close();
         this.connection = null;

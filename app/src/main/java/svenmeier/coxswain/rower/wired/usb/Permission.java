@@ -39,7 +39,7 @@ public class Permission extends BroadcastReceiver {
 	public void request(UsbDevice device) {
 		UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
-		manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), Coxswain.pendingIntentFlag(0)));
+		manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), Coxswain.pendingIntentFlagMutable(0)));
 	}
 
 	public void onReceive(Context context, Intent intent) {
