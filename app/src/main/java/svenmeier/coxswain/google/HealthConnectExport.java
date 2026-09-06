@@ -124,6 +124,7 @@ public class HealthConnectExport extends Export<Workout> {
         Futures.addCallback(insertFuture, new FutureCallback<InsertRecordsResponse>() {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
+                Log.d(Coxswain.TAG, "Inserted " + result.getRecordIdsList().size() + " records into Health Connect: " + result.getRecordIdsList());
                 toast(context.getString(R.string.healthconnect_export_finished));
             }
 

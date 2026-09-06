@@ -36,7 +36,8 @@ public class Workout2HealthConnect {
         ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(start);
 
         // 1. Exercise Session
-        Metadata sessionMetadata = Metadata.manualEntry((Device) null);
+        String workoutId = "coxswain_workout_" + workout.start.get();
+        Metadata sessionMetadata = Metadata.manualEntry(workoutId, 0, (Device) null);
         records.add(new ExerciseSessionRecord(
                 start,
                 zoneOffset,
@@ -44,8 +45,8 @@ public class Workout2HealthConnect {
                 zoneOffset,
                 sessionMetadata,
                 ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE,
-                workout.programName("UNKNOWN"),
-                null, // Notes
+                workout.programName("Rowing"),
+                "Recorded with Coxswain on WaterRower", // Notes
                 Collections.emptyList(), // Segments
                 Collections.emptyList(), // Laps
                 null // Route
