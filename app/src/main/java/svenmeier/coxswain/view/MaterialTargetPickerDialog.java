@@ -20,6 +20,8 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.Locale;
+
 import propoid.db.Reference;
 import svenmeier.coxswain.Gym;
 import svenmeier.coxswain.R;
@@ -36,9 +38,13 @@ public class MaterialTargetPickerDialog extends DialogFragment {
     private Segment segment;
 
     private int currentType = TYPE_DISTANCE;
-    private int currentValue = 500;
+    private int currentValue = 500; // in meters, seconds, strokes, or kcal
 
+    private View singleValueContainer;
+    private View durationContainer;
     private EditText valueInput;
+    private EditText durationMinutesInput;
+    private EditText durationSecondsInput;
     private TextView unitLabel;
     private ChipGroup presetChips;
     private boolean updatingText = false;
@@ -55,7 +61,10 @@ public class MaterialTargetPickerDialog extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         gym = Gym.instance(getContext());
-        segment = gym.get(Reference.<Segment>from(getArguments()));
+        Bundle args = getArguments();
+        if (args != null) {
+            segment = gym.get(Reference.from(args));
+        }
 
         if (segment != null) {
             if (segment.duration.get() > 0) {
@@ -81,12 +90,18 @@ public class MaterialTargetPickerDialog extends DialogFragment {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_target_picker, null);
 
         TabLayout tabLayout = view.findViewById(R.id.picker_tabs);
+        singleValueContainer = view.findViewById(R.id.single_value_container);
+        durationContainer = view.findViewById(R.id.duration_container);
         valueInput = view.findViewById(R.id.value_input);
+        durationMinutesInput = view.findViewById(R.id.duration_minutes_input);
+        durationSecondsInput = view.findViewById(R.id.duration_seconds_input);
         unitLabel = view.findViewById(R.id.unit_label);
         presetChips = view.findViewById(R.id.preset_chips);
 
         MaterialButton btnMinus = view.findViewById(R.id.btn_minus_large);
         MaterialButton btnPlus = view.findViewById(R.id.btn_plus_large);
+        MaterialButton btnDurationMinus = view.findViewById(R.id.btn_duration_minus);
+        MaterialButton btnDurationPlus = view.findViewById(R.id.btn_duration_plus);
 
         // Configure Tabs
         tabLayout.addTab(tabLayout.newTab().setText(R.string.distance_label), currentType == TYPE_DISTANCE);
@@ -98,13 +113,12 @@ public class MaterialTargetPickerDialog extends DialogFragment {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 currentType = tab.getPosition();
-                // Set default sensible starting value for each type
                 switch (currentType) {
                     case TYPE_DISTANCE:
                         currentValue = 500;
                         break;
                     case TYPE_DURATION:
-                        currentValue = 120; // 2 minutes
+                        currentValue = 120; // 2:00
                         break;
                     case TYPE_STROKES:
                         currentValue = 50;
@@ -123,21 +137,23 @@ public class MaterialTargetPickerDialog extends DialogFragment {
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        // Stepper Buttons
+        // Single Stepper Buttons
         btnMinus.setOnClickListener(v -> adjustValue(-getStep()));
         btnPlus.setOnClickListener(v -> adjustValue(getStep()));
 
-        // Direct Text input watcher
+        // Duration Stepper Buttons (±30s)
+        btnDurationMinus.setOnClickListener(v -> adjustValue(-30));
+        btnDurationPlus.setOnClickListener(v -> adjustValue(30));
+
+        // Direct Text input watcher for Distance / Strokes / Energy
         valueInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
             @Override
             public void afterTextChanged(Editable s) {
-                if (updatingText) return;
+                if (updatingText || currentType == TYPE_DURATION) return;
                 try {
                     int val = Integer.parseInt(s.toString().replaceAll("[^0-9]", ""));
                     if (val > 0) {
@@ -146,6 +162,29 @@ public class MaterialTargetPickerDialog extends DialogFragment {
                 } catch (NumberFormatException ignored) {}
             }
         });
+
+        // Duration Minutes & Seconds watchers
+        TextWatcher durationWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (updatingText || currentType != TYPE_DURATION) return;
+                try {
+                    int mins = 0;
+                    int secs = 0;
+                    String mStr = durationMinutesInput.getText().toString().replaceAll("[^0-9]", "");
+                    String sStr = durationSecondsInput.getText().toString().replaceAll("[^0-9]", "");
+                    if (!mStr.isEmpty()) mins = Integer.parseInt(mStr);
+                    if (!sStr.isEmpty()) secs = Integer.parseInt(sStr);
+                    currentValue = (mins * 60) + secs;
+                } catch (NumberFormatException ignored) {}
+            }
+        };
+        durationMinutesInput.addTextChangedListener(durationWatcher);
+        durationSecondsInput.addTextChangedListener(durationWatcher);
 
         updateUI();
 
@@ -163,9 +202,7 @@ public class MaterialTargetPickerDialog extends DialogFragment {
             case TYPE_DURATION:
                 return 30; // 30 seconds
             case TYPE_STROKES:
-                return 10;
             case TYPE_ENERGY:
-                return 10;
             default:
                 return 10;
         }
@@ -178,27 +215,36 @@ public class MaterialTargetPickerDialog extends DialogFragment {
 
     private void updateUI() {
         updatingText = true;
-        valueInput.setText(String.valueOf(currentValue));
-        updatingText = false;
 
-        switch (currentType) {
-            case TYPE_DISTANCE:
+        if (currentType == TYPE_DURATION) {
+            singleValueContainer.setVisibility(View.GONE);
+            durationContainer.setVisibility(View.VISIBLE);
+
+            int mins = currentValue / 60;
+            int secs = currentValue % 60;
+            durationMinutesInput.setText(String.format(Locale.getDefault(), "%02d", mins));
+            durationSecondsInput.setText(String.format(Locale.getDefault(), "%02d", secs));
+            unitLabel.setText("Minutes : Seconds");
+            setupPresets(new int[]{60, 120, 300, 600, 1200});
+        } else {
+            durationContainer.setVisibility(View.GONE);
+            singleValueContainer.setVisibility(View.VISIBLE);
+
+            valueInput.setText(String.valueOf(currentValue));
+
+            if (currentType == TYPE_DISTANCE) {
                 unitLabel.setText(R.string.distance_label);
                 setupPresets(new int[]{250, 500, 1000, 2000, 5000});
-                break;
-            case TYPE_DURATION:
-                unitLabel.setText(R.string.duration_label);
-                setupPresets(new int[]{60, 120, 300, 600, 1200});
-                break;
-            case TYPE_STROKES:
+            } else if (currentType == TYPE_STROKES) {
                 unitLabel.setText(R.string.strokes_label);
                 setupPresets(new int[]{20, 50, 100, 200, 500});
-                break;
-            case TYPE_ENERGY:
+            } else if (currentType == TYPE_ENERGY) {
                 unitLabel.setText(R.string.energy_label);
                 setupPresets(new int[]{25, 50, 100, 200, 500});
-                break;
+            }
         }
+
+        updatingText = false;
     }
 
     private void setupPresets(int[] presets) {
