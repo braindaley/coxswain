@@ -163,6 +163,7 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
         private final BindingView limitView;
         private final LevelView difficultyView;
         private final ImageButton menuButton;
+        private final ImageButton deleteButton;
 
         public SegmentHolder(View v) {
             super(v);
@@ -170,6 +171,21 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
             targetView = (BindingView) v.findViewById(R.id.segments_item_target);
             limitView = (BindingView) v.findViewById(R.id.segments_item_limit);
             difficultyView = (LevelView) v.findViewById(R.id.segments_difficulty);
+
+            deleteButton = (ImageButton) v.findViewById(R.id.segment_delete);
+            if (deleteButton != null) {
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int pos = getAdapterPosition();
+                        if (pos != RecyclerView.NO_POSITION) {
+                            program.removeSegment(item);
+                            gym.mergeProgram(program);
+                            segmentsAdapter.notifyItemRemoved(pos);
+                        }
+                    }
+                });
+            }
 
             menuButton = (ImageButton) v.findViewById(R.id.segment_menu);
             menuButton.setOnClickListener(new View.OnClickListener() {
