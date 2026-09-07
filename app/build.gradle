@@ -11,12 +11,12 @@ if (project.hasProperty("coxswain-private") && new File(project.property("coxswa
 
 android {
     namespace 'svenmeier.coxswain'
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         applicationId "svenmeier.coxswain"
         minSdk 34
-        targetSdk 36
+        targetSdk 37
 
         versionCode 114
         versionName "1.14"
