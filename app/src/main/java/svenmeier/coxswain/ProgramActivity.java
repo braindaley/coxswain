@@ -39,6 +39,8 @@ import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.view.AbstractValueFragment;
 import svenmeier.coxswain.view.BindingView;
 import svenmeier.coxswain.view.LevelView;
+import svenmeier.coxswain.view.MaterialLimitPickerDialog;
+import svenmeier.coxswain.view.MaterialTargetPickerDialog;
 import svenmeier.coxswain.view.ValueBinding;
 
 
@@ -219,7 +221,7 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
             targetView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AbstractValueFragment.createTarget(item).show(getSupportFragmentManager(), "changed");
+                    MaterialTargetPickerDialog.create(item).show(getSupportFragmentManager(), "target_dialog");
                 }
             });
 
@@ -242,7 +244,7 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
             limitView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AbstractValueFragment.createLimit(item).show(getSupportFragmentManager(), "changed");
+                    MaterialLimitPickerDialog.create(item).show(getSupportFragmentManager(), "limit_dialog");
                 }
             });
 

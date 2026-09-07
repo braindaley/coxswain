@@ -1,0 +1,121 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="16dp"
+    >
+
+    <TextView
+        android:id="@+id/picker_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Segment Target"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
+    />
+
+    <!-- Tabs: Distance | Duration | Strokes | Energy -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/picker_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+        style="@style/Widget.Material3.TabLayout"
+    />
+
+    <!-- Main Value Display & Steppers -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="12dp"
+        >
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_minus_large"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:padding="0dp"
+            app:icon="@drawable/ic_remove_24dp"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            android:contentDescription="Decrease"
+        />
+
+        <!-- Editable input value -->
+        <EditText
+            android:id="@+id/value_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/coxswain"
+            android:textColor="@color/primary"
+            android:inputType="number"
+            android:background="@android:color/transparent"
+            android:selectAllOnFocus="true"
+            android:minHeight="56dp"
+        />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_plus_large"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:padding="0dp"
+            app:icon="@drawable/ic_add_24dp"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            android:contentDescription="Increase"
+        />
+    </LinearLayout>
+
+    <!-- Unit Label (e.g. "Meters", "Minutes : Seconds", "Strokes") -->
+    <TextView
+        android:id="@+id/unit_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textAllCaps="true"
+        android:text="Meters"
+    />
+
+    <!-- Quick Preset Chips -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:scrollbars="none"
+        >
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/preset_chips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+        />
+    </HorizontalScrollView>
+
+</LinearLayout>
