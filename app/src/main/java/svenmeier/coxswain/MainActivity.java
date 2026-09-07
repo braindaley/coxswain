@@ -16,6 +16,7 @@
 package svenmeier.coxswain;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
@@ -33,13 +34,15 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.io.ImportIntention;
@@ -56,7 +59,8 @@ public class MainActivity extends AbstractActivity {
 
     private Gym gym;
 
-    private ViewPager pager;
+    private ViewPager2 pager;
+    private BottomNavigationView bottomNav;
 
     private AppBarLayout appBar;
 
@@ -84,11 +88,44 @@ public class MainActivity extends AbstractActivity {
 
         onNewIntent(getIntent());
 
-        pager = (ViewPager) findViewById(R.id.main_pager);
-        pager.setAdapter(new MainAdapter(getSupportFragmentManager()));
+        pager = findViewById(R.id.main_pager2);
+        pager.setAdapter(new MainAdapter(this));
 
-        TabLayout tabLayout = (TabLayout)findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(pager);
+        bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int id = item.getItemId();
+                if (id == R.id.nav_programs) {
+                    pager.setCurrentItem(0, false);
+                    return true;
+                } else if (id == R.id.nav_workouts) {
+                    pager.setCurrentItem(1, false);
+                    return true;
+                } else if (id == R.id.nav_performance) {
+                    pager.setCurrentItem(2, false);
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                switch (position) {
+                    case 0:
+                        bottomNav.setSelectedItemId(R.id.nav_programs);
+                        break;
+                    case 1:
+                        bottomNav.setSelectedItemId(R.id.nav_workouts);
+                        break;
+                    case 2:
+                        bottomNav.setSelectedItemId(R.id.nav_performance);
+                        break;
+                }
+            }
+        });
 
         appBar = (AppBarLayout) findViewById(R.id.main_appbar);
 
@@ -253,7 +290,7 @@ public class MainActivity extends AbstractActivity {
 
             try {
                 startActivityForResult(Intent.createChooser(intent, getString(R.string.action_import)), REQUEST_IMPORT);
-            } catch (android.content.ActivityNotFoundException ex) {
+            } catch (ActivityNotFoundException ex) {
                 Toast.makeText(this, getString(R.string.import_chooser), Toast.LENGTH_LONG).show();
             }
 
@@ -266,30 +303,20 @@ public class MainActivity extends AbstractActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class MainAdapter extends FragmentStatePagerAdapter {
+    private class MainAdapter extends FragmentStateAdapter {
 
-        public MainAdapter(FragmentManager fm) {
-            super(fm);
+        public MainAdapter(FragmentActivity fa) {
+            super(fa);
         }
 
         @Override
-        public int getCount() {
+        public int getItemCount() {
             return 3;
         }
 
+        @NonNull
         @Override
-        public CharSequence getPageTitle(int position) {
-            if (position == 0) {
-                return getString(R.string.programs);
-            } else if (position == 1) {
-                return getString(R.string.workouts);
-            } else {
-                return getString(R.string.performance);
-            }
-        }
-
-        @Override
-        public Fragment getItem(int position) {
+        public Fragment createFragment(int position) {
             if (position == 0) {
                 return new ProgramsFragment();
             } else if (position == 1) {

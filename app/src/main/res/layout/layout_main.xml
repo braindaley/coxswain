@@ -13,8 +13,6 @@
        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             style="@style/Toolbar"
-
-            app:layout_scrollFlags="scroll|enterAlways"
         />
 
         <LinearLayout
@@ -22,8 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-
-            app:layout_scrollFlags="scroll|enterAlways"
+            android:visibility="gone"
         >
 
             <ImageButton
@@ -43,32 +40,34 @@
                     android:id="@+id/main_program_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="32dp"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
                 />
                 <TextView
                     android:id="@+id/main_program_current"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="16dp"
+                    android:textSize="14sp"
                 />
             </LinearLayout>
         </LinearLayout>
-
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/TabLayout"
-        />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/main_pager"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/main_pager2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        >
-    </androidx.viewpager.widget.ViewPager>
+    />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/menu_bottom_nav"
+        style="@style/Widget.Material3.BottomNavigationView"
+        app:elevation="8dp"
+    />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

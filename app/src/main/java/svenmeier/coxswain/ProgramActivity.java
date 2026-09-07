@@ -17,8 +17,10 @@ package svenmeier.coxswain;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -26,6 +28,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +36,8 @@ import java.util.List;
 import propoid.db.Reference;
 import propoid.db.aspect.Row;
 import propoid.ui.list.GenericRecyclerAdapter;
+import svenmeier.coxswain.gym.Difficulty;
+import com.google.android.material.chip.Chip;
 import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.gym.Segment;
@@ -159,20 +164,27 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
 
     private class SegmentHolder extends GenericRecyclerAdapter.GenericHolder<Segment> {
 
-        private final BindingView targetView;
-        private final BindingView limitView;
-        private final LevelView difficultyView;
+        private final View intensityStrip;
+        private final View targetContainer;
+        private final TextView targetValue;
+        private final TextView targetSubtitle;
+        private final Chip goalChip;
+        private final TextView difficultyBadge;
         private final ImageButton menuButton;
         private final ImageButton deleteButton;
 
         public SegmentHolder(View v) {
             super(v);
 
-            targetView = (BindingView) v.findViewById(R.id.segments_item_target);
-            limitView = (BindingView) v.findViewById(R.id.segments_item_limit);
-            difficultyView = (LevelView) v.findViewById(R.id.segments_difficulty);
+            intensityStrip = v.findViewById(R.id.segment_intensity_strip);
+            targetContainer = v.findViewById(R.id.segment_target_container);
+            targetValue = v.findViewById(R.id.segment_target_value);
+            targetSubtitle = v.findViewById(R.id.segment_target_subtitle);
+            goalChip = v.findViewById(R.id.segment_goal_chip);
+            difficultyBadge = v.findViewById(R.id.segments_difficulty);
+            deleteButton = v.findViewById(R.id.segment_delete);
+            menuButton = v.findViewById(R.id.segment_menu);
 
-            deleteButton = (ImageButton) v.findViewById(R.id.segment_delete);
             if (deleteButton != null) {
                 deleteButton.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -187,93 +199,100 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
                 });
             }
 
-            menuButton = (ImageButton) v.findViewById(R.id.segment_menu);
-            menuButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Segment duplicate = program.duplicateSegment(item);
-
-                    Gym.instance(ProgramActivity.this).mergeProgram(program);
-
-                    segmentsAdapter.notifyItemInserted(program.getSegments().indexOf(duplicate));
-                }
-            });
-            menuButton.setOnTouchListener(new View.OnTouchListener() {
-
-                private float y;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP) {
-                        y = event.getY();
-                    } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                        if (Math.abs(event.getY() - y) > 5) {
-                            touchHelper.startDrag(SegmentHolder.this);
-
-                            return true;
-                        }
+            if (menuButton != null) {
+                menuButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Segment duplicate = program.duplicateSegment(item);
+                        gym.mergeProgram(program);
+                        segmentsAdapter.notifyItemInserted(program.getSegments().indexOf(duplicate));
                     }
+                });
+                menuButton.setOnTouchListener(new View.OnTouchListener() {
+                    private float y;
 
-                    return false;
-                }
-            });
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP) {
+                            y = event.getY();
+                        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                            if (Math.abs(event.getY() - y) > 5) {
+                                touchHelper.startDrag(SegmentHolder.this);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                });
+            }
         }
 
         @Override
         protected void onBind() {
+            // 1. Target Value & Subtitle
             if (item.duration.get() > 0) {
-                targetView.setBinding(ValueBinding.DURATION);
-                targetView.changed(item.duration.get());
+                int secs = item.duration.get();
+                targetValue.setText(String.format("%02d:%02d", secs / 60, secs % 60));
+                targetSubtitle.setText(R.string.duration_label);
             } else if (item.distance.get() > 0) {
-                targetView.setBinding(ValueBinding.DISTANCE);
-                targetView.changed(item.distance.get());
+                targetValue.setText(String.format("%,d m", item.distance.get()));
+                targetSubtitle.setText(R.string.distance_label);
             } else if (item.strokes.get() > 0) {
-                targetView.setBinding(ValueBinding.STROKES);
-                targetView.changed(item.strokes.get());
+                targetValue.setText(String.format("%,d", item.strokes.get()));
+                targetSubtitle.setText(R.string.strokes_label);
             } else if (item.energy.get() > 0) {
-                targetView.setBinding(ValueBinding.ENERGY);
-                targetView.changed(item.energy.get());
+                targetValue.setText(String.format("%,d kcal", item.energy.get()));
+                targetSubtitle.setText(R.string.energy_label);
             }
-            targetView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    MaterialTargetPickerDialog.create(item).show(getSupportFragmentManager(), "target_dialog");
-                }
-            });
 
-            if (item.speed.get() > 0) {
-                limitView.setBinding(ValueBinding.SPEED);
-                limitView.changed(item.speed.get());
+            targetContainer.setOnClickListener(v -> MaterialTargetPickerDialog.create(item).show(getSupportFragmentManager(), "target_dialog"));
+
+            // 2. Goal / Limit Chip
+            if (item.strokeRate.get() > 0) {
+                goalChip.setText(item.strokeRate.get() + " spm");
             } else if (item.pulse.get() > 0) {
-                limitView.setBinding(ValueBinding.PULSE);
-                limitView.changed(item.pulse.get());
-            } else if (item.strokeRate.get() > 0) {
-                limitView.setBinding(ValueBinding.STROKE_RATE);
-                limitView.changed(item.strokeRate.get());
+                goalChip.setText(item.pulse.get() + " bpm");
+            } else if (item.speed.get() > 0) {
+                goalChip.setText(String.format("%.2f m/s", item.speed.get() / 100f));
             } else if (item.power.get() > 0) {
-                limitView.setBinding(ValueBinding.POWER);
-                limitView.changed(item.power.get());
+                goalChip.setText(item.power.get() + " W");
             } else {
-                limitView.setBinding(ValueBinding.NONE);
-                limitView.setCustomText("+ Goal", "Pace Limit");
+                goalChip.setText("+ Set goal");
             }
-            limitView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    MaterialLimitPickerDialog.create(item).show(getSupportFragmentManager(), "limit_dialog");
-                }
-            });
 
-            difficultyView.setLevel(item.difficulty.get().ordinal());
-            difficultyView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    item.difficulty.set(item.difficulty.get().increase());
+            goalChip.setOnClickListener(v -> MaterialLimitPickerDialog.create(item).show(getSupportFragmentManager(), "limit_dialog"));
 
-                    Gym.instance(ProgramActivity.this).mergeProgram(program);
+            // 3. Difficulty Badge & Left Strip
+            Difficulty diff = item.difficulty.get();
+            difficultyBadge.setText(diff.name());
 
-                    segmentsAdapter.notifyItemChanged(getAdapterPosition());
-                }
+            int colorRes = R.color.intensity_easy;
+            switch (diff) {
+                case REST:
+                    colorRes = R.color.intensity_rest;
+                    break;
+                case EASY:
+                    colorRes = R.color.intensity_easy;
+                    break;
+                case MEDIUM:
+                    colorRes = R.color.intensity_medium;
+                    break;
+                case HARD:
+                    colorRes = R.color.intensity_hard;
+                    break;
+                case PEAK:
+                    colorRes = R.color.intensity_peak;
+                    break;
+            }
+
+            int stripColor = ContextCompat.getColor(ProgramActivity.this, colorRes);
+            intensityStrip.setBackgroundColor(stripColor);
+            difficultyBadge.setBackgroundTintList(ColorStateList.valueOf(stripColor));
+
+            difficultyBadge.setOnClickListener(v -> {
+                item.difficulty.set(item.difficulty.get().increase());
+                gym.mergeProgram(program);
+                segmentsAdapter.notifyItemChanged(getAdapterPosition());
             });
         }
     }

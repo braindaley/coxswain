@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_programs"
+        android:icon="@drawable/ic_nav_programs_24dp"
+        android:title="@string/programs" />
+    <item
+        android:id="@+id/nav_workouts"
+        android:icon="@drawable/ic_nav_workouts_24dp"
+        android:title="@string/workouts" />
+    <item
+        android:id="@+id/nav_performance"
+        android:icon="@drawable/ic_nav_performance_24dp"
+        android:title="@string/performance" />
+</menu>
