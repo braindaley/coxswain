@@ -33,6 +33,7 @@ import java.util.List;
 import propoid.db.Reference;
 import propoid.db.aspect.Row;
 import propoid.ui.list.GenericRecyclerAdapter;
+import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.view.AbstractValueFragment;
@@ -79,6 +80,21 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
 
             touchHelper = new ItemTouchHelper(new SegmentsMover());
             touchHelper.attachToRecyclerView(segmentsView);
+
+            View addButton = findViewById(R.id.segment_add);
+            if (addButton != null) {
+                addButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Segment newSegment = new Segment(Difficulty.EASY);
+                        newSegment.setDistance(500);
+                        program.addSegment(newSegment);
+                        gym.mergeProgram(program);
+                        segmentsAdapter.notifyItemInserted(program.getSegments().size() - 1);
+                        segmentsView.smoothScrollToPosition(program.getSegments().size() - 1);
+                    }
+                });
+            }
         }
     }
 
