@@ -24,6 +24,7 @@ import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -75,6 +76,7 @@ public class MainActivity extends AbstractActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: Launching Material 3 Overhaul");
 
         if (Build.VERSION.SDK_INT >= 33) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -84,7 +86,7 @@ public class MainActivity extends AbstractActivity {
 
         gym = Gym.instance(this);
 
-        setContentView(R.layout.layout_main);
+        setContentView(R.layout.activity_main);
 
         onNewIntent(getIntent());
 
