@@ -16,6 +16,8 @@ Your Waterrower S4 can be connected to your Android device
 - either via USB-OTG adapter (USB-A-female to USB-micro/USB-C resp.), requires On-The-Go (OTG) support on your device
 - or Bluetooth, requires the Waterrower S4 Bluetooth Comm Module 
 
-This app is under development. Please report problems and ideas and/or support the original developer by a donation:
+Support the original developer by a donation:
 
 [<img alt="Donate" src="https://www.paypalobjects.com/en_US/DE/i/btn/btn_donateCC_LG.gif" />](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CC3QC76CKCCRY)
+
+
