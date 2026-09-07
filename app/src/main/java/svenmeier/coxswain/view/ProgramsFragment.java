@@ -65,6 +65,17 @@ public class ProgramsFragment extends Fragment {
         programsView.setHasFixedSize(true);
         programsView.setAdapter(adapter = new ProgramsAdapter());
 
+        View addButton = root.findViewById(R.id.programs_add);
+        if (addButton != null) {
+            addButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Program newProgram = gym.newProgram();
+                    startActivity(ProgramActivity.createIntent(getActivity(), newProgram));
+                }
+            });
+        }
+
         return root;
     }
 

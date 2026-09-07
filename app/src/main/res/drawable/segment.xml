@@ -1,60 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<level-list xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 0: NONE -->
     <item android:maxLevel="0">
-        <shape>
-            <solid android:color="#16909090"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <solid android:color="#1F757575" />
         </shape>
     </item>
+    <!-- 1: REST (Light Blue / Recovery) -->
     <item android:maxLevel="1">
-        <shape>
-            <stroke
-                android:color="#8EA8ED"
-                android:width="1dp"
-                />
-            <solid android:color="#A6B9ED"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <stroke android:color="@color/intensity_rest" android:width="1.5dp" />
+            <solid android:color="@color/intensity_rest_bg" />
         </shape>
     </item>
+    <!-- 2: EASY (Green / Aerobic) -->
     <item android:maxLevel="2">
-        <shape>
-            <stroke
-                android:color="#FFBBEE00"
-                android:width="1dp"
-                />
-            <solid android:color="#FFCCFF00"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <stroke android:color="@color/intensity_easy" android:width="1.5dp" />
+            <solid android:color="@color/intensity_easy_bg" />
         </shape>
     </item>
+    <!-- 3: MEDIUM (Amber-Yellow / Moderate) -->
     <item android:maxLevel="3">
-        <shape>
-            <stroke
-                android:color="#FFEEEE00"
-                android:width="1dp"
-                />
-            <solid android:color="#FFFFFF00"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <stroke android:color="@color/intensity_medium" android:width="1.5dp" />
+            <solid android:color="@color/intensity_medium_bg" />
         </shape>
     </item>
+    <!-- 4: HARD (Orange / Threshold) -->
     <item android:maxLevel="4">
-        <shape>
-            <stroke
-                android:color="#FFEEBB00"
-                android:width="1dp"
-                />
-            <solid android:color="#FFFFCC00"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <stroke android:color="@color/intensity_hard" android:width="1.5dp" />
+            <solid android:color="@color/intensity_hard_bg" />
         </shape>
     </item>
+    <!-- 5: PEAK (Red / Maximum) -->
     <item android:maxLevel="5">
-        <shape>
-            <stroke
-                android:color="#FF5900"
-                android:width="1dp"
-                />
-            <solid android:color="#FF7429"
-                />
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <stroke android:color="@color/intensity_peak" android:width="1.5dp" />
+            <solid android:color="@color/intensity_peak_bg" />
         </shape>
     </item>
 </level-list>

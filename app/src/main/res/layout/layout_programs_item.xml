@@ -1,60 +1,88 @@
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:coxswain="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/programs_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:background="?android:attr/selectableItemBackground"
-    android:id="@+id/programs_item"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/card_stroke"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     >
 
-    <ImageButton
-        android:id="@+id/program_menu"
-        android:src="?attr/icon_more"
-        style="@style/MenuButton"
-        />
-
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="4dp"
+        android:padding="16dp"
         >
 
+        <!-- Header: Title, Duration Badge, and 3-dots Menu on the right -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             >
 
             <TextView
                 android:id="@+id/program_name"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textSize="32dp"
-                android:text="Name"
-
                 android:layout_weight="1"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
                 android:singleLine="true"
                 android:ellipsize="end"
+                android:text="Name"
                 />
+
             <TextView
                 android:id="@+id/program_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:background="@drawable/badge_duration"
                 android:text="duration"
+                />
+
+            <ImageButton
+                android:id="@+id/program_menu"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="?attr/icon_more"
+                android:contentDescription="@string/action_settings"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
                 />
         </LinearLayout>
 
+        <!-- Visual Segment Intensity Bar -->
         <svenmeier.coxswain.view.SegmentsView
             android:id="@+id/program_segments"
             android:layout_width="match_parent"
-            android:layout_height="32dp"
+            android:layout_height="22dp"
+            android:layout_marginTop="12dp"
             coxswain:drawable="@drawable/segment"
             coxswain:orientation="horizontal"
             />
 
     </LinearLayout>
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

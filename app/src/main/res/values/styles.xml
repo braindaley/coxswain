@@ -1,7 +1,8 @@
 <resources>
-    <style name="LightTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="LightTheme" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary</item>
         <item name="colorAccent">@color/accent</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
@@ -11,9 +12,10 @@
         <item name="icon_duplicate">@drawable/baseline_filter_none_black_24</item>
     </style>
 
-    <style name="DarkTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="DarkTheme" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary</item>
         <item name="colorAccent">@color/accent</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
@@ -23,9 +25,9 @@
         <item name="icon_duplicate">@drawable/baseline_filter_none_white_24</item>
     </style>
 
-    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
+    <style name="DialogTheme" parent="Theme.Material3.Light.Dialog">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary</item>
         <item name="colorAccent">@color/accent</item>
         <item name="android:windowMinWidthMinor">75%</item>
         <item name="android:windowMinWidthMajor">75%</item>
@@ -34,20 +36,20 @@
     </style>
 
     <style name="AppBar">
-        <item name="android:theme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="android:theme">@style/ThemeOverlay.Material3.Dark</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="Toolbar" parent="Base.Widget.AppCompat.Toolbar">
+    <style name="Toolbar" parent="Widget.Material3.Toolbar">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
     </style>
 
-    <style name="TabLayout" parent="Base.Widget.Design.TabLayout">
-        <item name="tabIndicatorHeight">4dp</item>
+    <style name="TabLayout" parent="Widget.Material3.TabLayout">
+        <item name="tabIndicatorHeight">3dp</item>
         <item name="tabGravity">fill</item>
+        <item name="tabIndicatorColor">@color/accent</item>
     </style>
 
     <style name="TimelineView">
@@ -55,8 +57,8 @@
     </style>
 
     <style name="TimelineTitle">
-        <item name="android:textColor">#ff3567ed</item>
-        <item name="android:textSize">20dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:gravity">center</item>
         <item name="android:padding">3dp</item>
     </style>
@@ -78,11 +80,10 @@
         <item name="android:layout_margin">0dp</item>
     </style>
 
-    <style name="MenuButton" parent="Base.Widget.AppCompat.Button.Borderless">
+    <style name="MenuButton" parent="Widget.Material3.Button.IconButton">
         <item name="android:layout_gravity">center</item>
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:background">#16909090</item>
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
     </style>
 
     <style name="TableCell">
@@ -90,7 +91,7 @@
         <item name="android:paddingBottom">2dp</item>
         <item name="android:paddingLeft">4dp</item>
         <item name="android:paddingRight">4dp</item>
-        <item name="android:textSize">20dp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:editable">false</item>
         <item name="android:background">@android:color/transparent</item>
     </style>

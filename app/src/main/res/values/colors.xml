@@ -1,16 +1,40 @@
 <resources>
+    <!-- Brand Core Colors (Material 3 derived from Coxswain Blue & Amber) -->
+    <color name="primary">#2B5BE3</color>
+    <color name="primary_dark">#183EA8</color>
+    <color name="primary_container">#DCE1FF</color>
+    <color name="on_primary_container">#001551</color>
 
-    <color name="primary">#ff3567ed</color>
-    <color name="primary_dark">#ff1547ad</color>
-    <color name="accent">#FFEEBB00</color>
+    <color name="accent">#D49B00</color>
+    <color name="secondary">#D49B00</color>
+    <color name="secondary_container">#FFDF9E</color>
+    <color name="on_secondary_container">#251A00</color>
 
-    <color name="chart_value">#ffffffff</color>
-    <color name="chart1">#ff50a9ff</color>
-    <color name="chart2">#ffc3a0ff</color>
-    <color name="chart3">#ffffa0be</color>
-    <color name="chart4">#ffffcc7e</color>
+    <!-- Semantic Surface & Neutral Colors -->
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_card_dark">#1E222B</color>
+    <color name="card_stroke">#E0E3EB</color>
+    <color name="card_stroke_dark">#2E3440</color>
+
+    <!-- Workout Intensity & Segment Colors -->
+    <color name="intensity_rest">#6C8CE8</color>
+    <color name="intensity_rest_bg">#E8EDFC</color>
+    <color name="intensity_easy">#34A853</color>
+    <color name="intensity_easy_bg">#E6F4EA</color>
+    <color name="intensity_medium">#F2BA00</color>
+    <color name="intensity_medium_bg">#FEF7E0</color>
+    <color name="intensity_hard">#F57C00</color>
+    <color name="intensity_hard_bg">#FFEFE0</color>
+    <color name="intensity_peak">#E53935</color>
+    <color name="intensity_peak_bg">#FCE8E6</color>
+
+    <!-- Chart Colors -->
+    <color name="chart_value">#FFFFFFFF</color>
+    <color name="chart1">#FF50A9FF</color>
+    <color name="chart2">#FFC3A0FF</color>
+    <color name="chart3">#FFFFA0BE</color>
+    <color name="chart4">#FFFFCC7E</color>
 
     <color name="chart_rest_show">#338EA8ED</color>
     <color name="chart_rest_hide">#668EA8ED</color>
-
 </resources>
