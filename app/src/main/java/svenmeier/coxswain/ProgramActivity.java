@@ -255,7 +255,7 @@ public class ProgramActivity extends AbstractActivity implements AbstractValueFr
                 limitView.changed(item.power.get());
             } else {
                 limitView.setBinding(ValueBinding.NONE);
-                limitView.changed(0);
+                limitView.setCustomText("+ Goal", "Pace Limit");
             }
             limitView.setOnClickListener(new View.OnClickListener() {
                 @Override

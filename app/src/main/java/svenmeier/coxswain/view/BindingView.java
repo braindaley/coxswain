@@ -124,6 +124,21 @@ public class BindingView extends LinearLayout {
         return binding;
     }
 
+    public void setCustomText(String valueText, String labelText) {
+        if (labelView == null) {
+            labelView = (TextView) findViewById(R.id.label);
+        }
+        if (valueView == null) {
+            valueView = (TextView) findViewById(R.id.value);
+        }
+        if (labelView != null) {
+            labelView.setText(labelText);
+        }
+        if (valueView != null) {
+            valueView.setText(valueText);
+        }
+    }
+
     public void changed(int value) {
         changeState(R.attr.binding_normal);
 
