@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'propoid.db'
-    compileSdk 37
+    compileSdk 36
 
     defaultConfig {
         minSdk 21
