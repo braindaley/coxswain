@@ -1,0 +1,13 @@
+.DS_Store
+
+# Temporary document renders and visual QA output.
+work/spec-v*/
+
+# Reference checkout; the original project remains at its upstream repository.
+work/coxswain-upstream/
+
+# Scratch previews and one-off inspection files.
+work/*-check.js
+work/live-preview.html
+work/home-label-crop*.png
+

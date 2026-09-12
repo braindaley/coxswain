@@ -1,0 +1,235 @@
+[
+  [
+    "Home",
+    "01_home.png",
+    [
+      "Quick Start exposes Duration, Distance, My Programs, and Library.",
+      "Free Row remains the dominant action."
+    ]
+  ],
+  [
+    "Quick Duration \u2014 no goal",
+    "02_quick_duration_none.png",
+    [
+      "Duration is preselected from Home.",
+      "No target-value panel is shown while Goal is None.",
+      "Start Workout is primary; Save as Program preserves the setup."
+    ]
+  ],
+  [
+    "Quick Duration \u2014 stroke rate",
+    "03_quick_duration_stroke_rate.png",
+    [
+      "Selecting Stroke Rate reveals its target controls.",
+      "Summary changes immediately to Goal 26 SPM."
+    ]
+  ],
+  [
+    "Quick Duration \u2014 speed",
+    "04_quick_duration_speed.png",
+    [
+      "Selecting Speed reveals pace controls in the configured /500 m representation.",
+      "Summary changes immediately to Goal 2:10 /500 m."
+    ]
+  ],
+  [
+    "Quick Duration \u2014 power",
+    "05_quick_duration_power.png",
+    [
+      "Selecting Power reveals watt controls.",
+      "Summary changes immediately to Goal 180 W."
+    ]
+  ],
+  [
+    "Quick Distance",
+    "06_quick_distance.png",
+    [
+      "Distance uses rowing presets: 500 m, 1K, 2K, 5K, 6K, and 10K.",
+      "Direct entry supports any distance."
+    ]
+  ],
+  [
+    "Distance \u2014 race available",
+    "07_distance_race_available.png",
+    [
+      "Race Your Best appears only when a compatible result exists.",
+      "Set Goal remains available while racing is disabled."
+    ]
+  ],
+  [
+    "Distance \u2014 race enabled",
+    "08_distance_race_enabled.png",
+    [
+      "The best compatible result and comparison pace are shown.",
+      "Race mode replaces Set Goal to avoid competing guidance."
+    ]
+  ],
+  [
+    "Quick Intervals",
+    "09_quick_intervals.png",
+    [
+      "Segments are compact, ordered, and individually editable.",
+      "Add Segment appends a new Duration, Distance, or Rest segment."
+    ]
+  ],
+  [
+    "Add Segment \u2014 Duration",
+    "10_segment_duration.png",
+    [
+      "Duration uses direct min:sec entry and duration presets.",
+      "Save adds or updates the segment and refreshes the summary."
+    ]
+  ],
+  [
+    "Add Segment \u2014 Distance",
+    "11_segment_distance.png",
+    [
+      "Distance uses direct meter entry and interval-distance presets.",
+      "Edit mode adds a Delete action."
+    ]
+  ],
+  [
+    "Add Segment \u2014 Rest",
+    "12_segment_rest.png",
+    [
+      "Rest is a first-class segment type and always uses time.",
+      "Rest presets favor short recovery periods."
+    ]
+  ],
+  [
+    "New Program \u2014 Duration",
+    "13_program_duration.png",
+    [
+      "Program context adds Program Name.",
+      "Save Program replaces Start Workout."
+    ]
+  ],
+  [
+    "New Program \u2014 Distance",
+    "14_program_distance.png",
+    [
+      "Program Builder reuses the same target, goal, and summary components.",
+      "Race Your Best is session guidance and is not saved into a program."
+    ]
+  ],
+  [
+    "New Program \u2014 Intervals",
+    "15_program_intervals.png",
+    [
+      "The type selector swaps only the configuration area.",
+      "Set Goal and Summary keep stable positions."
+    ]
+  ],
+  [
+    "My Programs",
+    "16_my_programs.png",
+    [
+      "Owned programs include View, Start, and an overflow management menu.",
+      "Create Program appears only on My Programs."
+    ]
+  ],
+  [
+    "Workout Library",
+    "17_workout_library.png",
+    [
+      "Library uses the same compact cards.",
+      "Curated items are read-only and omit Create Program and management actions."
+    ]
+  ],
+  [
+    "Live Row \u2014 Free",
+    "18_live_row_free.png",
+    [
+      "All metric values use the same maximum readable size.",
+      "Edit Display, Pause, and End remain available."
+    ]
+  ],
+  [
+    "Live Row \u2014 Race",
+    "19_live_row_race.png",
+    [
+      "The metric grid matches Live Row Free.",
+      "Two progress lines compare You with the best compatible workout from History."
+    ]
+  ],
+  [
+    "Program Detail \u2014 Duration",
+    "20_program_detail_duration.png",
+    [
+      "Duration ranks History by greatest distance at the fixed elapsed time.",
+      "A compatible previous run can compare distance at the same elapsed time."
+    ]
+  ],
+  [
+    "Program Detail \u2014 Distance",
+    "21_program_detail_distance.png",
+    [
+      "Distance ranks History by fastest completion time.",
+      "A compatible previous result enables Race Your Best."
+    ]
+  ],
+  [
+    "Program Detail \u2014 Intervals",
+    "22_program_detail_intervals.png",
+    [
+      "Intervals show the exact free-form order of Row and Rest segments saved by the builder.",
+      "Time-only sequences can show a total; mixed sequences omit an exact duration."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Duration",
+    "23_live_target_duration.png",
+    [
+      "The approved metric grid remains unchanged.",
+      "Progress shows elapsed time, time remaining, and the fixed duration target."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Distance",
+    "24_live_target_distance.png",
+    [
+      "Progress shows completed meters, remaining meters, and the fixed distance target.",
+      "Metric values retain the same shared maximum size."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Intervals",
+    "25_live_target_intervals.png",
+    [
+      "One continuous segmented line represents the complete saved sequence.",
+      "Blue sections are Row, lighter sections are Rest, and a small marker shows current progress."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Stroke-rate Goal",
+    "26_live_target_goal_stroke_rate.png",
+    [
+      "The card splits evenly between the live stroke rate and signed variance.",
+      "Stroke rate is shown as 24 and variance as red \u22122 without repeating SPM."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Speed Goal",
+    "27_live_target_goal_speed.png",
+    [
+      "The left pane shows current speed with its unit in the label.",
+      "The right pane shows a large signed variance labeled To Target."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Power Goal",
+    "28_live_target_goal_power.png",
+    [
+      "The left pane shows current power with its unit in the label.",
+      "The right pane shows green +8 above the target."
+    ]
+  ],
+  [
+    "Live Row Target \u2014 Interval Rest",
+    "29_live_target_interval_rest.png",
+    [
+      "Rest replaces the metric grid with a large countdown.",
+      "The next Row segment and complete color-coded sequence remain visible."
+    ]
+  ]
+]
