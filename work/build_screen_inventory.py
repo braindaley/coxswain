@@ -43,10 +43,10 @@ CURRENT = [
     ("Live Target — Speed", "Session", "27_live_target_goal_speed.png"),
     ("Live Target — Power", "Session", "28_live_target_goal_power.png"),
     ("Live Target — Interval Rest", "Session", "29_live_target_interval_rest.png"),
+    ("Race Reference Picker", "Session", "30_race_reference_picker.png"),
 ]
 
 PLANNED = [
-    ("Race Reference Picker", "Session", None),
     ("Pause / End", "Session", None),
     ("Workout Complete", "Results", None),
     ("History", "History", None),

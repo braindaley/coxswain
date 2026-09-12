@@ -41,6 +41,7 @@ base_setup = (ROOT / "outputs/Coxswain_Workout_Setup.html").read_text(encoding="
 base_programs = (ROOT / "outputs/Coxswain_Programs.html").read_text(encoding="utf-8")
 base_live = (ROOT / "outputs/Coxswain_Live_Row_Free.html").read_text(encoding="utf-8")
 base_program_detail = (ROOT / "outputs/Coxswain_Program_Detail.html").read_text(encoding="utf-8")
+base_race_picker = (ROOT / "outputs/Coxswain_Race_Reference_Picker.html").read_text(encoding="utf-8")
 
 
 def setup_variant(workout_type: str, mode: str = "quick") -> str:
@@ -145,6 +146,7 @@ sources = {
     "programs-mine": programs_variant("mine"),
     "programs-library": programs_variant("library"),
     "program-detail": base_program_detail,
+    "race-picker": base_race_picker,
     "live-free": live_variant(False),
     "live-race": live_variant(True),
     "live-target": live_target_variant(),
@@ -162,7 +164,7 @@ screens = [
     ("Live Row: Race", "Interactive", "Session", "live-race", "Uses the Live Row metric grid with two race-progress lines at the bottom: You and the best compatible workout from History."),
     ("Program Detail / Start", "Interactive", "Programs", "program-detail", "Review the saved workout, inspect program history, optionally Race Your Best, or start the workout."),
     ("Live Row: Target", "Interactive", "Session", "live-target", "Preview Duration, Distance, or Intervals. In Intervals, switch between Row and Rest to see the simplified sequence line and full countdown state."),
-    ("Race Reference Picker", "Placeholder", "Session", None, "Choose an alternative compatible completed workout."),
+    ("Race Reference Picker", "Interactive", "Session", "race-picker", "Choose a compatible completed workout, inspect excluded history, and start the race."),
     ("Pause / End", "Placeholder", "Session", None, "Pause, resume, end, and discard safeguards."),
     ("Workout Complete", "Placeholder", "Results", None, "Post-workout summary and quick actions."),
     ("History", "Placeholder", "History", None, "Completed workouts, filters, and totals."),

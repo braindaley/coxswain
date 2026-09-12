@@ -162,6 +162,22 @@ def live_interval_rest(name):
     marker_x=bar_left+int((bar_right-bar_left)*.44); rr(d,(marker_x-1,bar_y-4,marker_x+2,bar_y+14),1,C['white'])
     rr(d,(16,720,204,776),28,C['blue']); centered(d,(16,720,204,776),'Pause',14,True,C['white']); rr(d,(212,720,414,776),28,'#DCEBFF'); centered(d,(212,720,414,776),'End session',14,True,C['ink']); save(im,name)
 
+def race_reference_picker(name):
+    im,d=canvas(); status(d); txt(d,(18,54),'‹',34,False,C['ink']); centered(d,(52,43,378,80),'Choose race',18,True,C['ink'])
+    rr(d,(16,96,414,180),18,C['white']); txt(d,(30,111),'RACING PROGRAM',10,True,C['muted']); txt(d,(30,132),'5,000-meter row',21,True,C['ink']); txt(d,(30,158),'Only completed 5,000 m workouts can be compared.',10,False,C['muted'])
+    label(d,202,'Compatible workouts'); y=226
+    workouts=[('Sep 6, 2025','2:04 /500 m','20:42','BEST'),('Aug 29, 2025','2:07 /500 m','21:06',''),('Aug 18, 2025','2:09 /500 m','21:31','')]
+    for index,(date,pace,result,best) in enumerate(workouts):
+        selected=index==0; rr(d,(16,y,414,y+96),18,'#EEF6FF' if selected else C['white'],C['blue'] if selected else C['line'],2 if selected else 1)
+        d.ellipse((sc(30),sc(y+35),sc(50),sc(y+55)),outline=C['blue'] if selected else '#AAB7C8',width=sc(2))
+        if selected: d.ellipse((sc(35),sc(y+40),sc(45),sc(y+50)),fill=C['blue'])
+        txt(d,(64,y+16),date,13,True,C['ink']); txt(d,(64,y+42),pace,11,False,C['muted'])
+        if best: rr(d,(64,y+63,105,y+83),10,C['pale']); centered(d,(64,y+63,105,y+83),best,8,True,C['blue'])
+        txt(d,(396,y+21),result,19,True,C['ink'],'ra'); txt(d,(396,y+50),'time',9,False,C['muted'],'ra'); y+=106
+    txt(d,(22,y+6),'Unavailable history',12,True,C['muted']); txt(d,(404,y+6),'Show 2',11,True,C['blue'],'ra')
+    txt(d,(215,711),'Selected · Sep 6, 2025 · 20:42',10,False,C['muted'],'ma')
+    rr(d,(16,730,134,786),28,C['white'],C['blue']); centered(d,(16,730,134,786),'Cancel',13,True,C['blue']); rr(d,(142,730,414,786),28,C['blue']); centered(d,(142,730,414,786),'Start race',14,True,C['white']); save(im,name)
+
 def program_detail(name,kind='Distance'):
     models={
         'Duration':('60-minute row','A repeatable duration workout saved to My Programs.',[('TYPE','Duration'),('TARGET','60 minutes'),('COMPLETION','When 60:00 is reached')],('—','No performance goal','Row at your own pace','No target'),('5 completed workouts','Best distance 13,720 m · Sep 2','13,720 m at 60:00')),
@@ -193,6 +209,7 @@ setup('13_program_duration.png','Duration','None',program=True); setup('14_progr
 programs('16_my_programs.png'); programs('17_workout_library.png',True); live('18_live_row_free.png'); live('19_live_row_race.png',True); program_detail('20_program_detail_duration.png','Duration'); program_detail('21_program_detail_distance.png','Distance'); program_detail('22_program_detail_intervals.png','Intervals'); live('23_live_target_duration.png',target='Duration'); live('24_live_target_distance.png',target='Distance'); live('25_live_target_intervals.png',target='Intervals')
 live('26_live_target_goal_stroke_rate.png',target='Distance',goal='Stroke rate'); live('27_live_target_goal_speed.png',target='Distance',goal='Speed'); live('28_live_target_goal_power.png',target='Distance',goal='Power')
 live_interval_rest('29_live_target_interval_rest.png')
+race_reference_picker('30_race_reference_picker.png')
 
 items=[
 ('Home','01_home.png',['Quick Start exposes Duration, Distance, My Programs, and Library.','Free Row remains the dominant action.']),
@@ -224,6 +241,7 @@ items=[
 ('Live Row Target — Speed Goal','27_live_target_goal_speed.png',['The goal card shows only the signed speed variance.','Its background communicates whether the rower is below or meeting the target.']),
 ('Live Row Target — Power Goal','28_live_target_goal_power.png',['The goal card shows only the signed power variance.','A green background makes the at-or-above-target state immediately visible.']),
 ('Live Row Target — Interval Rest','29_live_target_interval_rest.png',['Rest replaces the metric grid with a large countdown.','The next Row segment and complete color-coded sequence remain visible.']),
+('Race Reference Picker','30_race_reference_picker.png',['Only completed workouts with a compatible target and structure can be selected.','The best result is selected by default; unavailable History explains why other workouts cannot be compared.','Start Race locks the chosen reference snapshot for the session.']),
 ]
 (OUT/'manifest.json').write_text(json.dumps(items,indent=2),encoding='utf-8')
 print(f'generated {len(items)} screens in {OUT}')

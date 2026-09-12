@@ -231,5 +231,14 @@
       "Rest replaces the metric grid with a large countdown.",
       "The next Row segment and complete color-coded sequence remain visible."
     ]
+  ],
+  [
+    "Race Reference Picker",
+    "30_race_reference_picker.png",
+    [
+      "Only completed workouts with a compatible target and structure can be selected.",
+      "The best result is selected by default; unavailable History explains why other workouts cannot be compared.",
+      "Start Race locks the chosen reference snapshot for the session."
+    ]
   ]
 ]
