@@ -1,0 +1,50 @@
+from pathlib import Path
+
+
+DEST = Path('/Users/brian/Documents/ChatGPT/Coxswain/outputs/Coxswain_Pause_End.html')
+
+html = r'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coxswain Pause and End</title>
+<style>
+html,body{margin:0;min-height:100%;background:#e8eef5;font-family:Arial,sans-serif;color:#fff}*{box-sizing:border-box}button{font:inherit}.preview{width:min(430px,100%);margin:0 auto 10px;padding:4px;display:grid;grid-template-columns:repeat(3,1fr);background:#dce5ef;border-radius:24px}.preview button{border:0;min-height:40px;border-radius:20px;background:transparent;color:#53647c;font-size:13px;font-weight:700;cursor:pointer}.preview button.active{background:#fff;color:#0b63f6;box-shadow:0 1px 3px #10213f1a}.phone{position:relative;width:min(430px,100%);height:800px;margin:auto;overflow:hidden;border-radius:24px;background:#042c3d}.screen{height:100%;display:flex;flex-direction:column;padding:16px}.top{min-height:58px;display:flex;align-items:center;justify-content:space-between;color:#c8e3e9;font-size:13px;font-weight:700}.status{display:flex;align-items:center;gap:8px}.dot{width:10px;height:10px;border-radius:50%;background:#22c55e}.paused{padding:8px 13px;border:1px solid #f3cf67;border-radius:18px;color:#ffe081;letter-spacing:.08em}.summary{padding:14px 0 13px;text-align:center}.summary h1{margin:0;font-size:34px}.summary p{margin:7px 0 0;color:#b5d3dc;font-size:14px}.metrics{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:1px;background:#31505d;border-top:1px solid #31505d;border-bottom:1px solid #31505d}.metric{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#042c3d}.metric strong{font-size:54px;line-height:1;font-weight:500;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.metric span{margin-top:7px;color:#cad4e1;font-size:12px;font-weight:700}.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:16px}.actions button,.sheet button{min-height:56px;border-radius:28px;font-weight:700;cursor:pointer}.resume{border:0;background:#0b63f6;color:#fff}.end{border:0;background:#dcebff;color:#10213f}.scrim{position:absolute;inset:0;display:flex;align-items:flex-end;background:#001019b8}.scrim[hidden],.panel[hidden]{display:none}.sheet{width:100%;padding:24px 20px 20px;border-radius:28px 28px 0 0;background:#f4f7fb;color:#10213f;box-shadow:0 -12px 30px #0010194d}.handle{width:44px;height:5px;margin:-9px auto 20px;border-radius:3px;background:#cad4e1}.sheet h2{margin:0;font-size:26px}.sheet p{margin:9px 0 20px;color:#53647c;font-size:15px;line-height:21px}.end-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}.end-summary div{padding:13px;border-radius:16px;background:#e8eef6}.end-summary strong,.end-summary span{display:block}.end-summary strong{font-size:24px}.end-summary span{margin-top:4px;color:#53647c;font-size:11px;font-weight:700}.sheet-actions{display:grid;gap:8px}.keep,.cancel-discard{border:1px solid #0b63f6;background:#fff;color:#0b63f6}.save{border:0;background:#0b63f6;color:#fff}.discard-link{min-height:44px!important;border:0;background:transparent;color:#a52a37}.confirm-discard{border:0;background:#ba1a1a;color:#fff}.sheet small{display:block;margin-top:8px;color:#53647c;text-align:center;line-height:16px}button:focus-visible{outline:3px solid #83d7ff;outline-offset:2px}@media(max-width:360px){.metric strong{font-size:47px}.screen{padding:12px}.sheet{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<div class="preview" aria-label="Interaction preview"><button class="active" data-state="paused">Paused</button><button data-state="confirm">End</button><button data-state="discard">Discard</button></div>
+<main class="phone">
+ <section class="screen">
+  <header class="top"><span class="status"><span class="dot"></span>WaterRower S4</span><span class="paused">PAUSED</span></header>
+  <div class="summary"><h1>Workout paused</h1><p>Metrics and workout progress are frozen.</p></div>
+  <section class="metrics" aria-label="Frozen workout metrics">
+   <div class="metric"><strong>2,450</strong><span>DISTANCE · M</span></div>
+   <div class="metric"><strong>12:34</strong><span>DURATION</span></div>
+   <div class="metric"><strong>2:08</strong><span>SPLIT · /500 M</span></div>
+   <div class="metric"><strong>26</strong><span>STROKE RATE</span></div>
+   <div class="metric"><strong>188</strong><span>POWER · W</span></div>
+   <div class="metric"><strong>142</strong><span>HEART RATE · BPM</span></div>
+  </section>
+  <footer class="actions"><button class="resume" type="button">Resume</button><button class="end" type="button">End session</button></footer>
+ </section>
+ <section class="scrim" hidden aria-label="End workout confirmation">
+  <div class="sheet"><section class="panel end-panel">
+   <div class="handle"></div>
+   <h2>End this workout?</h2>
+   <p>Your completed distance and time will be saved to History.</p>
+   <div class="end-summary"><div><strong>2,450 m</strong><span>DISTANCE</span></div><div><strong>12:34</strong><span>DURATION</span></div></div>
+   <div class="sheet-actions"><button class="save" type="button">End and save</button><button class="keep" type="button">Stay paused</button><button class="discard-link" type="button">Discard workout</button></div>
+   <small>The workout remains paused until you choose an action.</small>
+  </section><section class="panel discard-panel" hidden><div class="handle"></div><h2>Discard this workout?</h2><p>This workout will not be saved to History. This cannot be undone.</p><div class="sheet-actions"><button class="confirm-discard" type="button">Discard workout</button><button class="cancel-discard" type="button">Go back</button></div></section></div>
+ </section>
+</main>
+<script>
+(()=>{const scrim=document.querySelector('.scrim'),endPanel=document.querySelector('.end-panel'),discardPanel=document.querySelector('.discard-panel');function show(state){const overlay=state!=='paused';scrim.hidden=!overlay;endPanel.hidden=state!=='confirm';discardPanel.hidden=state!=='discard';document.querySelectorAll('.preview button').forEach(button=>button.classList.toggle('active',button.dataset.state===state))}document.querySelectorAll('.preview button').forEach(button=>button.onclick=()=>show(button.dataset.state));document.querySelector('.end').onclick=()=>show('confirm');document.querySelector('.keep').onclick=()=>show('paused');document.querySelector('.discard-link').onclick=()=>show('discard');document.querySelector('.cancel-discard').onclick=()=>show('confirm');document.querySelector('.resume').onclick=()=>top.postMessage({type:'coxswain-resume-live'},'*');document.querySelector('.save').onclick=()=>top.postMessage({type:'coxswain-open',name:'Workout Complete'},'*');document.querySelector('.confirm-discard').onclick=()=>top.postMessage({type:'coxswain-open',name:'Home'},'*');show('paused')})();
+</script>
+</body>
+</html>'''
+
+DEST.write_text(html, encoding='utf-8')
+print(f'wrote {DEST}')

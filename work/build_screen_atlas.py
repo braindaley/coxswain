@@ -178,6 +178,48 @@ def race_reference_picker(name):
     txt(d,(215,711),'Selected · Sep 6, 2025 · 20:42',10,False,C['muted'],'ma')
     rr(d,(16,730,134,786),28,C['white'],C['blue']); centered(d,(16,730,134,786),'Cancel',13,True,C['blue']); rr(d,(142,730,414,786),28,C['blue']); centered(d,(142,730,414,786),'Start race',14,True,C['white']); save(im,name)
 
+def pause_end(name,state='paused'):
+    im,d=canvas(C['navy']); status(d,True); txt(d,(20,54),'●  WaterRower S4',11,True,C['green']); rr(d,(337,42,414,74),16,C['navy'],'#F3CF67'); centered(d,(337,42,414,74),'PAUSED',10,True,'#FFE081')
+    centered(d,(16,88,414,130),'Workout paused',25,True,C['white']); centered(d,(16,126,414,150),'Metrics and workout progress are frozen.',11,False,'#B5D3DC')
+    values=[('2,450','DISTANCE · M'),('12:34','DURATION'),('2:08','SPLIT · /500 M'),('26','STROKE RATE'),('188','POWER · W'),('142','HEART RATE · BPM')]
+    top=164; cell_h=174
+    for i,(value,label_text) in enumerate(values):
+        row,col=divmod(i,2); x1=16+col*199; x2=215+col*199; y1=top+row*cell_h; y2=y1+cell_h
+        rr(d,(x1,y1,x2,y2),0,C['navy'],'#31505D'); centered(d,(x1,y1+28,x2,y1+112),value,40,False,C['white']); centered(d,(x1,y1+111,x2,y1+143),label_text,9,True,'#CAD4E1')
+    rr(d,(16,704,204,760),28,C['blue']); centered(d,(16,704,204,760),'Resume',14,True,C['white']); rr(d,(212,704,414,760),28,C['pale']); centered(d,(212,704,414,760),'End session',14,True,C['ink'])
+    if state!='paused':
+        overlay=Image.new('RGBA',im.size,(0,16,25,185)); im=Image.alpha_composite(im.convert('RGBA'),overlay).convert('RGB'); d=ImageDraw.Draw(im)
+        if state=='confirm':
+            rr(d,(0,468,430,860),28,C['bg']); rr(d,(193,480,237,485),3,'#CAD4E1'); txt(d,(20,510),'End this workout?',25,True,C['ink']); wrapped(d,(20,550),'Your completed distance and time will be saved to History.',13,48,C['muted']); rr(d,(20,614,209,684),16,'#E8EEF6'); txt(d,(34,629),'2,450 m',20,True); txt(d,(34,657),'DISTANCE',9,True,C['muted']); rr(d,(217,614,410,684),16,'#E8EEF6'); txt(d,(231,629),'12:34',20,True); txt(d,(231,657),'DURATION',9,True,C['muted']); rr(d,(20,704,410,760),28,C['blue']); centered(d,(20,704,410,760),'End and save',14,True,C['white']); rr(d,(20,770,410,826),28,C['white'],C['blue']); centered(d,(20,770,410,826),'Stay paused',14,True,C['blue']); centered(d,(20,827,410,853),'Discard workout',11,True,'#A52A37')
+        else:
+            rr(d,(0,566,430,860),28,C['bg']); rr(d,(193,578,237,583),3,'#CAD4E1'); txt(d,(20,608),'Discard this workout?',25,True,C['ink']); wrapped(d,(20,648),'This workout will not be saved to History. This cannot be undone.',13,46,C['muted']); rr(d,(20,718,410,774),28,C['red']); centered(d,(20,718,410,774),'Discard workout',14,True,C['white']); rr(d,(20,784,410,840),28,C['white'],C['blue']); centered(d,(20,784,410,840),'Go back',14,True,C['blue'])
+    save(im,name)
+
+def workout_complete(name,kind='distance'):
+    models={
+        'distance':('5,000-METER ROW','20:42','','TOTAL TIME','NEW BEST','18 sec faster than your previous best',[('2:04','AVERAGE · /500 M'),('26','AVERAGE STROKE RATE'),('188','AVERAGE POWER · W'),('312','ENERGY · KCAL')]),
+        'duration':('30-MINUTE ROW','7,214','m','DISTANCE','NEW BEST','129 m farther than your previous best',[('2:05','AVERAGE · /500 M'),('27','AVERAGE STROKE RATE'),('192','AVERAGE POWER · W'),('428','ENERGY · KCAL')]),
+        'intervals':('TIMED INTERVALS','2,430','m','WORK DISTANCE','3 OF 3 SEGMENTS','Rest is excluded from performance results.',[('2:03','AVERAGE WORK · /500 M'),('28','AVERAGE WORK STROKE RATE'),('204','AVERAGE WORK POWER · W'),('11:00','TOTAL ELAPSED')]),
+        'free':('FREE ROW','2,450','m','DISTANCE','SAVED TO HISTORY','Ended by you after 12:34',[('12:34','DURATION'),('2:08','AVERAGE · /500 M'),('26','AVERAGE STROKE RATE'),('312','ENERGY · KCAL')]),
+        'race':('5,000-METER RACE','20:42','','TOTAL TIME','WON BY 24 M','Reference · Sep 6, 2025 · 20:46',[('2:04','AVERAGE · /500 M'),('26','AVERAGE STROKE RATE'),('+24 m','FINISH MARGIN'),('−4 sec','TIME VS BEST')]),
+        'ended':('5,000-METER ROW','2,450','m','DISTANCE COMPLETED','ENDED EARLY','Saved at 12:34 of the workout',[('12:34','DURATION'),('2:08','AVERAGE · /500 M'),('26','AVERAGE STROKE RATE'),('49%','TARGET COMPLETE')]),
+    }
+    program,result,unit,result_label,badge,comparison,metrics=models[kind]; im,d=canvas(); status(d); d.ellipse((sc(187),sc(43),sc(243),sc(99)),fill='#D9F6E6'); line(d,(202,71,211,81),'#168752',3); line(d,(211,81,230,59),'#168752',3); centered(d,(16,105,414,145),'Workout complete',26,True,C['ink']); centered(d,(16,140,414,162),'Today · 9:42 AM',10,False,C['muted'])
+    rr(d,(16,178,414,350),20,C['white']); centered(d,(30,192,400,216),program,10,True,C['muted']); centered(d,(30,216,400,279),result,42,True,C['ink']);
+    if unit: txt(d,(306 if len(result)>4 else 274,248),unit,20,True,C['ink'])
+    centered(d,(30,278,400,300),result_label,10,True,C['muted']); badge_fill='#D9F6E6' if kind in ('distance','duration','race') else '#E8EEF6'; badge_text='#168752' if kind in ('distance','duration','race') else C['muted']; badge_w=max(80,10+len(badge)*7); rr(d,(215-badge_w/2,306,215+badge_w/2,332),13,badge_fill); centered(d,(215-badge_w/2,306,215+badge_w/2,332),badge,9,True,badge_text); centered(d,(30,334,400,350),comparison,9,False,C['muted'])
+    label(d,370,'Workout summary'); top=394
+    for i,(value,label_text) in enumerate(metrics):
+        row,col=divmod(i,2); x1=16+col*203; x2=211+col*203; y1=top+row*96; rr(d,(x1,y1,x2,y1+88),16,C['white']); txt(d,(x1+14,y1+14),value,23,True,C['ink']); txt(d,(x1+14,y1+52),label_text,8,True,C['muted'])
+    footer_y=724
+    if kind=='intervals':
+        label(d,596,'Segment results'); rr(d,(16,618,414,710),16,C['white']); x=28
+        for label_text,value,width,fill in [('ROW','5:00',142,C['pale']),('REST','1:00',72,'#EDF4FC'),('ROW','5:00',142,C['pale'])]: rr(d,(x,632,x+width,676),10,fill); centered(d,(x,632,x+width,652),label_text,9,True,C['blue'] if label_text=='ROW' else C['muted']); centered(d,(x,650,x+width,674),value,8,False,C['muted']); x+=width+5
+    elif kind=='race':
+        label(d,596,'Race result'); rr(d,(16,618,414,704),16,C['white']); txt(d,(30,635),'You',11,False,C['muted']); txt(d,(400,635),'20:42',13,True,C['ink'],'ra'); line(d,(30,660,400,660),C['line']); txt(d,(30,675),'Saved reference',11,False,C['muted']); txt(d,(400,675),'20:46',13,True,C['ink'],'ra')
+    else: footer_y=626
+    rr(d,(16,footer_y,204,footer_y+54),27,C['white'],C['blue']); centered(d,(16,footer_y,204,footer_y+54),'Row again',13,True,C['blue']); rr(d,(212,footer_y,414,footer_y+54),27,C['blue']); centered(d,(212,footer_y,414,footer_y+54),'View details',13,True,C['white']); centered(d,(16,footer_y+60,414,footer_y+100),'Done',12,True,C['muted']); save(im,name)
+
 def program_detail(name,kind='Distance'):
     models={
         'Duration':('60-minute row','A repeatable duration workout saved to My Programs.',[('TYPE','Duration'),('TARGET','60 minutes'),('COMPLETION','When 60:00 is reached')],('—','No performance goal','Row at your own pace','No target'),('5 completed workouts','Best distance 13,720 m · Sep 2','13,720 m at 60:00')),
@@ -210,6 +252,8 @@ programs('16_my_programs.png'); programs('17_workout_library.png',True); live('1
 live('26_live_target_goal_stroke_rate.png',target='Distance',goal='Stroke rate'); live('27_live_target_goal_speed.png',target='Distance',goal='Speed'); live('28_live_target_goal_power.png',target='Distance',goal='Power')
 live_interval_rest('29_live_target_interval_rest.png')
 race_reference_picker('30_race_reference_picker.png')
+pause_end('31_pause_end_paused.png','paused'); pause_end('32_pause_end_confirm.png','confirm'); pause_end('33_pause_end_discard.png','discard')
+for index,kind in enumerate(['distance','duration','intervals','free','race','ended'],34): workout_complete(f'{index:02d}_workout_complete_{kind}.png',kind)
 
 items=[
 ('Home','01_home.png',['Quick Start exposes Duration, Distance, My Programs, and Library.','Free Row remains the dominant action.']),
@@ -242,6 +286,15 @@ items=[
 ('Live Row Target — Power Goal','28_live_target_goal_power.png',['The goal card shows only the signed power variance.','A green background makes the at-or-above-target state immediately visible.']),
 ('Live Row Target — Interval Rest','29_live_target_interval_rest.png',['Rest replaces the metric grid with a large countdown.','The next Row segment and complete color-coded sequence remain visible.']),
 ('Race Reference Picker','30_race_reference_picker.png',['Only completed workouts with a compatible target and structure can be selected.','The best result is selected by default; unavailable History explains why other workouts cannot be compared.','Start Race locks the chosen reference snapshot for the session.']),
+('Pause / End — Paused','31_pause_end_paused.png',['Pause freezes every metric and all program progress.','Resume returns to the exact Live Row mode and session state that opened the screen.']),
+('Pause / End — End confirmation','32_pause_end_confirm.png',['End and Save preserves the completed portion in History and proceeds to Workout Complete.','Stay Paused closes the sheet without advancing timers or progress.']),
+('Pause / End — Discard confirmation','33_pause_end_discard.png',['Discard is separated from ending and saving.','A second explicit confirmation protects the irreversible removal of the active workout.']),
+('Workout Complete — Distance','34_workout_complete_distance.png',['Distance results lead with completion time and identify a new best when applicable.','Summary metrics remain compact and Row Again, View Details, and Done stay available.']),
+('Workout Complete — Duration','35_workout_complete_duration.png',['Duration results lead with distance achieved during the fixed time.','Best-result comparison uses distance rather than completion time.']),
+('Workout Complete — Intervals','36_workout_complete_intervals.png',['Intervals lead with the program-specific work result and exclude Rest from performance ranking.','The complete ordered segment group and individual Row results remain available.']),
+('Workout Complete — Free Row','37_workout_complete_free.png',['Free Row leads with distance and records that the user ended the open session.','The workout is saved to History without target-completion language.']),
+('Workout Complete — Race','38_workout_complete_race.png',['Race results show the finish outcome and retain the fixed saved reference.','The comparison uses both distance and time language.']),
+('Workout Complete — Ended Early','39_workout_complete_ended.png',['A manually ended target workout states that it ended early and shows partial target progress.','The partial result is still saved accurately to History.']),
 ]
 (OUT/'manifest.json').write_text(json.dumps(items,indent=2),encoding='utf-8')
 print(f'generated {len(items)} screens in {OUT}')

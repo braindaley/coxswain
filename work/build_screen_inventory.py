@@ -44,11 +44,18 @@ CURRENT = [
     ("Live Target — Power", "Session", "28_live_target_goal_power.png"),
     ("Live Target — Interval Rest", "Session", "29_live_target_interval_rest.png"),
     ("Race Reference Picker", "Session", "30_race_reference_picker.png"),
+    ("Pause / End — Paused", "Session", "31_pause_end_paused.png"),
+    ("Pause / End — End", "Session", "32_pause_end_confirm.png"),
+    ("Pause / End — Discard", "Session", "33_pause_end_discard.png"),
+    ("Complete — Distance", "Results", "34_workout_complete_distance.png"),
+    ("Complete — Duration", "Results", "35_workout_complete_duration.png"),
+    ("Complete — Intervals", "Results", "36_workout_complete_intervals.png"),
+    ("Complete — Free Row", "Results", "37_workout_complete_free.png"),
+    ("Complete — Race", "Results", "38_workout_complete_race.png"),
+    ("Complete — Ended Early", "Results", "39_workout_complete_ended.png"),
 ]
 
 PLANNED = [
-    ("Pause / End", "Session", None),
-    ("Workout Complete", "Results", None),
     ("History", "History", None),
     ("Workout Details", "History", None),
     ("Race Comparison Details", "History", None),

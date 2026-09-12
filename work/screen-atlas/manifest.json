@@ -240,5 +240,77 @@
       "The best result is selected by default; unavailable History explains why other workouts cannot be compared.",
       "Start Race locks the chosen reference snapshot for the session."
     ]
+  ],
+  [
+    "Pause / End \u2014 Paused",
+    "31_pause_end_paused.png",
+    [
+      "Pause freezes every metric and all program progress.",
+      "Resume returns to the exact Live Row mode and session state that opened the screen."
+    ]
+  ],
+  [
+    "Pause / End \u2014 End confirmation",
+    "32_pause_end_confirm.png",
+    [
+      "End and Save preserves the completed portion in History and proceeds to Workout Complete.",
+      "Stay Paused closes the sheet without advancing timers or progress."
+    ]
+  ],
+  [
+    "Pause / End \u2014 Discard confirmation",
+    "33_pause_end_discard.png",
+    [
+      "Discard is separated from ending and saving.",
+      "A second explicit confirmation protects the irreversible removal of the active workout."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Distance",
+    "34_workout_complete_distance.png",
+    [
+      "Distance results lead with completion time and identify a new best when applicable.",
+      "Summary metrics remain compact and Row Again, View Details, and Done stay available."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Duration",
+    "35_workout_complete_duration.png",
+    [
+      "Duration results lead with distance achieved during the fixed time.",
+      "Best-result comparison uses distance rather than completion time."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Intervals",
+    "36_workout_complete_intervals.png",
+    [
+      "Intervals lead with the program-specific work result and exclude Rest from performance ranking.",
+      "The complete ordered segment group and individual Row results remain available."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Free Row",
+    "37_workout_complete_free.png",
+    [
+      "Free Row leads with distance and records that the user ended the open session.",
+      "The workout is saved to History without target-completion language."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Race",
+    "38_workout_complete_race.png",
+    [
+      "Race results show the finish outcome and retain the fixed saved reference.",
+      "The comparison uses both distance and time language."
+    ]
+  ],
+  [
+    "Workout Complete \u2014 Ended Early",
+    "39_workout_complete_ended.png",
+    [
+      "A manually ended target workout states that it ended early and shows partial target progress.",
+      "The partial result is still saved accurately to History."
+    ]
   ]
 ]

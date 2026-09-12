@@ -42,6 +42,8 @@ base_programs = (ROOT / "outputs/Coxswain_Programs.html").read_text(encoding="ut
 base_live = (ROOT / "outputs/Coxswain_Live_Row_Free.html").read_text(encoding="utf-8")
 base_program_detail = (ROOT / "outputs/Coxswain_Program_Detail.html").read_text(encoding="utf-8")
 base_race_picker = (ROOT / "outputs/Coxswain_Race_Reference_Picker.html").read_text(encoding="utf-8")
+base_pause_end = (ROOT / "outputs/Coxswain_Pause_End.html").read_text(encoding="utf-8")
+base_workout_complete = (ROOT / "outputs/Coxswain_Workout_Complete.html").read_text(encoding="utf-8")
 
 
 def setup_variant(workout_type: str, mode: str = "quick") -> str:
@@ -147,6 +149,8 @@ sources = {
     "programs-library": programs_variant("library"),
     "program-detail": base_program_detail,
     "race-picker": base_race_picker,
+    "pause-end": base_pause_end,
+    "workout-complete": base_workout_complete,
     "live-free": live_variant(False),
     "live-race": live_variant(True),
     "live-target": live_target_variant(),
@@ -165,8 +169,8 @@ screens = [
     ("Program Detail / Start", "Interactive", "Programs", "program-detail", "Review the saved workout, inspect program history, optionally Race Your Best, or start the workout."),
     ("Live Row: Target", "Interactive", "Session", "live-target", "Preview Duration, Distance, or Intervals. In Intervals, switch between Row and Rest to see the simplified sequence line and full countdown state."),
     ("Race Reference Picker", "Interactive", "Session", "race-picker", "Choose a compatible completed workout, inspect excluded history, and start the race."),
-    ("Pause / End", "Placeholder", "Session", None, "Pause, resume, end, and discard safeguards."),
-    ("Workout Complete", "Placeholder", "Results", None, "Post-workout summary and quick actions."),
+    ("Pause / End", "Interactive", "Session", "pause-end", "Pause freezes the current session. Resume returns to the same live-row mode; ending requires confirmation and saves the result to History."),
+    ("Workout Complete", "Interactive", "Results", "workout-complete", "Preview distance, duration, interval, free-row, race, and early-end result states; then Row Again, View Details, or Done."),
     ("History", "Placeholder", "History", None, "Completed workouts, filters, and totals."),
     ("Workout Details", "Placeholder", "History", None, "Metrics, graphs, export, repeat, and Race Your Best."),
     ("Race Comparison Details", "Placeholder", "History", None, "Detailed comparison with the selected prior workout."),
@@ -229,9 +233,10 @@ fragment = f'''<div id="coxswain-interactive-canvas">
 const root=document.getElementById('coxswain-interactive-canvas');
 const screens=[{data_rows}];
 const sources={{{source_map_rows}}};
-const stage=root.querySelector('.cs-stage');let current=0;
+const stage=root.querySelector('.cs-stage');let current=0,lastLiveName='Live Row: Free';
 function show(index){{
  current=Math.max(0,Math.min(screens.length-1,index));const s=screens[current];
+ if(s.name.startsWith('Live Row:'))lastLiveName=s.name;
  root.querySelector('.cs-title h3').textContent=s.name;
  root.querySelector('.cs-title p').textContent=s.group+' · '+s.status+' — '+s.note;
  root.querySelectorAll('.cs-nav-item').forEach((b,i)=>b.classList.toggle('active',i===current));
@@ -243,7 +248,7 @@ function show(index){{
 root.querySelectorAll('.cs-nav-item').forEach((button,index)=>button.addEventListener('click',()=>show(index)));
 root.querySelector('.cs-prev').onclick=()=>show(current-1);root.querySelector('.cs-next').onclick=()=>show(current+1);
 root.querySelector('.cs-expand').onclick=()=>{{root.classList.toggle('expanded');root.querySelector('.cs-expand').textContent=root.classList.contains('expanded')?'Show list':'Expand';}};
-window.addEventListener('message',event=>{{if(event.data?.type==='coxswain-open'){{const index=screens.findIndex(s=>s.name===event.data.name);if(index>=0)show(index);}}}});
+window.addEventListener('message',event=>{{if(event.data?.type==='coxswain-open'){{const index=screens.findIndex(s=>s.name===event.data.name);if(index>=0)show(index);}}else if(event.data?.type==='coxswain-resume-live'){{const index=screens.findIndex(s=>s.name===lastLiveName);if(index>=0)show(index);}}}});
 show(0);
 }})();
 </script>
