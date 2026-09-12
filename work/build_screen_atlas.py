@@ -127,9 +127,10 @@ def live(name,race=False,target=None,goal=None):
         lab,val,unit=metric[:3]; variance=metric[3] if len(metric)>3 else None; tone=metric[4] if len(metric)>4 else None
         rr(d,(16,y,414,y+metric_h),16,'#0B3B4E','#1C566B')
         if variance:
-            tone_fill='#482F38' if tone=='below' else '#16493B'; tone_text='#FF8A96' if tone=='below' else '#4ADE80'; rr(d,(215,y+1,413,y+metric_h-1),15,tone_fill); d.rectangle((sc(215),sc(y+1),sc(230),sc(y+metric_h-1)),fill=tone_fill); line(d,(215,y+1,215,y+metric_h-1),'#31505D',1)
-            centered(d,(16,y+18,215,y+78),val,52,True,C['white']); measure_label=lab.upper() if lab=='Stroke rate' else f'{lab.upper()} · {unit}'; centered(d,(16,y+80,215,y+104),measure_label,10,True,'#A6C8D4')
-            centered(d,(215,y+18,414,y+78),variance,52,True,tone_text); centered(d,(215,y+80,414,y+104),'TO TARGET',10,True,tone_text)
+            tone_fill='#7A2836' if tone=='below' else '#126B4D'
+            rr(d,(16,y,414,y+metric_h),16,tone_fill)
+            centered(d,(16,y+14,414,y+78),variance,56,True,C['white'])
+            centered(d,(16,y+78,414,y+105),f'{lab.upper()} · TO TARGET',10,True,C['white'])
         else:
             txt(d,(32,y+14),lab.upper(),11,True,'#A6C8D4'); txt(d,(215,y+metric_h//2+6),val,46 if race else 52,True,C['white'],'mm'); txt(d,(386,y+metric_h-26),unit,11,False,'#A6C8D4','ra')
         y+=metric_h+metric_gap
@@ -219,9 +220,9 @@ items=[
 ('Live Row Target — Duration','23_live_target_duration.png',['The approved metric grid remains unchanged.','Progress shows elapsed time, time remaining, and the fixed duration target.']),
 ('Live Row Target — Distance','24_live_target_distance.png',['Progress shows completed meters, remaining meters, and the fixed distance target.','Metric values retain the same shared maximum size.']),
 ('Live Row Target — Intervals','25_live_target_intervals.png',['One continuous segmented line represents the complete saved sequence.','Blue sections are Row, lighter sections are Rest, and a small marker shows current progress.']),
-('Live Row Target — Stroke-rate Goal','26_live_target_goal_stroke_rate.png',['The card splits evenly between the live stroke rate and signed variance.','Stroke rate is shown as 24 and variance as red −2 without repeating SPM.']),
-('Live Row Target — Speed Goal','27_live_target_goal_speed.png',['The left pane shows current speed with its unit in the label.','The right pane shows a large signed variance labeled To Target.']),
-('Live Row Target — Power Goal','28_live_target_goal_power.png',['The left pane shows current power with its unit in the label.','The right pane shows green +8 above the target.']),
+('Live Row Target — Stroke-rate Goal','26_live_target_goal_stroke_rate.png',['The goal card shows only the signed variance so it stays readable at rowing distance.','A red background makes the below-target state immediately visible.']),
+('Live Row Target — Speed Goal','27_live_target_goal_speed.png',['The goal card shows only the signed speed variance.','Its background communicates whether the rower is below or meeting the target.']),
+('Live Row Target — Power Goal','28_live_target_goal_power.png',['The goal card shows only the signed power variance.','A green background makes the at-or-above-target state immediately visible.']),
 ('Live Row Target — Interval Rest','29_live_target_interval_rest.png',['Rest replaces the metric grid with a large countdown.','The next Row segment and complete color-coded sequence remain visible.']),
 ]
 (OUT/'manifest.json').write_text(json.dumps(items,indent=2),encoding='utf-8')

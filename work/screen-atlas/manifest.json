@@ -204,24 +204,24 @@
     "Live Row Target \u2014 Stroke-rate Goal",
     "26_live_target_goal_stroke_rate.png",
     [
-      "The card splits evenly between the live stroke rate and signed variance.",
-      "Stroke rate is shown as 24 and variance as red \u22122 without repeating SPM."
+      "The goal card shows only the signed variance so it stays readable at rowing distance.",
+      "A red background makes the below-target state immediately visible."
     ]
   ],
   [
     "Live Row Target \u2014 Speed Goal",
     "27_live_target_goal_speed.png",
     [
-      "The left pane shows current speed with its unit in the label.",
-      "The right pane shows a large signed variance labeled To Target."
+      "The goal card shows only the signed speed variance.",
+      "Its background communicates whether the rower is below or meeting the target."
     ]
   ],
   [
     "Live Row Target \u2014 Power Goal",
     "28_live_target_goal_power.png",
     [
-      "The left pane shows current power with its unit in the label.",
-      "The right pane shows green +8 above the target."
+      "The goal card shows only the signed power variance.",
+      "A green background makes the at-or-above-target state immediately visible."
     ]
   ],
   [

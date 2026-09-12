@@ -1,7 +1,8 @@
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
+import sys
 
-source = Path('/Users/brian/Documents/ChatGPT/Coxswain/work/spec-v1-4-render')
+source = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('/Users/brian/Documents/ChatGPT/Coxswain/work/spec-v1-4-render')
 pages = sorted(source.glob('page-*.png'), key=lambda p: int(p.stem.split('-')[1]))
 for group_index in range(0, len(pages), 8):
     subset = pages[group_index:group_index + 8]
