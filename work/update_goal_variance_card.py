@@ -14,7 +14,7 @@ old_render_piece = "b.className=&#x27;metric&#x27;+(hasGoal?&#x27; has-goal&#x27
 new_render_piece = "b.className=&#x27;metric&#x27;+(hasGoal?&#x27; has-goal goal-&#x27;+goal.tone:&#x27;&#x27;)+(device.classList.contains(&#x27;editing&#x27;)&amp;&amp;i===active?&#x27; active&#x27;:&#x27;&#x27;);const shownValue=hasGoal?goal.variance:m[1]"
 
 old_goal_markup = "l.textContent=hasGoal&amp;&amp;m[0]===&#x27;Stroke rate&#x27;?&#x27;STROKE RATE&#x27;:m[0].toUpperCase()+&#x27; · &#x27;+m[2];if(hasGoal){const measure=document.createElement(&#x27;span&#x27;);measure.className=&#x27;measure-pane&#x27;;measure.append(n,l);const variance=document.createElement(&#x27;span&#x27;);variance.className=&#x27;variance-pane &#x27;+goal.tone;const vn=document.createElement(&#x27;span&#x27;);vn.className=&#x27;variance-number&#x27;;vn.textContent=goal.variance;const vl=document.createElement(&#x27;span&#x27;);vl.className=&#x27;variance-label&#x27;;vl.textContent=&#x27;TO TARGET&#x27;;variance.append(vn,vl);b.append(measure,variance)}else{b.append(n,l)}"
-new_goal_markup = "l.textContent=hasGoal?m[0].toUpperCase()+&#x27; · TO TARGET&#x27;:m[0].toUpperCase()+&#x27; · &#x27;+m[2];b.append(n,l)"
+new_goal_markup = "l.textContent=hasGoal?m[0].toUpperCase()+&#x27; · TO TARGET&#x27;:m[0].toUpperCase()+&#x27; · &#x27;+m[2];b.append(n,l);"
 
 for old, new, expected in [
     (old_css, new_css, 1),
