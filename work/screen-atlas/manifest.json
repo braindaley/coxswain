@@ -270,7 +270,7 @@
     "34_workout_complete_distance.png",
     [
       "Distance results lead with completion time and identify a new best when applicable.",
-      "Summary metrics remain compact and Row Again, View Details, and Done stay available."
+      "Average split, calories, stroke rate, and power precede three taller time-series graphs. Done is the only action."
     ]
   ],
   [
@@ -286,7 +286,7 @@
     "36_workout_complete_intervals.png",
     [
       "Intervals lead with the program-specific work result and exclude Rest from performance ranking.",
-      "The complete ordered segment group and individual Row results remain available."
+      "The complete ordered segment group, individual Row results, and all three time-series graphs remain on this screen."
     ]
   ],
   [
@@ -294,7 +294,7 @@
     "37_workout_complete_free.png",
     [
       "Free Row leads with distance and records that the user ended the open session.",
-      "The workout is saved to History without target-completion language."
+      "The workout is saved to History without target-completion language; Done is the only action."
     ]
   ],
   [
@@ -302,7 +302,7 @@
     "38_workout_complete_race.png",
     [
       "Race results show the finish outcome and retain the fixed saved reference.",
-      "The comparison uses both distance and time language."
+      "The comparison and complete metric graphs remain on the same scrollable results screen."
     ]
   ],
   [

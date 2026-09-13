@@ -218,7 +218,7 @@ def workout_complete(name,kind='distance'):
     elif kind=='race':
         label(d,596,'Race result'); rr(d,(16,618,414,704),16,C['white']); txt(d,(30,635),'You',11,False,C['muted']); txt(d,(400,635),'20:42',13,True,C['ink'],'ra'); line(d,(30,660,400,660),C['line']); txt(d,(30,675),'Saved reference',11,False,C['muted']); txt(d,(400,675),'20:46',13,True,C['ink'],'ra')
     else: footer_y=626
-    rr(d,(16,footer_y,204,footer_y+54),27,C['white'],C['blue']); centered(d,(16,footer_y,204,footer_y+54),'Row again',13,True,C['blue']); rr(d,(212,footer_y,414,footer_y+54),27,C['blue']); centered(d,(212,footer_y,414,footer_y+54),'View details',13,True,C['white']); centered(d,(16,footer_y+60,414,footer_y+100),'Done',12,True,C['muted']); save(im,name)
+    rr(d,(16,footer_y,414,footer_y+56),28,C['blue']); centered(d,(16,footer_y,414,footer_y+56),'Done',14,True,C['white']); save(im,name)
 
 def program_detail(name,kind='Distance'):
     models={
@@ -289,11 +289,11 @@ items=[
 ('Pause / End — Paused','31_pause_end_paused.png',['Pause freezes every metric and all program progress.','Resume returns to the exact Live Row mode and session state that opened the screen.']),
 ('Pause / End — End confirmation','32_pause_end_confirm.png',['End and Save preserves the completed portion in History and proceeds to Workout Complete.','Stay Paused closes the sheet without advancing timers or progress.']),
 ('Pause / End — Discard confirmation','33_pause_end_discard.png',['Discard is separated from ending and saving.','A second explicit confirmation protects the irreversible removal of the active workout.']),
-('Workout Complete — Distance','34_workout_complete_distance.png',['Distance results lead with completion time and identify a new best when applicable.','Summary metrics remain compact and Row Again, View Details, and Done stay available.']),
+('Workout Complete — Distance','34_workout_complete_distance.png',['Distance results lead with completion time and identify a new best when applicable.','Average split, calories, stroke rate, and power precede three taller time-series graphs. Done is the only action.']),
 ('Workout Complete — Duration','35_workout_complete_duration.png',['Duration results lead with distance achieved during the fixed time.','Best-result comparison uses distance rather than completion time.']),
-('Workout Complete — Intervals','36_workout_complete_intervals.png',['Intervals lead with the program-specific work result and exclude Rest from performance ranking.','The complete ordered segment group and individual Row results remain available.']),
-('Workout Complete — Free Row','37_workout_complete_free.png',['Free Row leads with distance and records that the user ended the open session.','The workout is saved to History without target-completion language.']),
-('Workout Complete — Race','38_workout_complete_race.png',['Race results show the finish outcome and retain the fixed saved reference.','The comparison uses both distance and time language.']),
+('Workout Complete — Intervals','36_workout_complete_intervals.png',['Intervals lead with the program-specific work result and exclude Rest from performance ranking.','The complete ordered segment group, individual Row results, and all three time-series graphs remain on this screen.']),
+('Workout Complete — Free Row','37_workout_complete_free.png',['Free Row leads with distance and records that the user ended the open session.','The workout is saved to History without target-completion language; Done is the only action.']),
+('Workout Complete — Race','38_workout_complete_race.png',['Race results show the finish outcome and retain the fixed saved reference.','The comparison and complete metric graphs remain on the same scrollable results screen.']),
 ('Workout Complete — Ended Early','39_workout_complete_ended.png',['A manually ended target workout states that it ended early and shows partial target progress.','The partial result is still saved accurately to History.']),
 ]
 (OUT/'manifest.json').write_text(json.dumps(items,indent=2),encoding='utf-8')

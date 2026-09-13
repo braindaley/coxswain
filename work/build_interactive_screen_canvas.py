@@ -249,7 +249,7 @@ root.querySelectorAll('.cs-nav-item').forEach((button,index)=>button.addEventLis
 root.querySelector('.cs-prev').onclick=()=>show(current-1);root.querySelector('.cs-next').onclick=()=>show(current+1);
 root.querySelector('.cs-expand').onclick=()=>{{root.classList.toggle('expanded');root.querySelector('.cs-expand').textContent=root.classList.contains('expanded')?'Show list':'Expand';}};
 window.addEventListener('message',event=>{{if(event.data?.type==='coxswain-open'){{const index=screens.findIndex(s=>s.name===event.data.name);if(index>=0)show(index);}}else if(event.data?.type==='coxswain-resume-live'){{const index=screens.findIndex(s=>s.name===lastLiveName);if(index>=0)show(index);}}}});
-show(0);
+const requested=decodeURIComponent(location.hash.slice(1));const start=screens.findIndex(s=>s.name===requested);show(start>=0?start:0);
 }})();
 </script>
 '''
