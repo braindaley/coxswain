@@ -9,11 +9,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -150,10 +150,11 @@ fun ProgramEditorScreen(
                     onMerge()
                     segments.add(newSegment)
                 },
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                containerColor = Color(0xFF0B63F6),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(28.dp),
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Add Segment") }
+                text = { Text("Add Segment", fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
@@ -161,8 +162,9 @@ fun ProgramEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.surface),
-            contentPadding = PaddingValues(bottom = 88.dp)
+                .background(Color(0xFFF4F7FB)),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             itemsIndexed(segments, key = { _, item -> item.hashCode() }) { index, segment ->
                 SegmentCard(
@@ -193,14 +195,13 @@ fun SegmentCard(
     onDelete: () -> Unit,
     onCycleDifficulty: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+            .padding(horizontal = 16.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -211,105 +212,101 @@ fun SegmentCard(
             // 1. Intensity Accent Strip
             Box(
                 modifier = Modifier
-                    .width(6.dp)
+                    .width(4.dp)
                     .fillMaxHeight()
                     .background(getIntensityColor(segment.difficulty.get()))
             )
 
-            // 2. Drag Handle (Affordance only for now)
+            // 2. Drag Handle
             Icon(
                 painter = painterResource(id = R.drawable.ic_reorder_24dp),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.padding(start = 12.dp, end = 8.dp).size(20.dp)
+                tint = Color(0xFFCAD4E1),
+                modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
             )
 
-            // 3. Primary Target Content
+            // 3. Primary Content Column
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .clickable { onTargetClick() }
-                    .padding(vertical = 16.dp, horizontal = 8.dp)
+                    .padding(vertical = 14.dp, horizontal = 8.dp)
             ) {
                 val (value, subtitle) = when {
                     segment.duration.get() > 0 -> {
                         val s = segment.duration.get()
-                        String.format("%02d:%02d", s / 60, s % 60) to "Duration"
+                        String.format(Locale.getDefault(), "%02d:%02d", s / 60, s % 60) to "Duration"
                     }
-                    segment.distance.get() > 0 -> "%,d m".format(segment.distance.get()) to "Distance"
-                    segment.strokes.get() > 0 -> "%,d".format(segment.strokes.get()) to "Strokes"
-                    segment.energy.get() > 0 -> "%,d kcal".format(segment.energy.get()) to "Energy"
+                    segment.distance.get() > 0 -> "%,d m".format(Locale.getDefault(), segment.distance.get()) to "Distance"
+                    segment.strokes.get() > 0 -> "%,d".format(Locale.getDefault(), segment.strokes.get()) to "Strokes"
+                    segment.energy.get() > 0 -> "%,d kcal".format(Locale.getDefault(), segment.energy.get()) to "Energy"
                     else -> "Set target" to "Action"
                 }
 
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-0.5).sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF10213F)
                 )
                 Text(
-                    text = subtitle.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
+                    text = subtitle,
+                    fontSize = 13.sp,
+                    color = Color(0xFF53647C),
+                    modifier = Modifier.padding(top = 1.dp)
                 )
             }
 
-            // 4. Pace Goal Chip
+            // 4. Goal Chip
             val limitText = when {
-                segment.strokeRate.get() > 0 -> "${segment.strokeRate.get()} spm"
-                segment.pulse.get() > 0 -> "${segment.pulse.get()} bpm"
+                segment.strokeRate.get() > 0 -> "${segment.strokeRate.get()} SPM"
+                segment.pulse.get() > 0 -> "${segment.pulse.get()} BPM"
                 segment.speed.get() > 0 -> String.format(Locale.US, "%.2f m/s", segment.speed.get() / 100f)
                 segment.power.get() > 0 -> "${segment.power.get()} W"
-                else -> null
+                else -> "+ Set goal"
             }
 
-            if (limitText != null) {
-                SuggestionChip(
-                    onClick = onGoalClick,
-                    label = { Text(limitText, fontWeight = FontWeight.Bold) },
-                    modifier = Modifier.padding(end = 8.dp)
+            Surface(
+                onClick = onGoalClick,
+                color = if (limitText == "+ Set goal") Color(0xFFF4F7FB) else Color(0xFFDCEBFF),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = limitText,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (limitText == "+ Set goal") Color(0xFF53647C) else Color(0xFF0B63F6),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
-            } else {
-                TextButton(
-                    onClick = onGoalClick,
-                    modifier = Modifier.padding(end = 8.dp)
-                ) {
-                    Text("+ Set goal", style = MaterialTheme.typography.labelMedium)
-                }
             }
 
-            // 5. Difficulty Cycle
+            // 5. Difficulty Cycle (Indicator & Toggle)
             Surface(
                 onClick = onCycleDifficulty,
                 color = getIntensityColor(segment.difficulty.get()).copy(alpha = 0.1f),
-                shape = MaterialTheme.shapes.small,
-                modifier = Modifier.padding(end = 8.dp)
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(horizontal = 4.dp)
             ) {
                 Text(
-                    text = segment.difficulty.get().name,
-                    style = MaterialTheme.typography.labelSmall,
+                    text = segment.difficulty.get().name.take(1),
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = getIntensityColor(segment.difficulty.get()),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
 
             // 6. Delete Action
             IconButton(
                 onClick = onDelete,
-                modifier = Modifier.padding(end = 4.dp)
+                modifier = Modifier.size(40.dp).padding(end = 4.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp)
+                    tint = Color(0xFFBA1A1A).copy(alpha = 0.6f),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

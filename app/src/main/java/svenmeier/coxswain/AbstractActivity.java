@@ -77,7 +77,7 @@ public class AbstractActivity extends AppCompatActivity {
         if (toolbar != null) {
             setSupportActionBar(toolbar);
 
-            if ((this instanceof MainActivity) == false) {
+            if (getIntent().getAction() == null || getIntent().getAction().equals(Intent.ACTION_MAIN) == false) {
                 ActionBar actionBar = getSupportActionBar();
                 actionBar.setDisplayHomeAsUpEnabled(true);
                 actionBar.setHomeButtonEnabled(true);

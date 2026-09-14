@@ -160,12 +160,12 @@ public class Gym {
         Workout workout = new Workout();
         Snapshot snapshot = new Snapshot();
         Where where =
-                Where.all(
+                all(
                     Where.lessEqual(workout.start, calendar.getTimeInMillis()),
                         Where.is(snapshot.workout, Where.any())
                 );
         for (Workout compact : repository.query(workout, where).list(Range.limit(count), Order.ascending(workout.start))) {
-            repository.query(snapshot, Where.equal(snapshot.workout, compact)).delete();
+            repository.query(snapshot, equal(snapshot.workout, compact)).delete();
         }
 
         repository.vacuum();
@@ -235,7 +235,7 @@ public class Gym {
         } else if (Row.getID(program) == Row.TRANSIENT) {
             return repository.query(prototype, Where.none());
         } else {
-            return repository.query(prototype, Where.equal(prototype.program, program));
+            return repository.query(prototype, equal(prototype.program, program));
         }
     }
 
@@ -259,6 +259,10 @@ public class Gym {
                     lessThan(prototype.start, to))
             );
         }
+    }
+
+    public Measurement getMeasurement() {
+        return measurement;
     }
 
     public void delete(Propoid propoid) {
