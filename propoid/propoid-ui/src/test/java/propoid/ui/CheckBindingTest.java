@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link CheckBinding}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = propoid.ui.BuildConfig.class)
+@Config(sdk = 28)
 public class CheckBindingTest {
 
 	private CheckBox checkBox;

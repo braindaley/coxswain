@@ -14,6 +14,8 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
+	static final int DATABASE_VERSION = 1;
+
 	GymVersioning() {
 		add(new WrongIndices());
 	}

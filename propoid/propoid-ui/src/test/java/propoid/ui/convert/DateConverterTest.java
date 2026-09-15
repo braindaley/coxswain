@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link DateConverter}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = propoid.ui.BuildConfig.class)
+@Config(sdk = 28)
 public class DateConverterTest {
 
 	@Test

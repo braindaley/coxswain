@@ -28,7 +28,7 @@ import propoid.db.mapping.StringMapper;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = propoid.db.BuildConfig.class)
+@Config(sdk = 28)
 public class DefaultMappingTest {
 
 	@Test

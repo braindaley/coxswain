@@ -2,7 +2,6 @@ package propoid.db.version;
 
 import java.util.List;
 
-import propoid.db.BuildConfig;
 import propoid.db.schema.Column;
 import propoid.db.version.AlterTable;
 import propoid.db.version.alter.CreateColumn;
@@ -12,7 +11,6 @@ import android.app.Application;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.test.ApplicationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -30,7 +28,7 @@ import static org.junit.Assert.fail;
  * Test for {@link AlterTable}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class AlterTableTest {
 
 	private SQLiteDatabase database;

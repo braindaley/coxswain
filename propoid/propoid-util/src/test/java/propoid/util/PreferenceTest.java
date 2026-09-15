@@ -7,7 +7,6 @@ import propoid.util.content.Preference;
 import propoid.util.content.Preference.OnChangeListener;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.test.InstrumentationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  * Test for {@link Preference}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class PreferenceTest {
 
 	private SharedPreferences preferences;

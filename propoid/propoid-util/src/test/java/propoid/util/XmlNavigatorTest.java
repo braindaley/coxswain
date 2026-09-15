@@ -21,7 +21,7 @@ import static org.junit.Assert.fail;
  * Test for {@link XmlNavigator}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class XmlNavigatorTest {
 
 	private InputStream input;

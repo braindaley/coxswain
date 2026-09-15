@@ -19,7 +19,7 @@ import static junit.framework.Assert.assertEquals;
 /**
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 34)
 public class Json2ProgramTest {
 
 	@Test

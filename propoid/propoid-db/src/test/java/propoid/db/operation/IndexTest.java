@@ -1,12 +1,10 @@
 package propoid.db.operation;
 
-import propoid.db.BuildConfig;
 import propoid.db.Order;
 import propoid.db.Repository;
 import propoid.db.locator.InMemoryLocator;
 import propoid.db.operation.Index;
 import android.app.Application;
-import android.test.ApplicationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -20,7 +18,7 @@ import org.robolectric.annotation.Config;
  * Test for {@link Index}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class IndexTest {
 
 	private Repository repository;

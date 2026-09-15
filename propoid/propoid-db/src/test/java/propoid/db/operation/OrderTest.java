@@ -7,12 +7,11 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import propoid.db.BuildConfig;
 import propoid.db.Order;
 import propoid.db.SQL;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class OrderTest extends TestCase {
 
 	@Test

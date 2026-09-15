@@ -1,12 +1,10 @@
 package propoid.db.operation;
 
-import propoid.db.BuildConfig;
 import propoid.db.Repository;
 import propoid.db.cascading.DefaultCascading;
 import propoid.db.locator.InMemoryLocator;
 import propoid.db.operation.Insert;
 import android.app.Application;
-import android.test.ApplicationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link Insert}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class InsertTest {
 
 	private Repository repository;

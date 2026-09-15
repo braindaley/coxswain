@@ -1,12 +1,10 @@
 package propoid.db.operation;
 
-import propoid.db.BuildConfig;
 import propoid.db.Repository;
 import propoid.db.cascading.DefaultCascading;
 import propoid.db.locator.InMemoryLocator;
 import propoid.db.operation.Delete;
 import android.app.Application;
-import android.test.ApplicationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -21,7 +19,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class DeleteTest {
 
 	private Repository repository;

@@ -16,7 +16,7 @@ import propoid.db.operation.FooEx;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = propoid.db.BuildConfig.class)
+@Config(sdk = 28)
 public class DefaultNamingTest {
 
 	@Test

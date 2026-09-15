@@ -11,7 +11,6 @@ import org.robolectric.annotation.Config;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import propoid.db.BuildConfig;
 import propoid.db.Order;
 import propoid.db.Repository;
 import propoid.db.RepositoryException;
@@ -27,7 +26,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link Query}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class QueryTest {
 
 	private Repository repository;

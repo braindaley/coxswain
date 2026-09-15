@@ -60,7 +60,7 @@ public class Workout2HealthConnect {
         List<PowerRecord.Sample> powerSamples = new ArrayList<>();
 
         int size = snapshots.size();
-        int step = Math.max(1, size / MAX_SAMPLES);
+        int step = Math.max(1, (size + MAX_SAMPLES - 1) / MAX_SAMPLES);
 
         for (int i = 0; i < size; i += step) {
             Snapshot snapshot = snapshots.get(i);

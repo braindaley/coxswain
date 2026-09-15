@@ -17,6 +17,7 @@ android {
         applicationId "svenmeier.coxswain"
         minSdk 34
         targetSdk 36
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         versionCode 114
         versionName "1.14"
@@ -44,6 +45,7 @@ android {
         }
     }
     testOptions {
+        unitTests.includeAndroidResources = true
         unitTests.all {
             jvmArgs(
                 "--add-opens", "java.base/java.lang=ALL-UNNAMED",
@@ -83,6 +85,11 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     testImplementation 'junit:junit:4.13'
     testImplementation 'org.robolectric:robolectric:4.14.1'
+    androidTestImplementation composeBom
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation project(':propoid-core')
     implementation project(':propoid-db')
     implementation project(':propoid-ui')

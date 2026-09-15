@@ -9,11 +9,10 @@ import org.robolectric.annotation.Config;
 
 import propoid.core.Property;
 import propoid.core.Propoid;
-import propoid.db.BuildConfig;
 import propoid.db.Where;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class WhereTest {
 
 	@Test

@@ -8,7 +8,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
-import propoid.db.BuildConfig;
 import propoid.db.Reference;
 import propoid.db.Repository;
 import propoid.db.aspect.Row;
@@ -20,7 +19,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link Lookup}.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(sdk = 28)
 public class LookupTest {
 
 	private Repository repository;
