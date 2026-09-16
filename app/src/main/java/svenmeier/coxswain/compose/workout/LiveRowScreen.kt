@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.view.ValueBinding
@@ -37,16 +38,29 @@ fun LiveRowScreen(
     // Reading this state makes live measurements invalidate the metric grid.
     @Suppress("UNUSED_VARIABLE") val measurementVersion = refreshTick
     var isPaused by remember { mutableStateOf(false) } 
+    var editMode by remember { mutableStateOf(false) }
+    var editingIndex by remember { mutableIntStateOf(-1) }
+    val context = LocalContext.current
     
     val activeMetrics = remember {
-        mutableStateListOf(
+        val fallback = listOf(
             ValueBinding.DURATION,
             ValueBinding.DISTANCE,
             ValueBinding.SPLIT,
             ValueBinding.STROKE_RATE,
             ValueBinding.POWER,
-            ValueBinding.PULSE
-        )
+            ValueBinding.PULSE)
+        val saved = context.getSharedPreferences("live_row", 0).getString("metrics", null)
+            ?.split(",")?.mapNotNull { runCatching { ValueBinding.valueOf(it) }.getOrNull() }
+        mutableStateListOf(*(if (saved?.size == 6) saved else fallback).toTypedArray())
+    }
+    if (editMode && editingIndex >= 0) {
+        AlertDialog(onDismissRequest = { editingIndex = -1 }, title = { Text("Choose metric") },
+            text = { Column { listOf(ValueBinding.DURATION, ValueBinding.DISTANCE, ValueBinding.SPLIT, ValueBinding.STROKE_RATE, ValueBinding.POWER, ValueBinding.PULSE, ValueBinding.SPEED, ValueBinding.ENERGY).forEach { metric ->
+                Row(Modifier.fillMaxWidth().clickable { activeMetrics[editingIndex] = metric; editingIndex = -1; context.getSharedPreferences("live_row", 0).edit().putString("metrics", activeMetrics.joinToString(",") { it.name }).apply() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = activeMetrics[editingIndex] == metric, onClick = null); Text(metric.name.replace('_', ' '), color = Color.White)
+                }
+            } } }, confirmButton = { TextButton(onClick = { editingIndex = -1 }) { Text("Done") } })
     }
 
     Scaffold(
@@ -76,8 +90,8 @@ fun LiveRowScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { /* Edit Display */ }) {
-                        Text("Edit display", color = Color(0xFFDCEBFF))
+                    TextButton(onClick = { editMode = !editMode }) {
+                        Text(if (editMode) "Done" else "Edit display", color = Color(0xFFDCEBFF))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -124,7 +138,7 @@ fun LiveRowScreen(
                     MetricCell(
                         binding = binding,
                         measurement = gym.getMeasurement(), // Use getter
-                        onClick = { onEditMetric(index) }
+                        onClick = { if (editMode) { editingIndex = index; onEditMetric(index) } }
                     )
                 }
             }
@@ -185,16 +199,16 @@ fun TargetProgressBar(gym: Gym) {
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text("WORKOUT PROGRESS", style = MaterialTheme.typography.labelSmall, color = Color(0xFFCAD4E1))
-            Text("21%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
+            Text("${((gym.progress?.completion() ?: 0f) * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
         }
         Text(
-            text = "47:26 remaining", 
+            text = gym.progress?.describe() ?: "Ready",
             style = MaterialTheme.typography.titleLarge, 
             color = Color.White,
             modifier = Modifier.padding(vertical = 8.dp)
         )
         LinearProgressIndicator(
-            progress = { 0.21f },
+            progress = { gym.progress?.completion() ?: 0f },
             modifier = Modifier.fillMaxWidth().height(8.dp),
             color = Color(0xFF0B8FFF),
             trackColor = Color(0xFF53647C),
