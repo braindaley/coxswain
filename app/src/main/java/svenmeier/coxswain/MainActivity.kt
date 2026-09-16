@@ -97,6 +97,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
         ) {
             when (currentTab) {
                 0 -> HomeScreen(
+                    gym = gym,
                     onFreeRow = {
                         gym.startFreeRow()
                         WorkoutActivity.start(activity)
