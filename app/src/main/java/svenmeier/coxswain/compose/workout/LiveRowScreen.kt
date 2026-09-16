@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -165,6 +167,7 @@ fun MetricCell(
             .fillMaxSize()
             .background(Color(0xFF042C3D))
             .clickable { onClick() }
+            .semantics { contentDescription = "$label metric, $valueStr" }
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
