@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.compose.*
 import svenmeier.coxswain.gym.Program
+import svenmeier.coxswain.bluetooth.BluetoothActivity
+import svenmeier.coxswain.bluetooth.BlueWriter
 
 class MainActivity : ComponentActivity() {
 
@@ -134,7 +136,10 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     gym = gym,
                     onWorkoutClick = { WorkoutDetailsActivity.start(activity, it) }
                 )
-                3 -> Text("More Screen", modifier = Modifier.padding(24.dp))
+                3 -> MoreScreen(
+                    onConnect = { BluetoothActivity.start(activity, "Rower", BlueWriter.SERVICE_FITNESS_MACHINE.toString()) },
+                    onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) }
+                )
             }
         }
     }
