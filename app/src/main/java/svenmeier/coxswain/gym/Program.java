@@ -133,6 +133,8 @@ public class Program extends Propoid {
      * @return workout
      */
     public Workout newWorkout() {
-        return new Workout((Row.getID(this) == Row.TRANSIENT) ? null : this);
+        Workout workout = new Workout((Row.getID(this) == Row.TRANSIENT) ? null : this);
+        workout.freeze(this, WorkoutDefinition.typeOf(this));
+        return workout;
     }
 }

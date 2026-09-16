@@ -4,8 +4,8 @@ Phase 0 records the currently shipped repository schema before workout identity 
 session lifecycle fields are added.
 
 - SQLite database name: `gym`
-- SQLite `user_version`: `1`
-- Version source: `GymVersioning.DATABASE_VERSION`
+- Fixture SQLite `user_version`: `1`
+- Current application version after Phase 1: `2`
 - Migration fixture: `app/src/test/resources/migrations/gym-v1.sql`
 - Fixture verification: `GymSchemaFixtureTest`
 
@@ -45,8 +45,8 @@ The fixture includes:
 
 - a single-segment 2,000-meter program;
 - a free-form Row/Rest interval program;
-- two completed workout records; and
+- three completed workout records, including one whose Program was deleted; and
 - representative active and rest snapshots.
 
-Future schema work must extend this fixture rather than generating a fresh
-database, so migration behavior remains testable.
+The Phase 1 migration continues to run from this fixture rather than generating
+a fresh database, so migration behavior remains testable.

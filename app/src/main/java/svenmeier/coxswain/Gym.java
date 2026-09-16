@@ -40,9 +40,13 @@ import propoid.util.content.Preference;
 import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Measurement;
 import svenmeier.coxswain.gym.Program;
+import svenmeier.coxswain.gym.RaceOutcome;
+import svenmeier.coxswain.gym.SessionType;
 import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.gym.Snapshot;
 import svenmeier.coxswain.gym.Workout;
+import svenmeier.coxswain.gym.WorkoutDefinition;
+import svenmeier.coxswain.gym.WorkoutStatus;
 import svenmeier.coxswain.io.Export;
 
 import static propoid.db.Where.all;
@@ -66,6 +70,22 @@ public class Gym {
      * The last measurement.
      */
     private Measurement measurement = new Measurement();
+
+    private Measurement rawMeasurement = new Measurement();
+
+    private Measurement pausedAtMeasurement;
+
+    private Measurement pausedOffsets = new Measurement();
+
+    private boolean paused;
+
+    private long pausedAtMillis;
+
+    private long pausedMillis;
+
+    private SessionType sessionType;
+
+    private long sessionGeneration;
 
     /**
      * The selected program.
@@ -101,6 +121,7 @@ public class Gym {
                 repository.open();
 
                 measurement = new Measurement();
+                rawMeasurement = new Measurement();
                 current = null;
                 progress = null;
 
@@ -207,7 +228,16 @@ public class Gym {
                 // imported workouts are not evaluated by default
                 workout.evaluate.set(false);
 
-                workout.program.set(repository.query(example, equal(example.name, programName)).first());
+                Program linked = repository.query(example, equal(example.name, programName)).first();
+                workout.program.set(linked);
+                if (linked != null) {
+                    workout.freeze(linked, WorkoutDefinition.typeOf(linked));
+                } else {
+                    workout.programName.set(programName);
+                    workout.sessionType.set(SessionType.FREE);
+                }
+                workout.status.set(WorkoutStatus.COMPLETED);
+                workout.completed.set(workout.start.get() + workout.duration.get() * 1000L);
                 repository.merge(workout);
 
                 for (Snapshot snapshot : snapshots) {
@@ -229,13 +259,16 @@ public class Gym {
 
     public Match<Workout> getWorkouts() {
         Workout prototype = new Workout();
+        Where finalized = Where.any(
+                equal(prototype.status, WorkoutStatus.COMPLETED),
+                equal(prototype.status, WorkoutStatus.ENDED_EARLY));
 
         if (program == null) {
-            return repository.query(prototype);
+            return repository.query(prototype, finalized);
         } else if (Row.getID(program) == Row.TRANSIENT) {
             return repository.query(prototype, Where.none());
         } else {
-            return repository.query(prototype, equal(prototype.program, program));
+            return repository.query(prototype, all(equal(prototype.program, program), finalized));
         }
     }
 
@@ -246,6 +279,9 @@ public class Gym {
         if (program == null) {
             return repository.query(prototype, all(
                     equal(prototype.evaluate, true),
+                    Where.any(
+                            equal(prototype.status, WorkoutStatus.COMPLETED),
+                            equal(prototype.status, WorkoutStatus.ENDED_EARLY)),
                     greaterEqual(prototype.start, from),
                     lessThan(prototype.start, to))
             );
@@ -255,6 +291,9 @@ public class Gym {
             return repository.query(prototype, all(
                     equal(prototype.program, program),
                     equal(prototype.evaluate, true),
+                    Where.any(
+                            equal(prototype.status, WorkoutStatus.COMPLETED),
+                            equal(prototype.status, WorkoutStatus.ENDED_EARLY)),
                     greaterEqual(prototype.start, from),
                     lessThan(prototype.start, to))
             );
@@ -287,31 +326,27 @@ public class Gym {
     }
 
     public void deselect() {
-        if (current != null) {
-            Export.start(context, current);
-        }
-
-        if (program != null) {
-            this.pace = null;
-            this.program = null;
-
-            this.measurement = new Measurement();
-            this.current = null;
-            this.progress = null;
-
-            fireChanged(null);
+        if (current != null && current.status.get() == WorkoutStatus.ACTIVE) {
+            discard();
+        } else {
+            clearSession();
         }
     }
 
     public void select(Program program) {
+        start(program, WorkoutDefinition.typeOf(program));
+    }
+
+    public void start(Program program, SessionType type) {
         this.pace = null;
         this.program = program;
+        prepareSession(type);
+    }
 
-        this.measurement = new Measurement();
-        this.current = null;
-        this.progress = null;
-
-        fireChanged(null);
+    public void startFreeRow() {
+        this.pace = null;
+        this.program = null;
+        prepareSession(SessionType.FREE);
     }
 
     public void repeat(Workout pace) {
@@ -326,23 +361,132 @@ public class Gym {
 
         this.pace = pace;
         this.program = program;
-
-        this.measurement = new Measurement();
-        this.current = null;
-        this.progress = null;
-
-        fireChanged(null);
+        prepareSession(SessionType.RACE);
     }
 
     public void challenge(Workout pace) {
         this.pace = pace;
         this.program = Program.meters(context.getString(R.string.action_challenge), pace.distance.get(), Difficulty.NONE);
+        prepareSession(SessionType.RACE);
+    }
 
+    private void prepareSession(SessionType type) {
+        this.sessionType = type;
         this.measurement = new Measurement();
+        this.rawMeasurement = new Measurement();
+        this.pausedOffsets = new Measurement();
+        this.pausedAtMeasurement = null;
+        this.paused = false;
+        this.pausedAtMillis = 0;
+        this.pausedMillis = 0;
         this.current = null;
         this.progress = null;
+        this.sessionGeneration++;
+        fireChanged(type);
+    }
 
+    private void clearSession() {
+        this.pace = null;
+        this.program = null;
+        this.sessionType = null;
+        this.measurement = new Measurement();
+        this.rawMeasurement = new Measurement();
+        this.pausedOffsets = new Measurement();
+        this.pausedAtMeasurement = null;
+        this.paused = false;
+        this.current = null;
+        this.progress = null;
+        this.sessionGeneration++;
         fireChanged(null);
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public boolean hasActiveSession() {
+        return sessionType != null;
+    }
+
+    public long getSessionGeneration() {
+        return sessionGeneration;
+    }
+
+    public void pause() {
+        if (sessionType == null || paused) return;
+        paused = true;
+        pausedAtMillis = System.currentTimeMillis();
+        pausedAtMeasurement = new Measurement(rawMeasurement);
+        fireChanged(null);
+    }
+
+    public void resume() {
+        if (!paused) return;
+        long measuredPauseMillis = Math.max(0,
+                rawMeasurement.getDuration() - pausedAtMeasurement.getDuration()) * 1000L;
+        addPauseOffsets(pausedAtMeasurement, rawMeasurement);
+        pausedMillis += Math.max(measuredPauseMillis,
+                Math.max(0, System.currentTimeMillis() - pausedAtMillis));
+        paused = false;
+        pausedAtMeasurement = null;
+        updatePausedDuration();
+        if (current != null) mergeWorkout(current);
+        fireChanged(null);
+    }
+
+    public Workout complete() {
+        return finalizeSession(WorkoutStatus.COMPLETED);
+    }
+
+    public Workout endEarly() {
+        WorkoutStatus status = sessionType == SessionType.FREE || progress == null
+                ? WorkoutStatus.COMPLETED : WorkoutStatus.ENDED_EARLY;
+        return finalizeSession(status);
+    }
+
+    public Workout discard() {
+        return finalizeSession(WorkoutStatus.DISCARDED);
+    }
+
+    private Workout finalizeSession(WorkoutStatus status) {
+        if (current == null) {
+            clearSession();
+            return null;
+        }
+        if (paused) resume();
+        Workout finalized = current;
+        finalized.status.set(status);
+        finalized.completed.set(System.currentTimeMillis());
+        finalizeRace(finalized);
+        updatePausedDuration();
+        mergeWorkout(finalized);
+        if (status != WorkoutStatus.DISCARDED) {
+            Export.start(context, finalized);
+        }
+        clearSession();
+        fireChanged(finalized);
+        return finalized;
+    }
+
+    private void finalizeRace(Workout workout) {
+        if (pace == null || workout.sessionType.get() != SessionType.RACE) return;
+        workout.raceReference.set(pace);
+        int margin;
+        if (program != null && program.getSegmentsCount() == 1
+                && program.getSegment(0).duration.get() > 0) {
+            margin = workout.distance.get() - pace.distance.get();
+        } else {
+            margin = (pace.duration.get() - workout.duration.get()) * 1000;
+        }
+        workout.raceMargin.set(margin);
+        workout.raceOutcome.set(margin > 0 ? RaceOutcome.WON
+                : margin < 0 ? RaceOutcome.LOST : RaceOutcome.TIED);
+    }
+
+    private void updatePausedDuration() {
+        if (current != null) {
+            current.pausedDuration.set((int) (pausedMillis / 1000L));
+        }
     }
 
 	/**
@@ -353,19 +497,23 @@ public class Gym {
     public Event onMeasured(Measurement measurement) {
         Event event = Event.ACKNOWLEDGED;
 
-        this.measurement = measurement;
+        this.rawMeasurement = new Measurement(measurement);
 
-        if (program != null) {
-            // program is selected
+        if (paused) {
+            fireChanged(null);
+            return event;
+        }
 
-            if (measurement.anyTargetValue()) {
+        this.measurement = normalized(measurement);
+
+        if (sessionType != null) {
+            if (this.measurement.anyTargetValue()) {
                 // delay workout creation
-
-                event = analyse(measurement);
+                event = analyse(this.measurement);
             }
         }
 
-        fireChanged(measurement);
+        fireChanged(this.measurement);
 
         return event;
     }
@@ -374,11 +522,14 @@ public class Gym {
         Event event = Event.ACKNOWLEDGED;
 
         if (current == null) {
-            current = program.newWorkout();
+            current = program == null ? new Workout(null) : program.newWorkout();
+            current.freeze(program, sessionType);
+            if (pace != null) current.raceReference.set(pace);
             current.location.set(getLocation());
             mergeWorkout(current);
 
-            progress = new Progress(program.getSegment(0), new Measurement());
+            progress = program == null || program.getSegmentsCount() == 0
+                    ? null : new Progress(program.getSegment(0), new Measurement());
 
             fireChanged(current);
 
@@ -422,6 +573,23 @@ public class Gym {
         }
 
         return event;
+    }
+
+    private Measurement normalized(Measurement raw) {
+        Measurement adjusted = new Measurement(raw);
+        adjusted.setDuration(Math.max(0, raw.getDuration() - pausedOffsets.getDuration()));
+        adjusted.setDistance(Math.max(0, raw.getDistance() - pausedOffsets.getDistance()));
+        adjusted.setStrokes(Math.max(0, raw.getStrokes() - pausedOffsets.getStrokes()));
+        adjusted.setEnergy(Math.max(0, raw.getEnergy() - pausedOffsets.getEnergy()));
+        return adjusted;
+    }
+
+    private void addPauseOffsets(Measurement start, Measurement end) {
+        if (start == null) return;
+        pausedOffsets.setDuration(pausedOffsets.getDuration() + Math.max(0, end.getDuration() - start.getDuration()));
+        pausedOffsets.setDistance(pausedOffsets.getDistance() + Math.max(0, end.getDistance() - start.getDistance()));
+        pausedOffsets.setStrokes(pausedOffsets.getStrokes() + Math.max(0, end.getStrokes() - start.getStrokes()));
+        pausedOffsets.setEnergy(pausedOffsets.getEnergy() + Math.max(0, end.getEnergy() - start.getEnergy()));
     }
 
     public Match<Snapshot> getSnapshots(Workout workout) {

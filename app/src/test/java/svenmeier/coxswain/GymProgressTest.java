@@ -18,6 +18,8 @@ import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Measurement;
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.gym.Segment;
+import svenmeier.coxswain.gym.Workout;
+import svenmeier.coxswain.gym.WorkoutStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -81,6 +83,54 @@ public class GymProgressTest {
         assertEquals(Event.PROGRAM_FINISHED, gym.onMeasured(measurement(15, 110, 24)));
         assertEquals(15, gym.current.duration.get().intValue());
         assertEquals(110, gym.current.distance.get().intValue());
+    }
+
+    @Test
+    public void freeRowFinalizesIntoHistory() {
+        gym.startFreeRow();
+        gym.onMeasured(measurement(30, 125, 24));
+
+        Workout finished = gym.endEarly();
+
+        assertEquals(WorkoutStatus.COMPLETED, finished.status.get());
+        assertTrue(finished.completed.get() > 0);
+        assertFalse(gym.hasActiveSession());
+        assertEquals(1, gym.getWorkouts().count());
+    }
+
+    @Test
+    public void pausedMeasurementsDoNotAdvanceWorkoutOrSnapshots() {
+        gym.startFreeRow();
+        gym.onMeasured(measurement(10, 100, 24));
+        Workout workout = gym.current;
+
+        gym.pause();
+        gym.onMeasured(measurement(20, 200, 24));
+        assertEquals(10, workout.duration.get().intValue());
+        assertEquals(100, workout.distance.get().intValue());
+
+        gym.resume();
+        gym.onMeasured(measurement(25, 250, 24));
+        assertEquals(15, workout.duration.get().intValue());
+        assertEquals(150, workout.distance.get().intValue());
+        assertEquals(10, workout.pausedDuration.get().intValue());
+        assertEquals(15, gym.getSnapshots(workout).count());
+    }
+
+    @Test
+    public void pausedMeasurementsDoNotAdvanceTargetProgress() {
+        gym.select(Program.meters("200 m", 200, Difficulty.EASY));
+        gym.onMeasured(measurement(5, 50, 24));
+        assertEquals(50, gym.progress.achieved());
+
+        gym.pause();
+        gym.onMeasured(measurement(10, 150, 24));
+        assertEquals(50, gym.progress.achieved());
+
+        gym.resume();
+        gym.onMeasured(measurement(15, 200, 24));
+        assertEquals(100, gym.progress.achieved());
+        assertEquals(0.5f, gym.progress.completion(), 0.001f);
     }
 
     private Measurement measurement(int duration, int distance, int strokeRate) {

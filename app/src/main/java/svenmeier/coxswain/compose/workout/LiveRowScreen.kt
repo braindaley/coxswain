@@ -28,11 +28,14 @@ import svenmeier.coxswain.view.ValueBinding
 @Composable
 fun LiveRowScreen(
     gym: Gym,
+    refreshTick: Int = 0,
     onPause: () -> Unit,
     onResume: () -> Unit,
     onEnd: () -> Unit,
     onEditMetric: (Int) -> Unit
 ) {
+    // Reading this state makes live measurements invalidate the metric grid.
+    @Suppress("UNUSED_VARIABLE") val measurementVersion = refreshTick
     var isPaused by remember { mutableStateOf(false) } 
     
     val activeMetrics = remember {

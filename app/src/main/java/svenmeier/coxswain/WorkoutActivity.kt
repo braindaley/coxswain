@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import svenmeier.coxswain.compose.CoxswainTheme
 import svenmeier.coxswain.compose.workout.LiveRowScreen
+import svenmeier.coxswain.gym.Workout
+import svenmeier.coxswain.gym.WorkoutStatus
 
 class WorkoutActivity : ComponentActivity() {
 
@@ -25,7 +27,16 @@ class WorkoutActivity : ComponentActivity() {
                 var tick by remember { mutableIntStateOf(0) }
                 
                 DisposableEffect(Unit) {
-                    listener = Gym.Listener { tick++ }
+                    listener = Gym.Listener { scope ->
+                        tick++
+                        if (scope is Workout && (scope.status.get() == WorkoutStatus.COMPLETED ||
+                                    scope.status.get() == WorkoutStatus.ENDED_EARLY)) {
+                            WorkoutCompleteActivity.start(this@WorkoutActivity, scope)
+                            finish()
+                        } else if (scope is Workout && scope.status.get() == WorkoutStatus.DISCARDED) {
+                            finish()
+                        }
+                    }
                     gym.addListener(listener)
                     onDispose {
                         gym.removeListener(listener)
@@ -34,9 +45,13 @@ class WorkoutActivity : ComponentActivity() {
 
                 LiveRowScreen(
                     gym = gym,
-                    onPause = { /* TODO: GymService pause */ },
-                    onResume = { /* TODO: GymService resume */ },
-                    onEnd = { finish() },
+                    refreshTick = tick,
+                    onPause = { gym.pause() },
+                    onResume = { gym.resume() },
+                    onEnd = {
+                        val workout = gym.endEarly()
+                        if (workout == null) finish()
+                    },
                     onEditMetric = { /* TODO: Metric picker */ }
                 )
             }

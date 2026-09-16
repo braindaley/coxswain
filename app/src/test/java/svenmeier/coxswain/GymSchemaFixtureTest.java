@@ -24,7 +24,10 @@ import propoid.db.schema.Column;
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.gym.Snapshot;
+import svenmeier.coxswain.gym.SessionType;
 import svenmeier.coxswain.gym.Workout;
+import svenmeier.coxswain.gym.WorkoutDefinition;
+import svenmeier.coxswain.gym.WorkoutStatus;
 
 import static org.junit.Assert.assertEquals;
 
@@ -67,12 +70,11 @@ public class GymSchemaFixtureTest {
 
     @Test
     public void currentVersionReadsExistingProgramsWorkoutsAndSnapshots() {
-        assertEquals(GymVersioning.DATABASE_VERSION, repository.getDatabase().getVersion());
-
         assertEquals(2, repository.query(new Program()).count());
         assertEquals(3, repository.query(new Segment()).count());
-        assertEquals(2, repository.query(new Workout()).count());
+        assertEquals(3, repository.query(new Workout()).count());
         assertEquals(3, repository.query(new Snapshot()).count());
+        assertEquals(GymVersioning.DATABASE_VERSION, repository.getDatabase().getVersion());
 
         Program intervals = repository.query(new Program()).list().get(1);
         assertEquals("Legacy intervals", intervals.name.get());
@@ -82,6 +84,18 @@ public class GymSchemaFixtureTest {
         Workout firstWorkout = repository.query(new Workout()).list().get(0);
         assertEquals("Legacy 2K", firstWorkout.programName("Unknown"));
         assertEquals(Integer.valueOf(2000), firstWorkout.distance.get());
+        assertEquals(SessionType.DISTANCE, firstWorkout.sessionType.get());
+        assertEquals(WorkoutStatus.COMPLETED, firstWorkout.status.get());
+        assertEquals(Long.valueOf(1700000500000L), firstWorkout.completed.get());
+        Program frozen = WorkoutDefinition.thaw(firstWorkout.programDefinition.get());
+        assertEquals("Legacy 2K", frozen.name.get());
+        assertEquals(2000, frozen.getSegment(0).distance.get().intValue());
+
+        Workout orphaned = repository.query(new Workout()).list().get(2);
+        assertEquals("Workout", orphaned.programName("Unknown"));
+        assertEquals(SessionType.DISTANCE, orphaned.sessionType.get());
+        assertEquals(6200, WorkoutDefinition.thaw(orphaned.programDefinition.get())
+                .getSegment(0).distance.get().intValue());
     }
 
     @Test
@@ -95,7 +109,9 @@ public class GymSchemaFixtureTest {
         assertColumns("Segment", "_id", "_type", "difficulty", "distance", "duration",
                 "strokes", "energy", "speed", "strokeRate", "pulse", "power");
         assertColumns("Workout", "_id", "_type", "program", "location", "start", "duration",
-                "distance", "strokes", "energy", "evaluate");
+                "distance", "strokes", "energy", "evaluate", "sessionType", "programName",
+                "programDefinition", "status", "pausedDuration", "completed", "goalType",
+                "goalTarget", "raceReference", "raceOutcome", "raceMargin");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
                 "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power");
     }

@@ -35,6 +35,7 @@ import svenmeier.coxswain.WorkoutActivity
 import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
+import svenmeier.coxswain.gym.SessionType
 import java.util.Locale
 
 class WorkoutSetupActivity : ComponentActivity() {
@@ -46,10 +47,14 @@ class WorkoutSetupActivity : ComponentActivity() {
         setContent {
             CoxswainTheme {
                 WorkoutSetupScreen(
+                    initialType = intent.getStringExtra(EXTRA_TYPE) ?: "Duration",
                     onBack = { finish() },
                     onStart = { program ->
-                        gym.deselect()
-                        gym.program = program
+                        gym.start(program, when {
+                            program.segments.get().size > 1 -> SessionType.INTERVAL
+                            program.segments.get().first().duration.get() > 0 -> SessionType.DURATION
+                            else -> SessionType.DISTANCE
+                        })
                         WorkoutActivity.start(this)
                         finish()
                     },
@@ -63,9 +68,16 @@ class WorkoutSetupActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val EXTRA_TYPE = "workoutType"
+
         @JvmStatic
-        fun start(context: Context) {
-            context.startActivity(Intent(context, WorkoutSetupActivity::class.java))
+        fun start(context: Context, type: String = "Duration") {
+            context.startActivity(createIntent(context, type))
+        }
+
+        @JvmStatic
+        fun createIntent(context: Context, type: String): Intent {
+            return Intent(context, WorkoutSetupActivity::class.java).putExtra(EXTRA_TYPE, type)
         }
     }
 }
@@ -73,12 +85,13 @@ class WorkoutSetupActivity : ComponentActivity() {
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutSetupScreen(
+    initialType: String = "Duration",
     onBack: () -> Unit,
     onStart: (Program) -> Unit,
     onSaveAsProgram: (Program) -> Unit
 ) {
-    var selectedType by remember { mutableStateOf("Duration") }
-    var targetValue by remember { mutableIntStateOf(60) } 
+    var selectedType by remember(initialType) { mutableStateOf(initialType) }
+    var targetValue by remember(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
     var selectedGoal by remember { mutableStateOf("None") }
     var goalValue by remember { mutableIntStateOf(26) }
 
@@ -442,14 +455,18 @@ fun SummaryRow(label: String, value: String) {
 
 fun buildProgram(type: String, target: Int, goal: String, goalValue: Int): Program {
     val p = Program("Quick Workout")
+    p.segments.get().clear()
     val s = Segment(Difficulty.EASY)
-    if (type == "Duration") s.duration.set(target * 60) else s.distance.set(target)
+    if (type == "Duration") s.setDuration(target * 60) else s.setDistance(target)
     
     when (goal) {
-        "Stroke rate" -> s.strokeRate.set(goalValue)
-        "Speed" -> s.speed.set(goalValue) 
-        "Power" -> s.power.set(goalValue)
+        "Stroke rate" -> s.setStrokeRate(goalValue)
+        "Speed" -> s.setSpeed(paceToCentimetersPerSecond(goalValue))
+        "Power" -> s.setPower(goalValue)
     }
     p.addSegment(s)
     return p
 }
+
+fun paceToCentimetersPerSecond(secondsPer500Meters: Int): Int =
+    if (secondsPer500Meters <= 0) 0 else (50_000f / secondsPer500Meters).toInt()

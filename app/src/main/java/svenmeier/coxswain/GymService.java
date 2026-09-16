@@ -68,6 +68,8 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
     private Program program;
 
+    private long sessionGeneration = -1;
+
     @Override
     public void onCreate() {
         gym = Gym.instance(this);
@@ -136,8 +138,9 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
         gym.removeListener(this);
 
-        // do not keep program
-        gym.deselect();
+        if (gym.hasActiveSession()) {
+            gym.endEarly();
+        }
     }
 
     @Override
@@ -146,7 +149,8 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
             return;
         }
 
-        if (gym.program != this.program) {
+        if (gym.getSessionGeneration() != this.sessionGeneration) {
+            this.sessionGeneration = gym.getSessionGeneration();
             this.program = gym.program;
 
             rower.getMeasurement().reset();
@@ -184,10 +188,10 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
         if (event == Event.REJECTED) {
             Toast.makeText(this, R.string.rowing_measurement_rejected, Toast.LENGTH_LONG).show();
-            gym.deselect();
+            gym.discard();
         } else if (event == Event.PROGRAM_FINISHED && endWorkout.get() == true) {
             Toast.makeText(this, R.string.rowing_program_finished, Toast.LENGTH_LONG).show();
-            gym.deselect();
+            gym.complete();
         } else if (program != null){
             foreground.progress();
         }

@@ -98,11 +98,11 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
             when (currentTab) {
                 0 -> HomeScreen(
                     onFreeRow = {
-                        gym.deselect()
+                        gym.startFreeRow()
                         WorkoutActivity.start(activity)
                     },
-                    onQuickDuration = { WorkoutSetupActivity.start(activity) },
-                    onQuickDistance = { WorkoutSetupActivity.start(activity) },
+                    onQuickDuration = { WorkoutSetupActivity.start(activity, "Duration") },
+                    onQuickDistance = { WorkoutSetupActivity.start(activity, "Distance") },
                     onMyPrograms = { currentTab = 1 },
                     onLibrary = { currentTab = 1 }
                 )
@@ -116,7 +116,6 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         activity.startActivity(ProgramActivity.createIntent(activity, program))
                     },
                     onStartProgram = { program ->
-                        gym.deselect()
                         gym.select(program)
                         WorkoutActivity.start(activity)
                     }

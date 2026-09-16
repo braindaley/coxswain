@@ -53,12 +53,46 @@ public class Workout extends Propoid {
      */
     public final Property<Boolean> evaluate = property();
 
+    public final Property<SessionType> sessionType = property();
+
+    public final Property<String> programName = property();
+
+    public final Property<String> programDefinition = property();
+
+    public final Property<WorkoutStatus> status = property();
+
+    /** seconds excluded from active workout time */
+    public final Property<Integer> pausedDuration = property();
+
+    /** epoch milliseconds */
+    public final Property<Long> completed = property();
+
+    public final Property<PerformanceGoal> goalType = property();
+
+    public final Property<Integer> goalTarget = property();
+
+    public final Property<Workout> raceReference = property();
+
+    public final Property<RaceOutcome> raceOutcome = property();
+
+    /** signed finishing margin in milliseconds or meters, according to session type */
+    public final Property<Integer> raceMargin = property();
+
     public Workout() {
         this.duration.set(0);
         this.distance.set(0);
         this.strokes.set(0);
         this.energy.set(0);
         this.evaluate.set(true);
+        this.sessionType.set(SessionType.FREE);
+        this.programName.set(null);
+        this.status.set(WorkoutStatus.ACTIVE);
+        this.pausedDuration.set(0);
+        this.completed.set(0L);
+        this.goalType.set(PerformanceGoal.NONE);
+        this.goalTarget.set(0);
+        this.raceOutcome.set(RaceOutcome.NONE);
+        this.raceMargin.set(0);
     }
 
     public Workout(Program program) {
@@ -66,6 +100,20 @@ public class Workout extends Propoid {
 
         this.program.set(program);
         this.start.set(System.currentTimeMillis());
+        freeze(program, WorkoutDefinition.typeOf(program));
+    }
+
+    public void freeze(Program definition, SessionType type) {
+        this.sessionType.set(type);
+        if (definition == null) {
+            this.programName.set("Free Row");
+            this.programDefinition.set(null);
+        } else {
+            this.programName.set(definition.name.get());
+            this.programDefinition.set(WorkoutDefinition.freeze(definition));
+        }
+        this.goalType.set(WorkoutDefinition.goalOf(definition));
+        this.goalTarget.set(WorkoutDefinition.goalTargetOf(definition));
     }
 
 	/**
@@ -97,7 +145,11 @@ public class Workout extends Propoid {
      * @param fallback name to use if program no longer exists
      */
     public String programName(String fallback) {
-        String name = fallback;
+        String name = programName.get();
+        if (name != null && !name.isEmpty()) {
+            return name;
+        }
+        name = fallback;
         try {
             name = program.get().name.get();
         } catch (Exception noProgramSetOrAlreadyDeleted) {
@@ -109,6 +161,9 @@ public class Workout extends Propoid {
      * Can this workout be repeated, i.e. does its program still exist.
      */
     public boolean canRepeat() {
+        if (programDefinition.get() != null && !programDefinition.get().isEmpty()) {
+            return true;
+        }
         try {
             return (program.get() != null);
         } catch (LookupException programAlreadyDeleted) {
