@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,41 +74,21 @@ fun WorkoutHistoryCard(workout: Workout, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = dateStr,
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF10213F)
                 )
-                IconButton(
-                    onClick = { /* Menu */ },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color(0xFF53647C))
-                }
             }
-
-            Text(
-                text = workout.programName("Free Row"),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0B63F6),
-                modifier = Modifier.padding(top = 2.dp)
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = "${workout.distance.get()}m • ${workout.duration.get() / 60} min • ${workout.energy.get()} kcal",
-                fontSize = 14.sp,
-                color = Color(0xFF53647C)
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(workout.programName("Free Row"), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+                Text("%,d m  •  %d:%02d".format(workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), fontSize = 13.sp, color = Color(0xFF53647C))
+            }
         }
     }
 }

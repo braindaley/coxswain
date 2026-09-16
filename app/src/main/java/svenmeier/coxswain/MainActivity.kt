@@ -131,7 +131,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                 )
                 2 -> WorkoutsScreen(
                     gym = gym,
-                    onWorkoutClick = { /* Show details */ }
+                    onWorkoutClick = { WorkoutDetailsActivity.start(activity, it) }
                 )
                 3 -> Text("More Screen", modifier = Modifier.padding(24.dp))
             }
