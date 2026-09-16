@@ -94,6 +94,7 @@ fun WorkoutSetupScreen(
     var targetValue by remember(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
     var selectedGoal by remember { mutableStateOf("None") }
     var goalValue by remember { mutableIntStateOf(26) }
+    val intervalSegments = remember { mutableStateListOf(DraftSegment(SegmentType.ROW, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.ROW, 5)) }
 
     Scaffold(
         topBar = {
@@ -121,7 +122,7 @@ fun WorkoutSetupScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue)
+                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
                             onSaveAsProgram(p)
                         },
                         modifier = Modifier.weight(1f).height(56.dp),
@@ -135,7 +136,7 @@ fun WorkoutSetupScreen(
                     }
                     Button(
                         onClick = {
-                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue)
+                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
                             onStart(p)
                         },
                         modifier = Modifier.weight(1.3f).height(56.dp),
@@ -178,16 +179,9 @@ fun WorkoutSetupScreen(
                     presets = if (selectedType == "Duration") listOf(10, 20, 30, 45, 60, 90) else listOf(500, 1000, 2000, 5000, 6000, 10000)
                 )
             } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                     Text("Intervals builder coming soon...", 
-                          modifier = Modifier.padding(24.dp),
-                          style = MaterialTheme.typography.bodyMedium,
-                          color = Color(0xFF53647C))
-                }
+                IntervalBuilderCard(intervalSegments,
+                    onAdd = { intervalSegments.add(DraftSegment(SegmentType.ROW, 5)) },
+                    onDelete = { if (intervalSegments.size > 1) intervalSegments.removeAt(it) })
             }
 
             SectionLabel("SET GOAL (OPTIONAL)")
@@ -199,7 +193,7 @@ fun WorkoutSetupScreen(
             )
 
             SectionLabel("WORKOUT SUMMARY")
-            SummaryCard(selectedType, targetValue, selectedGoal, goalValue)
+            SummaryCard(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
             
             Spacer(Modifier.height(40.dp))
         }
@@ -430,7 +424,7 @@ fun GoalSelector(
 }
 
 @Composable
-fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int) {
+fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int, intervals: List<DraftSegment> = emptyList()) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
@@ -439,7 +433,7 @@ fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int) {
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SummaryRow("Type", type)
-            SummaryRow("Target", if (type == "Duration") "$target minutes" else "%,d meters".format(target))
+            SummaryRow("Target", if (type == "Intervals") "${intervals.size} segments" else if (type == "Duration") "$target minutes" else "%,d meters".format(target))
             SummaryRow("Goal", if (goal == "None") "No performance goal" else if (goal == "Speed") String.format(Locale.getDefault(), "%d:%02d /500m", goalValue/60, goalValue%60) else "$goalValue ${if (goal == "Power") "W" else "SPM"}")
         }
     }
@@ -453,20 +447,41 @@ fun SummaryRow(label: String, value: String) {
     }
 }
 
-fun buildProgram(type: String, target: Int, goal: String, goalValue: Int): Program {
+enum class SegmentType { ROW, REST }
+data class DraftSegment(val type: SegmentType, var value: Int)
+
+@Composable
+fun IntervalBuilderCard(segments: MutableList<DraftSegment>, onAdd: () -> Unit, onDelete: (Int) -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            segments.forEachIndexed { index, segment ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (segment.type == SegmentType.ROW) "ROW" else "REST", Modifier.width(52.dp), fontWeight = FontWeight.Bold, color = if (segment.type == SegmentType.ROW) Color(0xFF0B63F6) else Color(0xFF53647C))
+                    OutlinedTextField(value = segment.value.toString(), onValueChange = { segment.value = it.filter(Char::isDigit).toIntOrNull() ?: 0 }, label = { Text(if (segment.type == SegmentType.ROW) "Minutes" else "Minutes") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    IconButton(onClick = { onDelete(index) }) { Icon(Icons.Default.Delete, contentDescription = "Delete segment") }
+                }
+            }
+            OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add segment") }
+        }
+    }
+}
+
+fun buildProgram(type: String, target: Int, goal: String, goalValue: Int, intervals: List<DraftSegment> = emptyList()): Program {
     val p = Program("Quick Workout")
     p.segments.get().clear()
-    val s = Segment(Difficulty.EASY)
-    if (type == "Duration") s.setDuration(target * 60) else s.setDistance(target)
-    
-    when (goal) {
-        "Stroke rate" -> s.setStrokeRate(goalValue)
-        "Speed" -> s.setSpeed(paceToCentimetersPerSecond(goalValue))
-        "Power" -> s.setPower(goalValue)
+    if (type == "Intervals") {
+        intervals.forEach { draft -> p.addSegment(Segment(if (draft.type == SegmentType.REST) Difficulty.REST else Difficulty.EASY).setDuration(draft.value * 60)) }
+    } else {
+        val s = Segment(Difficulty.EASY)
+        if (type == "Duration") s.setDuration(target * 60) else s.setDistance(target)
+        when (goal) { "Stroke rate" -> s.setStrokeRate(goalValue); "Speed" -> s.setSpeed(paceToCentimetersPerSecond(goalValue)); "Power" -> s.setPower(goalValue) }
+        p.addSegment(s)
     }
-    p.addSegment(s)
     return p
 }
+
+fun buildProgram(type: String, target: Int, goal: String, goalValue: Int): Program =
+    buildProgram(type, target, goal, goalValue, emptyList())
 
 fun paceToCentimetersPerSecond(secondsPer500Meters: Int): Int =
     if (secondsPer500Meters <= 0) 0 else (50_000f / secondsPer500Meters).toInt()

@@ -57,8 +57,9 @@ class ProgramActivity : FragmentActivity() {
             CoxswainTheme {
                 ProgramEditorScreen(
                     program = program!!,
+                    readOnly = intent.getBooleanExtra(EXTRA_READ_ONLY, false),
                     onBack = { finish() },
-                    onMerge = { gym.mergeProgram(program) },
+                    onMerge = { if (!intent.getBooleanExtra(EXTRA_READ_ONLY, false)) gym.mergeProgram(program) },
                     onShowTargetDialog = { segment ->
                         MaterialTargetPickerDialog.create(segment).show(supportFragmentManager, "target")
                     },
@@ -72,16 +73,20 @@ class ProgramActivity : FragmentActivity() {
 
     override fun onPause() {
         super.onPause()
-        program?.let { gym.mergeProgram(it) }
+        if (!intent.getBooleanExtra(EXTRA_READ_ONLY, false)) program?.let { gym.mergeProgram(it) }
     }
 
     companion object {
+        private const val EXTRA_READ_ONLY = "readOnly"
         @JvmStatic
         fun createIntent(context: Context, program: Program): Intent {
             val intent = Intent(context, ProgramActivity::class.java)
             intent.data = Reference(program).toUri()
             return intent
         }
+
+        @JvmStatic
+        fun createReadOnlyIntent(context: Context, program: Program): Intent = createIntent(context, program).putExtra(EXTRA_READ_ONLY, true)
     }
 }
 
@@ -89,6 +94,7 @@ class ProgramActivity : FragmentActivity() {
 @Composable
 fun ProgramEditorScreen(
     program: Program,
+    readOnly: Boolean = false,
     onBack: () -> Unit,
     onMerge: () -> Unit,
     onShowTargetDialog: (Segment) -> Unit,
@@ -104,9 +110,11 @@ fun ProgramEditorScreen(
                     TextField(
                         value = programName,
                         onValueChange = { 
-                            programName = it
-                            program.name.set(it)
-                            onMerge()
+                            if (!readOnly) {
+                                programName = it
+                                program.name.set(it)
+                                onMerge()
+                            }
                         },
                         textStyle = MaterialTheme.typography.titleLarge.copy(
                             color = MaterialTheme.colorScheme.onPrimary,
@@ -142,7 +150,7 @@ fun ProgramEditorScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            if (!readOnly) ExtendedFloatingActionButton(
                 onClick = {
                     val newSegment = Segment(Difficulty.EASY)
                     newSegment.distance.set(500)
@@ -169,17 +177,21 @@ fun ProgramEditorScreen(
             itemsIndexed(segments, key = { _, item -> item.hashCode() }) { index, segment ->
                 SegmentCard(
                     segment = segment,
-                    onTargetClick = { onShowTargetDialog(segment) },
-                    onGoalClick = { onShowLimitDialog(segment) },
+                    onTargetClick = { if (!readOnly) onShowTargetDialog(segment) },
+                    onGoalClick = { if (!readOnly) onShowLimitDialog(segment) },
                     onDelete = {
-                        program.segments.get().remove(segment)
-                        onMerge()
-                        segments.remove(segment)
+                        if (!readOnly) {
+                            program.segments.get().remove(segment)
+                            onMerge()
+                            segments.remove(segment)
+                        }
                     },
                     onCycleDifficulty = {
-                        segment.difficulty.set(segment.difficulty.get().increase())
-                        onMerge()
-                        segments[index] = segment 
+                        if (!readOnly) {
+                            segment.difficulty.set(segment.difficulty.get().increase())
+                            onMerge()
+                            segments[index] = segment
+                        }
                     }
                 )
             }

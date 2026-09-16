@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
+import svenmeier.coxswain.gym.Difficulty
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +30,7 @@ fun ProgramsScreen(
     onCreateProgram: () -> Unit,
     onEditProgram: (Program) -> Unit,
     onStartProgram: (Program) -> Unit
+    ,onDuplicateProgram: (Program) -> Unit = {}, onDeleteProgram: (Program) -> Unit = {}, onSaveLibraryProgram: (Program) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val programs = remember { mutableStateListOf<Program>() }
@@ -38,7 +40,7 @@ fun ProgramsScreen(
         if (selectedTab == 0) {
             programs.addAll(gym.getPrograms().list())
         } else {
-            // Library logic - for now just empty or mock
+            programs.addAll(curatedPrograms())
         }
     }
 
@@ -102,7 +104,10 @@ fun ProgramsScreen(
                 ProgramCard(
                     program = program,
                     onView = { onEditProgram(program) },
-                    onStart = { onStartProgram(program) }
+                    onStart = { onStartProgram(program) },
+                    isLibrary = selectedTab == 1,
+                    onDuplicate = { if (selectedTab == 0) onDuplicateProgram(program) else onSaveLibraryProgram(program) },
+                    onDelete = { onDeleteProgram(program) }
                 )
             }
         }
@@ -114,6 +119,7 @@ fun ProgramCard(
     program: Program,
     onView: () -> Unit,
     onStart: () -> Unit
+    ,isLibrary: Boolean = false, onDuplicate: () -> Unit = {}, onDelete: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -147,11 +153,16 @@ fun ProgramCard(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
-                IconButton(
-                    onClick = { /* Menu */ },
-                    modifier = Modifier.size(48.dp)
-                ) {
+                var menuOpen by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color(0xFF53647C))
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(text = { Text("View program") }, onClick = { menuOpen = false; onView() })
+                        DropdownMenuItem(text = { Text(if (isLibrary) "Save to My Programs" else "Duplicate") }, onClick = { menuOpen = false; onDuplicate() })
+                        if (!isLibrary) DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() })
+                    }
                 }
             }
 
@@ -183,6 +194,12 @@ fun ProgramCard(
         }
     }
 }
+
+fun curatedPrograms(): List<Program> = listOf(
+    Program.minutes("Steady 20", 20, Difficulty.EASY),
+    Program.meters("Foundation 2K", 2000, Difficulty.MEDIUM),
+    Program.minutes("Power 30", 30, Difficulty.HARD)
+)
 
 fun Segment.describeTarget(): String {
     return if (duration.get() > 0) "${duration.get() / 60} min"

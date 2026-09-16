@@ -647,6 +647,18 @@ public class Gym {
         return duplicate;
     }
 
+    public Program duplicateProgram(final Program original, final String name) {
+        final Program duplicate = new Program(name);
+        repository.transactional(new Transaction() {
+            @Override public void doTransactional() {
+                duplicate.getSegments().clear();
+                for (Segment segment : original.getSegments()) duplicate.addSegment(segment.duplicate());
+                repository.merge(duplicate);
+            }
+        });
+        return duplicate;
+    }
+
     public class Progress {
 
         public final Segment segment;

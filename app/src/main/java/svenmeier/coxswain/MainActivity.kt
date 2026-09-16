@@ -118,6 +118,15 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     onStartProgram = { program ->
                         gym.select(program)
                         WorkoutActivity.start(activity)
+                    },
+                    onDuplicateProgram = { program ->
+                        gym.duplicateProgram(program, "${program.name.get()} copy")
+                    },
+                    onDeleteProgram = { program ->
+                        gym.delete(program)
+                    },
+                    onSaveLibraryProgram = { program ->
+                        gym.duplicateProgram(program, program.name.get())
                     }
                 )
                 2 -> WorkoutsScreen(
