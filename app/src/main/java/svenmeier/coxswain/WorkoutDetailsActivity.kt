@@ -23,7 +23,8 @@ class WorkoutDetailsActivity : ComponentActivity() {
         val workout = Reference.from<Workout>(intent)?.let { Gym.instance(this).get(it) }
         if (workout == null) { finish(); return }
         val gym = Gym.instance(this)
-        setContent { CoxswainTheme { WorkoutDetailsScreen(workout, gym.getSnapshots(workout).list(), onBack = { finish() }, onDelete = { gym.delete(workout); finish() }) } }
+        val snapshots = ArrayList(gym.getSnapshots(workout).list())
+        setContent { CoxswainTheme { WorkoutDetailsScreen(workout, snapshots, onBack = { finish() }, onDelete = { gym.delete(workout); finish() }) } }
     }
     companion object { @JvmStatic fun start(activity: Activity, workout: Workout) { activity.startActivity(Intent(activity, WorkoutDetailsActivity::class.java).setData(Reference(workout).toUri())) } }
 }

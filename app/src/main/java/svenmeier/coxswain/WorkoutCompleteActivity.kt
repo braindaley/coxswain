@@ -40,9 +40,10 @@ class WorkoutCompleteActivity : ComponentActivity() {
         }
 
         val gym = Gym.instance(this)
+        val snapshots = ArrayList(gym.getSnapshots(workout).list())
         setContent {
             CoxswainTheme {
-                WorkoutCompleteScreen(workout = workout, snapshots = gym.getSnapshots(workout).list(), onDone = { finish() })
+                WorkoutCompleteScreen(workout = workout, snapshots = snapshots, onDone = { finish() })
             }
         }
     }

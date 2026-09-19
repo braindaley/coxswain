@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
@@ -142,7 +143,7 @@ fun ProgramCard(
     ,isLibrary: Boolean = false, onDuplicate: () -> Unit = {}, onDelete: () -> Unit = {}, onRace: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("program-${program.name.get()}"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

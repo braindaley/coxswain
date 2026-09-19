@@ -121,8 +121,10 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     var period by remember { mutableStateOf("This week") }
     val now = System.currentTimeMillis()
     val range = calendarRange(period, now)
-    val workouts = gym.getWorkouts(range.first, range.second).list()
-    val previous = gym.getWorkouts(range.first - (range.second - range.first), range.first).list()
+    // Repository lists are cursor-backed. Materialize each query before opening
+    // the next one so recomposition never reads from a cursor another query closed.
+    val workouts = ArrayList(gym.getWorkouts(range.first, range.second).list())
+    val previous = ArrayList(gym.getWorkouts(range.first - (range.second - range.first), range.first).list())
     val meters = workouts.sumOf { it.distance.get() }
     val seconds = workouts.sumOf { it.duration.get() }
     val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }

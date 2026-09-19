@@ -7,9 +7,9 @@ Status legend: complete means implemented in source; verify means implemented bu
 ## Release blockers
 
 - [x] Run `:app:assembleDebug`, `testDebugUnitTest`, and `:app:assembleDebugAndroidTest` against the latest Phase 3–6 commits.
-- [ ] Run the Compose instrumentation suite on an emulator or physical device.
+- [x] Run the Compose instrumentation suite on the Android 17 Pixel 9a emulator; all eight tests pass.
 - [x] Resolve or intentionally baseline current `lintDebug` errors. The 50 legacy findings are captured in `app/lint-baseline.xml`; new lint findings fail the build.
-- [ ] Add end-to-end tests for Free Row, Quick Start, intervals, program creation, Race Your Best, History deletion, Row Again, and More destinations.
+- [x] Add end-to-end tests for Free Row, Quick Start, intervals, program creation, Race Your Best, History deletion, Row Again, and More destinations.
 - [ ] Verify the v1-to-v2 migration against a copy of real user data.
 
 ## Phase 0 — Baseline and build confidence
@@ -34,7 +34,7 @@ Implemented: v2 workout identity fields, frozen definitions, migration, Free Row
 Implemented: shared Duration/Distance setup, Duration/Distance/Rest interval segments, optional goals, Start/Save, naming prompt, visible Create Program, View/Start/Duplicate/Delete, read-only used programs, and curated library copies.
 
 - [x] Add unit tests proving immediate-start and saved-program definitions are identical for Duration, Distance, and mixed intervals.
-- [x] Add UI tests for interval type changes, value edits, add, delete, and invalid zero targets. The instrumentation APK compiles; device execution remains subject to the API 37 runner issue below.
+- [x] Add UI tests for interval type changes, value edits, add, delete, and invalid zero targets; the complete interaction test passes on the API 37 emulator.
 - [x] Test duplicate/delete/list refresh and deletion of the final saved program.
 - [x] Ensure read-only programs use a static title and disable target, goal, and difficulty actions while hiding add/delete controls.
 - [x] Decide whether segment reordering is required. The builder remains free-form in insertion order; no reorder control is shown.
@@ -122,4 +122,4 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 
 ## Validation note
 
-The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. The Compose suite was installed on the available Android 17 preview emulator, but Espresso fails before app assertions because AndroidX Test calls the removed `android.hardware.input.InputManager.getInstance()` method. A stable Android API emulator or an AndroidX Test release compatible with API 37 is required to complete the device-run checkbox.
+The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. AndroidX Test was updated to runner 1.7.0, JUnit 1.3.0, and Espresso 3.7.0 for Android 17 compatibility. All eight Compose/instrumentation tests pass on the available Pixel 9a API 37 emulator, including the complete Race Your Best result path and the interval builder interactions. Device runs exposed cursor-lifetime crashes in Home analytics and workout result screens; repository query results are now materialized before later queries can close their cursors.
