@@ -52,7 +52,7 @@ Implemented: six persisted metric choices, explicit edit mode, radio selection, 
 - [x] Display live lead/behind distance without shrinking the metric grid.
 - [x] Expose the connected rower name/type and connect/disconnect state for USB and Bluetooth.
 - [x] Remove the unused `onEditMetric` callback/TODO from `WorkoutActivity`.
-- [ ] Add deterministic tests for goal variance, interval transitions, rest countdown, and race progress.
+- [x] Add deterministic tests for goal variance, interval transitions, rest countdown, and race progress.
 
 ## Phase 4 — Complete, Details, History, and Race Your Best
 
@@ -76,7 +76,7 @@ Implemented: Free Row and Quick Start, scrollable Your Rowing card, period contr
 - [x] Add meaningful horizontal labels for days/weeks/months and multiple numbered vertical-axis ticks.
 - [x] Calculate a real rowing streak and prior-period comparison.
 - [x] Add a useful first-workout empty state with a Quick Start action.
-- [ ] Verify totals and graph buckets against History fixtures, including year boundaries.
+- [x] Verify calendar ranges, streaks, and graph buckets with workout fixtures, including year boundaries.
 - [ ] Add a small actionable connection treatment only when disconnected, if retained by the final design.
 
 ## Phase 6 — Connection, More, Settings, and integrations

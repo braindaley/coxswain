@@ -128,9 +128,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }
     val bucketMeters = MutableList(bucketCount) { 0 }
     workouts.forEach { workout ->
-        val workoutCalendar = java.util.Calendar.getInstance().also { it.timeInMillis = workout.start.get() }
-        val dayFromStart = ((startOfDay(workout.start.get()) - range.first) / 86400000L).toInt()
-        val bucket = when (period) { "This year" -> workoutCalendar.get(java.util.Calendar.MONTH); "This month" -> (dayFromStart / 7).coerceIn(0, 4); else -> dayFromStart.coerceIn(0, 6) }
+        val bucket = homeBucketIndex(period, range.first, workout.start.get())
         bucketMeters[bucket] += workout.distance.get()
     }
     val labels = bucketLabels(period, range.first, bucketCount)
@@ -165,7 +163,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     }
 }
 
-private fun calendarRange(period: String, now: Long): Pair<Long, Long> {
+internal fun calendarRange(period: String, now: Long): Pair<Long, Long> {
     val start = java.util.Calendar.getInstance().apply { timeInMillis = now; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }
     when (period) {
         "This month" -> start.set(java.util.Calendar.DAY_OF_MONTH, 1)
@@ -187,9 +185,15 @@ private fun bucketLabels(period: String, start: Long, count: Int): List<String> 
     }
 }
 
-private fun startOfDay(time: Long): Long = java.util.Calendar.getInstance().apply { timeInMillis = time; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
+internal fun startOfDay(time: Long): Long = java.util.Calendar.getInstance().apply { timeInMillis = time; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
 
-private fun rowingStreak(workouts: List<Workout>, now: Long): Int {
+internal fun homeBucketIndex(period: String, rangeStart: Long, workoutStart: Long): Int {
+    val calendar = java.util.Calendar.getInstance().apply { timeInMillis = workoutStart }
+    val dayFromStart = ((startOfDay(workoutStart) - rangeStart) / 86400000L).toInt()
+    return when (period) { "This year" -> calendar.get(java.util.Calendar.MONTH); "This month" -> (dayFromStart / 7).coerceIn(0, 4); else -> dayFromStart.coerceIn(0, 6) }
+}
+
+internal fun rowingStreak(workouts: List<Workout>, now: Long): Int {
     val days = workouts.map { startOfDay(it.start.get()) }.toSet()
     var cursor = startOfDay(now)
     if (cursor !in days) cursor -= 86400000L

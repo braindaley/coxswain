@@ -209,16 +209,26 @@ private fun IntervalStrip(gym: Gym) {
 private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
     val progress = gym.progress
     val segment = progress?.segment
-    val remaining = if (segment?.duration?.get() ?: 0 > 0) ((segment!!.duration.get() * (1f - (progress?.completion() ?: 0f))).toInt()).coerceAtLeast(0) else (segment?.getTarget() ?: 0)
     val segments = gym.program?.segments?.get().orEmpty()
-    val index = segments.indexOfFirst { it === segment }.coerceAtLeast(0)
-    val next = segments.getOrNull(index + 1)
+    val display = restDisplay(segments, segment, progress?.completion() ?: 0f)
     Column(modifier.fillMaxWidth().background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("SEGMENT ${index + 1} OF ${segments.size}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text("SEGMENT ${display.position} OF ${display.total}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text(if (segment?.duration?.get() ?: 0 > 0) "%d:%02d".format(remaining / 60, remaining % 60) else "$remaining m", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
-        Text(if (next == null) "Final segment" else "Next: ${segmentTarget(next)} row", color = Color(0xFF83D7FF), fontSize = 18.sp)
+        Text(display.remaining, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
+        Text(display.next, color = Color(0xFF83D7FF), fontSize = 18.sp)
     }
+}
+
+data class RestDisplay(val position: Int, val total: Int, val remaining: String, val next: String)
+
+internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: Float): RestDisplay {
+    val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
+    val remaining = if ((active?.duration?.get() ?: 0) > 0) {
+        val seconds = (active!!.duration.get() * (1f - completion)).toInt().coerceAtLeast(0)
+        "%d:%02d".format(seconds / 60, seconds % 60)
+    } else "${((active?.getTarget() ?: 0) * (1f - completion)).toInt().coerceAtLeast(0)} m"
+    val next = segments.getOrNull(index + 1)
+    return RestDisplay(index + 1, segments.size, remaining, if (next == null) "Final segment" else "Next: ${segmentTarget(next)} row")
 }
 
 data class GoalDisplay(val variance: String, val target: String, val state: Int)
@@ -254,18 +264,21 @@ private fun segmentTarget(segment: Segment): String = when {
 @Composable
 private fun RaceComparison(gym: Gym) {
     val pace = gym.pace ?: return
-    val current = gym.getMeasurement()
-    val expectedDistance = if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
-    val distanceRace = gym.program?.getSegmentsCount() == 1 && (gym.program?.getSegment(0)?.distance?.get() ?: 0) > 0
-    val target = if (distanceRace) gym.program!!.getSegment(0).distance.get().coerceAtLeast(1) else pace.distance.get().coerceAtLeast(1)
-    val currentProgress = (current.distance.toFloat() / target).coerceIn(0f, 1f)
-    val bestProgress = (expectedDistance / target).coerceIn(0f, 1f)
-    val lead = current.distance - expectedDistance.toInt()
+    val state = raceDisplay(gym.getMeasurement(), pace, gym.program)
     Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        RaceLine("YOU", currentProgress, Color(0xFF0B8FFF))
-        RaceLine("BEST", bestProgress, Color(0xFF9CAFC0))
-        Text(if (lead >= 0) "+$lead m ahead" else "${-lead} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (lead >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
+        RaceLine("YOU", state.currentProgress, Color(0xFF0B8FFF))
+        RaceLine("BEST", state.bestProgress, Color(0xFF9CAFC0))
+        Text(if (state.leadMeters >= 0) "+${state.leadMeters} m ahead" else "${-state.leadMeters} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (state.leadMeters >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
     }
+}
+
+data class RaceDisplay(val currentProgress: Float, val bestProgress: Float, val leadMeters: Int)
+
+internal fun raceDisplay(current: Measurement, pace: svenmeier.coxswain.gym.Workout, program: svenmeier.coxswain.gym.Program?): RaceDisplay {
+    val expectedDistance = if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
+    val distanceRace = program?.getSegmentsCount() == 1 && (program.getSegment(0).distance.get() > 0)
+    val target = if (distanceRace) program!!.getSegment(0).distance.get().coerceAtLeast(1) else pace.distance.get().coerceAtLeast(1)
+    return RaceDisplay((current.distance.toFloat() / target).coerceIn(0f, 1f), (expectedDistance / target).coerceIn(0f, 1f), current.distance - expectedDistance.toInt())
 }
 
 @Composable
