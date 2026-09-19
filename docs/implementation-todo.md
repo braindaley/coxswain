@@ -34,9 +34,9 @@ Implemented: v2 workout identity fields, frozen definitions, migration, Free Row
 Implemented: shared Duration/Distance setup, Duration/Distance/Rest interval segments, optional goals, Start/Save, naming prompt, visible Create Program, View/Start/Duplicate/Delete, read-only used programs, and curated library copies.
 
 - [x] Add unit tests proving immediate-start and saved-program definitions are identical for Duration, Distance, and mixed intervals.
-- [ ] Add UI tests for interval type changes, value edits, add, delete, and invalid zero targets.
-- [ ] Test duplicate/delete/list refresh and deletion of the final saved program.
-- [ ] Verify read-only programs expose no controls that appear editable.
+- [x] Add UI tests for interval type changes, value edits, add, delete, and invalid zero targets. The instrumentation APK compiles; device execution remains subject to the API 37 runner issue below.
+- [x] Test duplicate/delete/list refresh and deletion of the final saved program.
+- [x] Ensure read-only programs use a static title and disable target, goal, and difficulty actions while hiding add/delete controls.
 - [x] Decide whether segment reordering is required. The builder remains free-form in insertion order; no reorder control is shown.
 
 ## Phase 3 — Live Row
@@ -65,7 +65,7 @@ Implemented: shared results component, snapshot-backed statistics, charts, Detai
 - [x] Format race margins with correct units in Workout Details.
 - [x] Exclude ended-early interval results from Race Your Best candidates.
 - [x] Define compatibility from segment structure and goals without making the program display name part of compatibility.
-- [ ] Add fixtures proving best selection for distance, duration, and mixed intervals.
+- [x] Add fixtures proving best selection for distance, duration, and mixed intervals.
 - [x] Verify deletion removes snapshots and preserves the source Program.
 
 ## Phase 5 — Home
@@ -77,7 +77,7 @@ Implemented: Free Row and Quick Start, scrollable Your Rowing card, period contr
 - [x] Calculate a real rowing streak and prior-period comparison.
 - [x] Add a useful first-workout empty state with a Quick Start action.
 - [x] Verify calendar ranges, streaks, and graph buckets with workout fixtures, including year boundaries.
-- [ ] Add a small actionable connection treatment only when disconnected, if retained by the final design.
+- [x] Keep connection status out of Home per the final design; connection actions remain in More → Connect Rower.
 
 ## Phase 6 — Connection, More, Settings, and integrations
 

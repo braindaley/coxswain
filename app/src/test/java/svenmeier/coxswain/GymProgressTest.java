@@ -12,6 +12,7 @@ import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.List;
 
 import propoid.db.Repository;
 import svenmeier.coxswain.gym.Difficulty;
@@ -195,6 +196,58 @@ public class GymProgressTest {
 
         assertEquals(0, gym.getSnapshots(workout).count());
         assertTrue(gym.getPrograms().list().stream().anyMatch(value -> "Keep source".equals(value.name.get())));
+    }
+
+    @Test
+    public void duplicateDeleteAndFinalProgramFallbackRefreshRepository() {
+        Program source = gym.getPrograms().list().get(0);
+        long originalCount = gym.getPrograms().count();
+        Program duplicate = gym.duplicateProgram(source, "A copy");
+        assertEquals(originalCount + 1, gym.getPrograms().count());
+        gym.delete(duplicate);
+        assertEquals(originalCount, gym.getPrograms().count());
+
+        for (Program value : new java.util.ArrayList<>(gym.getPrograms().list())) gym.delete(value);
+        assertEquals(1, gym.getPrograms().count());
+    }
+
+    @Test
+    public void raceCandidatesSelectBestDistanceDurationAndCompletedIntervals() {
+        Program distance = Program.meters("Race distance", 100, Difficulty.HARD);
+        gym.mergeProgram(distance);
+        finish(distance, measurement(30, 100, 24));
+        finish(distance, measurement(25, 100, 24));
+        assertEquals(25, gym.getRaceCandidates(distance).get(0).duration.get().intValue());
+
+        Program duration = Program.minutes("Race duration", 1, Difficulty.HARD);
+        gym.mergeProgram(duration);
+        finish(duration, measurement(60, 1000, 24));
+        finish(duration, measurement(60, 1100, 24));
+        assertEquals(1100, gym.getRaceCandidates(duration).get(0).distance.get().intValue());
+
+        Program intervals = new Program("Race intervals");
+        intervals.getSegments().clear();
+        intervals.addSegment(new Segment(Difficulty.HARD).setDistance(10));
+        intervals.addSegment(new Segment(Difficulty.REST).setDuration(5));
+        intervals.addSegment(new Segment(Difficulty.HARD).setDistance(10));
+        gym.mergeProgram(intervals);
+        gym.select(intervals);
+        gym.onMeasured(measurement(1, 10, 24));
+        gym.onMeasured(measurement(6, 10, 20));
+        gym.onMeasured(measurement(7, 20, 24));
+        Workout completed = gym.complete();
+        gym.select(intervals);
+        gym.onMeasured(measurement(1, 5, 24));
+        gym.endEarly();
+        List<Workout> candidates = gym.getRaceCandidates(intervals);
+        assertEquals(1, candidates.size());
+        assertEquals(completed.start.get(), candidates.get(0).start.get());
+    }
+
+    private Workout finish(Program program, Measurement measurement) {
+        gym.select(program);
+        gym.onMeasured(measurement);
+        return gym.complete();
     }
 
     private Measurement measurement(int duration, int distance, int strokeRate) {

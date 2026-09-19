@@ -107,33 +107,41 @@ fun ProgramEditorScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    TextField(
-                        value = programName,
-                        onValueChange = { 
-                            if (!readOnly) {
+                    if (readOnly) {
+                        Text(
+                            text = programName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        TextField(
+                            value = programName,
+                            onValueChange = {
                                 programName = it
                                 program.name.set(it)
                                 onMerge()
-                            }
-                        },
-                        textStyle = MaterialTheme.typography.titleLarge.copy(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Done
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                            },
+                            textStyle = MaterialTheme.typography.titleLarge.copy(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                cursorColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Words,
+                                imeAction = ImeAction.Done
+                            ),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -177,6 +185,7 @@ fun ProgramEditorScreen(
             itemsIndexed(segments, key = { _, item -> item.hashCode() }) { index, segment ->
                 SegmentCard(
                     segment = segment,
+                    readOnly = readOnly,
                     onTargetClick = { if (!readOnly) onShowTargetDialog(segment) },
                     onGoalClick = { if (!readOnly) onShowLimitDialog(segment) },
                     onDelete = {
@@ -203,6 +212,7 @@ fun ProgramEditorScreen(
 @Composable
 fun SegmentCard(
     segment: Segment,
+    readOnly: Boolean = false,
     onTargetClick: () -> Unit,
     onGoalClick: () -> Unit,
     onDelete: () -> Unit,
@@ -234,7 +244,7 @@ fun SegmentCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onTargetClick() }
+                    .clickable(enabled = !readOnly) { onTargetClick() }
                     .padding(vertical = 14.dp, horizontal = 8.dp)
             ) {
                 val (value, subtitle) = when {
@@ -268,12 +278,13 @@ fun SegmentCard(
                 segment.pulse.get() > 0 -> "${segment.pulse.get()} BPM"
                 segment.speed.get() > 0 -> String.format(Locale.US, "%.2f m/s", segment.speed.get() / 100f)
                 segment.power.get() > 0 -> "${segment.power.get()} W"
-                else -> "+ Set goal"
+                else -> if (readOnly) "No goal" else "+ Set goal"
             }
 
             Surface(
                 onClick = onGoalClick,
-                color = if (limitText == "+ Set goal") Color(0xFFF4F7FB) else Color(0xFFDCEBFF),
+                enabled = !readOnly,
+                color = if (limitText == "+ Set goal" || limitText == "No goal") Color(0xFFF4F7FB) else Color(0xFFDCEBFF),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
@@ -289,6 +300,7 @@ fun SegmentCard(
             // 5. Difficulty Cycle (Indicator & Toggle)
             Surface(
                 onClick = onCycleDifficulty,
+                enabled = !readOnly,
                 color = getIntensityColor(segment.difficulty.get()).copy(alpha = 0.1f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -303,16 +315,18 @@ fun SegmentCard(
             }
 
             // 6. Delete Action
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(40.dp).padding(end = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color(0xFFBA1A1A).copy(alpha = 0.6f),
-                    modifier = Modifier.size(18.dp)
-                )
+            if (!readOnly) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(40.dp).padding(end = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = Color(0xFFBA1A1A).copy(alpha = 0.6f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
