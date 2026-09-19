@@ -139,7 +139,7 @@ fun LiveRowScreen(
                 horizontalArrangement = Arrangement.spacedBy(1.dp), verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 itemsIndexed(activeMetrics) { index, binding ->
-                    MetricCell(binding, gym.getMeasurement(), goalDisplay(binding, active, gym.getMeasurement())) { if (editMode) editingIndex = index }
+                    MetricCell(binding, gym.getMeasurement(), goalDisplay(binding, active, gym.getMeasurement()), editMode) { editingIndex = index }
                 }
             }
             
@@ -155,6 +155,7 @@ fun MetricCell(
     binding: ValueBinding,
     measurement: Measurement,
     goal: GoalDisplay? = null,
+    editable: Boolean = false,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -165,7 +166,7 @@ fun MetricCell(
         modifier = Modifier
             .fillMaxSize()
             .background(when { goal == null -> Color(0xFF042C3D); goal.state > 0 -> Color(0xFF073E34); goal.state < 0 -> Color(0xFF4A2028); else -> Color(0xFF123F51) })
-            .clickable { onClick() }
+            .clickable(enabled = editable) { onClick() }
             .semantics { contentDescription = if (goal == null) "$label metric, $valueStr" else "$label goal variance ${goal.variance}, current $valueStr, target ${goal.target}" }
             .padding(16.dp),
         contentAlignment = Alignment.Center
@@ -197,9 +198,16 @@ fun MetricCell(
 
 @Composable
 private fun IntervalStrip(gym: Gym) {
-    Row(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        val active = gym.progress?.segment
-        gym.program?.segments?.get()?.forEach { segment ->
+    val segments = gym.program?.segments?.get().orEmpty()
+    val active = gym.progress?.segment
+    val activeIndex = segments.indexOfFirst { it === active }.coerceAtLeast(0)
+    Row(
+        Modifier.fillMaxWidth().background(Color(0xFF123F51))
+            .semantics { contentDescription = "Interval ${activeIndex + 1} of ${segments.size}" }
+            .padding(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        segments.forEach { segment ->
             Box(Modifier.weight(1f).height(34.dp).background(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF6D8792) else Color(0xFF0B63F6), MaterialTheme.shapes.small), contentAlignment = Alignment.Center) { Text(if (segment.difficulty.get() == Difficulty.REST) "REST" else "ROW", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = if (segment === active) 1f else .65f)) }
         }
     }
@@ -211,7 +219,9 @@ private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
     val segment = progress?.segment
     val segments = gym.program?.segments?.get().orEmpty()
     val display = restDisplay(segments, segment, progress?.completion() ?: 0f)
-    Column(modifier.fillMaxWidth().background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Column(modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
+        contentDescription = "Rest, segment ${display.position} of ${display.total}, ${display.remaining} remaining, ${display.next}"
+    }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("SEGMENT ${display.position} OF ${display.total}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Text(display.remaining, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
@@ -265,7 +275,9 @@ private fun segmentTarget(segment: Segment): String = when {
 private fun RaceComparison(gym: Gym) {
     val pace = gym.pace ?: return
     val state = raceDisplay(gym.getMeasurement(), pace, gym.program)
-    Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
+        contentDescription = if (state.leadMeters >= 0) "Race comparison, ${state.leadMeters} meters ahead" else "Race comparison, ${-state.leadMeters} meters behind"
+    }.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         RaceLine("YOU", state.currentProgress, Color(0xFF0B8FFF))
         RaceLine("BEST", state.bestProgress, Color(0xFF9CAFC0))
         Text(if (state.leadMeters >= 0) "+${state.leadMeters} m ahead" else "${-state.leadMeters} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (state.leadMeters >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
@@ -296,6 +308,7 @@ fun TargetProgressBar(gym: Gym) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF123F51))
+            .semantics { contentDescription = "Workout progress ${((gym.progress?.completion() ?: 0f) * 100).toInt()} percent, ${gym.progress?.describe() ?: "Ready"}" }
             .padding(16.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {

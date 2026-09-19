@@ -104,7 +104,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [ ] Verify all six Live Row values are readable at rowing distance.
 - [ ] Test WaterRower USB, Bluetooth FTMS, BLE HR, and ANT+ where hardware is available.
 - [ ] Test Bluetooth loss, USB detach, app backgrounding, rotation, and process death during a workout.
-- [ ] Audit every Compose control for labels, touch-target size, focus order, and TalkBack behavior.
+- [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
 - [ ] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
 - [ ] Verify locale-aware number, date, time, and unit formatting.
 - [x] Add persisted diagnostics for failed/lost connections, incomplete sessions, export failures, and storage migration fallback.
