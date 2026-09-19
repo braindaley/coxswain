@@ -42,6 +42,7 @@ class GymLocator implements Locator {
 			try {
 				database = open(external());
 			} catch (Exception ex) {
+				DiagnosticsLog.record(context, "External database could not be opened; using internal storage");
 				Toast.makeText(context, R.string.gym_repository_extern_failed, Toast.LENGTH_LONG).show();
 			}
 		}

@@ -8,9 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import svenmeier.coxswain.Gym
+import svenmeier.coxswain.DiagnosticsLog
 
 private enum class MoreDestination { ROOT, CONNECT, DATA, DIAGNOSTICS, HELP }
 
@@ -92,6 +94,7 @@ private fun DataExportScreen(onBack: () -> Unit, onSettings: () -> Unit, onHealt
 @Composable
 private fun DiagnosticsScreen(gym: Gym, onBack: () -> Unit) {
     val measurement = gym.measurement
+    val context = LocalContext.current
     MorePage("Diagnostics", onBack) {
         StatusCard(if (gym.connected) "Rower connected" else "Rower disconnected", gym.connectedRowerName ?: "No device")
         Text("Live measurement", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -101,6 +104,8 @@ private fun DiagnosticsScreen(gym: Gym, onBack: () -> Unit) {
         DiagnosticRow("Power", "${measurement.power} W")
         DiagnosticRow("Heart rate", if (measurement.pulse > 0) "${measurement.pulse} bpm" else "No signal")
         DiagnosticRow("Heart source", gym.heartSourceName ?: "Not active")
+        Text("Last recorded issue", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(DiagnosticsLog.latest(context), style = MaterialTheme.typography.bodySmall)
         Text("If values stop changing, disconnect and reconnect the rower. Watches work when they can broadcast standard BLE Heart Rate or ANT+; ordinary watch-to-phone syncing does not provide live heart rate.", style = MaterialTheme.typography.bodySmall)
     }
 }

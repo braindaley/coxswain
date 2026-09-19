@@ -26,7 +26,7 @@ Implemented: v2 workout identity fields, frozen definitions, migration, Free Row
 
 - [ ] Add lifecycle tests for Back, rotation, process recreation, Bluetooth loss, and USB detach during active and paused sessions.
 - [ ] Verify paused time and snapshot accumulation on actual hardware.
-- [ ] Guard stale notification launches when no active session exists.
+- [x] Guard stale notification launches by routing the connection notification to Main rather than directly into a workout session.
 - [x] Confirm every finalization path clears the active Gym session.
 
 ## Phase 2 — Quick Start, Programs, and Library
@@ -107,7 +107,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [ ] Audit every Compose control for labels, touch-target size, focus order, and TalkBack behavior.
 - [ ] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
 - [ ] Verify locale-aware number, date, time, and unit formatting.
-- [ ] Add diagnostics for failed connections, incomplete sessions, export failures, and migration failures.
+- [x] Add persisted diagnostics for failed/lost connections, incomplete sessions, export failures, and storage migration fallback.
 - [ ] Run migration, backup/restore, and Health Connect device test scripts.
 - [ ] Confirm every designed screen is reachable and every visible primary control performs its stated action.
 

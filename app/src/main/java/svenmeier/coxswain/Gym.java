@@ -505,6 +505,9 @@ public class Gym {
         if (paused) resume();
         Workout finalized = current;
         finalized.status.set(status);
+        if (status == WorkoutStatus.ENDED_EARLY) {
+            DiagnosticsLog.record(context, "Workout ended before its target");
+        }
         finalized.completed.set(System.currentTimeMillis());
         finalizeRace(finalized);
         updatePausedDuration();

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import svenmeier.coxswain.Coxswain;
+import svenmeier.coxswain.DiagnosticsLog;
 import svenmeier.coxswain.Gym;
 import svenmeier.coxswain.R;
 import svenmeier.coxswain.gym.Snapshot;
@@ -84,6 +85,7 @@ public class HealthConnectExport extends Export<Workout> {
 
             @Override
             public void onFailure(@NonNull Throwable t) {
+                DiagnosticsLog.record(context, "Health Connect permission check failed: " + t.getMessage());
                 toast("Permission check failed: " + t.getMessage());
             }
         }, ContextCompat.getMainExecutor(context));
@@ -137,6 +139,7 @@ public class HealthConnectExport extends Export<Workout> {
             @Override
             public void onFailure(@NonNull Throwable t) {
                 Log.e(Coxswain.TAG, "Health Connect export failed", t);
+                DiagnosticsLog.record(context, "Health Connect export failed: " + t.getMessage());
                 toast(context.getString(R.string.healthconnect_export_failed) + ": " + t.getMessage());
             }
         }, ContextCompat.getMainExecutor(context));

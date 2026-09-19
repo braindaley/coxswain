@@ -213,6 +213,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         }
 
         gym.connected = false;
+        DiagnosticsLog.record(this, "Rower connection was lost");
         endRowing();
 
         stopSelf();
