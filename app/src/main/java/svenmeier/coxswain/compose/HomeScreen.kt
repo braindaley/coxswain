@@ -120,10 +120,21 @@ fun HomeScreen(
 private fun HomeProgress(gym: Gym) {
     var period by remember { mutableStateOf("This week") }
     val now = System.currentTimeMillis()
-    val days = when (period) { "This month" -> 30; "This year" -> 365; else -> 7 }
+    val days = when (period) { "This month" -> 31; "This year" -> 366; else -> 7 }
     val workouts = gym.getWorkouts(now - days * 86400000L, now).list()
     val meters = workouts.sumOf { it.distance.get() }
     val seconds = workouts.sumOf { it.duration.get() }
+    val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }
+    val bucketMeters = MutableList(bucketCount) { 0 }
+    val nowCalendar = java.util.Calendar.getInstance()
+    workouts.forEach { workout ->
+        val ageDays = ((now - workout.start.get()) / 86400000L).toInt().coerceAtLeast(0)
+        val workoutCalendar = java.util.Calendar.getInstance().also { it.timeInMillis = workout.start.get() }
+        val monthAge = (nowCalendar.get(java.util.Calendar.YEAR) - workoutCalendar.get(java.util.Calendar.YEAR)) * 12 + nowCalendar.get(java.util.Calendar.MONTH) - workoutCalendar.get(java.util.Calendar.MONTH)
+        val bucket = when (period) { "This year" -> monthAge.coerceIn(0, 11); "This month" -> (ageDays / 7).coerceIn(0, 4); else -> ageDays.coerceIn(0, 6) }
+        bucketMeters[bucket] += workout.distance.get()
+    }
+    val maxBucket = bucketMeters.maxOrNull()?.coerceAtLeast(1) ?: 1
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("YOUR ROWING", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C))
@@ -131,11 +142,12 @@ private fun HomeProgress(gym: Gym) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Stat("Meters rowed", "%,d m".format(meters)); Stat("Time rowed", "%d:%02d".format(seconds/60, seconds%60))
             }
+            Text(if (workouts.isEmpty()) "No rowing recorded for this period yet." else "${workouts.size} workout${if (workouts.size == 1) "" else "s"} completed. Keep the streak going.", fontSize = 13.sp, color = Color(0xFF53647C))
             Text("Activity", fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
             Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
-                repeat(if (days == 7) 7 else 8) { i -> Box(Modifier.weight(1f).height((24 + (i * 17 % 80)).dp).background(Color(0xFF0B63F6), RoundedCornerShape(4.dp))) }
+                bucketMeters.reversed().forEach { value -> Box(Modifier.weight(1f).height((18 + (value * 102 / maxBucket)).dp).background(if (value > 0) Color(0xFF0B63F6) else Color(0xFFDCE5EF), RoundedCornerShape(4.dp))) }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("0", fontSize = 11.sp); Text("Meters", fontSize = 11.sp); Text("%,d".format(meters), fontSize = 11.sp) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("0 m", fontSize = 11.sp); Text(if (period == "This year") "Months" else if (period == "This month") "Weeks" else "Days", fontSize = 11.sp); Text("%,d m".format(maxBucket), fontSize = 11.sp) }
         }
     }
 }
