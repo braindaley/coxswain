@@ -7,7 +7,7 @@ Status legend: complete means implemented in source; verify means implemented bu
 ## Release blockers
 
 - [x] Run `:app:assembleDebug`, `testDebugUnitTest`, and `:app:assembleDebugAndroidTest` against the latest Phase 3–6 commits.
-- [x] Run the Compose instrumentation suite on the Android 17 Pixel 9a emulator; all eight tests pass.
+- [x] Run the Compose instrumentation suite on the Android 17 Pixel 9a emulator; all ten tests pass.
 - [x] Resolve or intentionally baseline current `lintDebug` errors. The 50 legacy findings are captured in `app/lint-baseline.xml`; new lint findings fail the build.
 - [x] Add end-to-end tests for Free Row, Quick Start, intervals, program creation, Race Your Best, History deletion, Row Again, and More destinations.
 - [ ] Verify the v1-to-v2 migration against a copy of real user data.
@@ -25,6 +25,8 @@ Implemented: CI debug build, unit-test baseline, schema documentation, v1 migrat
 Implemented: v2 workout identity fields, frozen definitions, migration, Free Row, pause/resume, completion/end/discard, pace conversion, and export-after-finalization.
 
 - [ ] Add lifecycle tests for Back, rotation, process recreation, Bluetooth loss, and USB detach during active and paused sessions.
+- [x] Verify Back cancellation, background/foreground, and rotation preserve active and paused session state on the API 37 emulator.
+- [x] Close stale Workout launches safely when process recreation has removed the in-memory session.
 - [ ] Verify paused time and snapshot accumulation on actual hardware.
 - [x] Guard stale notification launches by routing the connection notification to Main rather than directly into a workout session.
 - [x] Confirm every finalization path clears the active Gym session.
@@ -104,6 +106,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [ ] Verify all six Live Row values are readable at rowing distance.
 - [ ] Test WaterRower USB, Bluetooth FTMS, BLE HR, and ANT+ where hardware is available.
 - [ ] Test Bluetooth loss, USB detach, app backgrounding, rotation, and process death during a workout.
+- [x] Test app backgrounding and rotation during an active/paused workout on the API 37 emulator.
 - [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
 - [ ] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
 - [ ] Verify locale-aware number, date, time, and unit formatting.
@@ -122,4 +125,4 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 
 ## Validation note
 
-The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. AndroidX Test was updated to runner 1.7.0, JUnit 1.3.0, and Espresso 3.7.0 for Android 17 compatibility. All eight Compose/instrumentation tests pass on the available Pixel 9a API 37 emulator, including the complete Race Your Best result path and the interval builder interactions. Device runs exposed cursor-lifetime crashes in Home analytics and workout result screens; repository query results are now materialized before later queries can close their cursors.
+The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. AndroidX Test was updated to runner 1.7.0, JUnit 1.3.0, and Espresso 3.7.0 for Android 17 compatibility. All ten Compose/instrumentation tests pass on the available Pixel 9a API 37 emulator, including the complete Race Your Best result path, interval builder interactions, rotation, background/foreground, Back cancellation, and stale workout launch handling. Device runs exposed cursor-lifetime crashes in Home analytics and workout result screens; repository query results are now materialized before later queries can close their cursors.

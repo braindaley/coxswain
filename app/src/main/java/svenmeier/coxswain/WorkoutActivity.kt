@@ -20,6 +20,13 @@ class WorkoutActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gym = Gym.instance(this)
+        // The OS can recreate this activity after the app process and its
+        // in-memory Gym session have gone away. Do not present an empty live
+        // row that cannot be completed or discarded.
+        if (!gym.hasActiveSession()) {
+            finish()
+            return
+        }
 
         setContent {
             CoxswainTheme {
