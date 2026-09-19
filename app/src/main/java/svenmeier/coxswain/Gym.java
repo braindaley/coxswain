@@ -23,6 +23,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 import propoid.core.Propoid;
@@ -279,6 +280,21 @@ public class Gym {
                 equal(prototype.program, selectedProgram),
                 Where.any(equal(prototype.status, WorkoutStatus.COMPLETED), equal(prototype.status, WorkoutStatus.ENDED_EARLY))))
                 .count() > 0;
+    }
+
+    public List<Workout> getRaceCandidates(Program selectedProgram) {
+        if (selectedProgram == null) return new ArrayList<>();
+        Workout prototype = new Workout();
+        List<Workout> candidates = repository.query(prototype, all(
+                equal(prototype.programDefinition, WorkoutDefinition.freeze(selectedProgram)),
+                Where.any(equal(prototype.status, WorkoutStatus.COMPLETED), equal(prototype.status, WorkoutStatus.ENDED_EARLY)))).list();
+        Collections.sort(candidates, (left, right) -> {
+            boolean timed = WorkoutDefinition.typeOf(selectedProgram) == SessionType.DURATION;
+            int leftValue = timed ? left.distance.get() : left.duration.get();
+            int rightValue = timed ? right.distance.get() : right.duration.get();
+            return timed ? Integer.compare(rightValue, leftValue) : Integer.compare(leftValue, rightValue);
+        });
+        return candidates;
     }
 
     public Match<Workout> getWorkouts(long from, long to) {

@@ -149,7 +149,8 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     },
                     onSaveLibraryProgram = { program ->
                         gym.duplicateProgram(program, program.name.get())
-                    }
+                    },
+                    onRaceProgram = { RaceYourBestActivity.start(activity, it) }
                 )
                 2 -> WorkoutsScreen(
                     gym = gym,

@@ -31,7 +31,7 @@ fun ProgramsScreen(
     onCreateProgram: () -> Unit,
     onEditProgram: (Program) -> Unit,
     onStartProgram: (Program) -> Unit
-    ,onDuplicateProgram: (Program) -> Unit = {}, onDeleteProgram: (Program) -> Unit = {}, onSaveLibraryProgram: (Program) -> Unit = {}
+    ,onDuplicateProgram: (Program) -> Unit = {}, onDeleteProgram: (Program) -> Unit = {}, onSaveLibraryProgram: (Program) -> Unit = {}, onRaceProgram: (Program) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var previewProgram by remember { mutableStateOf<Program?>(null) }
@@ -119,6 +119,7 @@ fun ProgramsScreen(
                     program = program,
                     onView = { if (selectedTab == 0) onEditProgram(program) else previewProgram = program },
                     onStart = { onStartProgram(program) },
+                    onRace = { if (selectedTab == 0) onRaceProgram(program) },
                     isLibrary = selectedTab == 1,
                     onDuplicate = {
                         if (selectedTab == 0) {
@@ -138,7 +139,7 @@ fun ProgramCard(
     program: Program,
     onView: () -> Unit,
     onStart: () -> Unit
-    ,isLibrary: Boolean = false, onDuplicate: () -> Unit = {}, onDelete: () -> Unit = {}
+    ,isLibrary: Boolean = false, onDuplicate: () -> Unit = {}, onDelete: () -> Unit = {}, onRace: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -210,6 +211,7 @@ fun ProgramCard(
                     Text("Start", fontWeight = FontWeight.Bold)
                 }
             }
+            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text("Race your best", color = Color(0xFF0B63F6)) }
         }
     }
 }
