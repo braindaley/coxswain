@@ -94,7 +94,10 @@ fun WorkoutSetupScreen(
     var targetValue by remember(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
     var selectedGoal by remember { mutableStateOf("None") }
     var goalValue by remember { mutableIntStateOf(26) }
-    val intervalSegments = remember { mutableStateListOf(DraftSegment(SegmentType.ROW, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.ROW, 5)) }
+    var pendingSave by remember { mutableStateOf<Program?>(null) }
+    var programName by remember { mutableStateOf("My workout") }
+    val intervalSegments = remember { mutableStateListOf(DraftSegment(SegmentType.DURATION, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.DURATION, 5)) }
+    val definitionValid = if (selectedType == "Intervals") intervalSegments.isNotEmpty() && intervalSegments.all { it.value > 0 } else targetValue > 0
 
     Scaffold(
         topBar = {
@@ -121,9 +124,9 @@ fun WorkoutSetupScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
+                        enabled = definitionValid,
                         onClick = {
-                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
-                            onSaveAsProgram(p)
+                            pendingSave = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
                         },
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape = RoundedCornerShape(28.dp),
@@ -135,6 +138,7 @@ fun WorkoutSetupScreen(
                         Text("Save as program", fontWeight = FontWeight.Bold)
                     }
                     Button(
+                        enabled = definitionValid,
                         onClick = {
                             val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
                             onStart(p)
@@ -180,7 +184,7 @@ fun WorkoutSetupScreen(
                 )
             } else {
                 IntervalBuilderCard(intervalSegments,
-                    onAdd = { intervalSegments.add(DraftSegment(SegmentType.ROW, 5)) },
+                    onAdd = { intervalSegments.add(DraftSegment(SegmentType.DURATION, 5)) },
                     onDelete = { if (intervalSegments.size > 1) intervalSegments.removeAt(it) })
             }
 
@@ -197,6 +201,9 @@ fun WorkoutSetupScreen(
             
             Spacer(Modifier.height(40.dp))
         }
+    }
+    pendingSave?.let { program ->
+        AlertDialog(onDismissRequest = { pendingSave = null }, title = { Text("Save as program") }, text = { OutlinedTextField(value = programName, onValueChange = { programName = it }, label = { Text("Program name") }, singleLine = true) }, confirmButton = { TextButton(enabled = programName.isNotBlank(), onClick = { program.name.set(programName.trim()); onSaveAsProgram(program); pendingSave = null }) { Text("Save") } }, dismissButton = { TextButton(onClick = { pendingSave = null }) { Text("Cancel") } })
     }
 }
 
@@ -447,18 +454,22 @@ fun SummaryRow(label: String, value: String) {
     }
 }
 
-enum class SegmentType { ROW, REST }
-data class DraftSegment(val type: SegmentType, var value: Int)
+enum class SegmentType { DURATION, DISTANCE, REST }
+data class DraftSegment(val type: SegmentType, val value: Int)
 
 @Composable
 fun IntervalBuilderCard(segments: MutableList<DraftSegment>, onAdd: () -> Unit, onDelete: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             segments.forEachIndexed { index, segment ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (segment.type == SegmentType.ROW) "ROW" else "REST", Modifier.width(52.dp), fontWeight = FontWeight.Bold, color = if (segment.type == SegmentType.ROW) Color(0xFF0B63F6) else Color(0xFF53647C))
-                    OutlinedTextField(value = segment.value.toString(), onValueChange = { segment.value = it.filter(Char::isDigit).toIntOrNull() ?: 0 }, label = { Text(if (segment.type == SegmentType.ROW) "Minutes" else "Minutes") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                    IconButton(onClick = { onDelete(index) }) { Icon(Icons.Default.Delete, contentDescription = "Delete segment") }
+                Column(Modifier.fillMaxWidth().background(Color(0xFFF7FAFD), RoundedCornerShape(12.dp)).padding(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        SegmentType.values().forEach { type -> FilterChip(selected = segment.type == type, onClick = { segments[index] = segment.copy(type = type, value = if (type == SegmentType.DISTANCE) 500 else 1) }, label = { Text(when(type) { SegmentType.DURATION -> "Duration"; SegmentType.DISTANCE -> "Distance"; SegmentType.REST -> "Rest" }) }) }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(value = segment.value.toString(), onValueChange = { segments[index] = segment.copy(value = it.filter(Char::isDigit).toIntOrNull() ?: 0) }, label = { Text(if (segment.type == SegmentType.DISTANCE) "Meters" else "Minutes") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        IconButton(onClick = { onDelete(index) }, enabled = segments.size > 1) { Icon(Icons.Default.Delete, contentDescription = "Delete segment") }
+                    }
                 }
             }
             OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add segment") }
@@ -470,7 +481,12 @@ fun buildProgram(type: String, target: Int, goal: String, goalValue: Int, interv
     val p = Program("Quick Workout")
     p.segments.get().clear()
     if (type == "Intervals") {
-        intervals.forEach { draft -> p.addSegment(Segment(if (draft.type == SegmentType.REST) Difficulty.REST else Difficulty.EASY).setDuration(draft.value * 60)) }
+        intervals.forEach { draft ->
+            val segment = Segment(if (draft.type == SegmentType.REST) Difficulty.REST else Difficulty.EASY)
+            if (draft.type == SegmentType.DISTANCE) segment.setDistance(draft.value) else segment.setDuration(draft.value * 60)
+            if (draft.type != SegmentType.REST) when (goal) { "Stroke rate" -> segment.setStrokeRate(goalValue); "Speed" -> segment.setSpeed(paceToCentimetersPerSecond(goalValue)); "Power" -> segment.setPower(goalValue) }
+            p.addSegment(segment)
+        }
     } else {
         val s = Segment(Difficulty.EASY)
         if (type == "Duration") s.setDuration(target * 60) else s.setDistance(target)

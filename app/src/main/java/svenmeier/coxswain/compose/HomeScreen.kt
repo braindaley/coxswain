@@ -30,12 +30,16 @@ import svenmeier.coxswain.gym.Workout
 @Composable
 fun HomeScreen(
     gym: Gym? = null,
+    refreshKey: Int = 0,
     onFreeRow: () -> Unit,
     onQuickDuration: () -> Unit,
     onQuickDistance: () -> Unit,
     onMyPrograms: () -> Unit,
-    onLibrary: () -> Unit
+    onLibrary: () -> Unit,
+    onWorkoutDetails: (Workout) -> Unit = {},
+    onRowAgain: (Workout) -> Unit = {}
 ) {
+    @Suppress("UNUSED_VARIABLE") val refresh = refreshKey
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -97,26 +101,17 @@ fun HomeScreen(
 
         // 2x2 Grid for Quick Actions (matches manifest "Duration, Distance, My Programs, and Library")
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickActionCard(
-                    title = "Duration",
-                    subtitle = "Time-based",
-                    iconRes = R.drawable.ic_nav_workouts_24dp,
-                    modifier = Modifier.weight(1f),
-                    onClick = onQuickDuration
-                )
-                QuickActionCard(
-                    title = "Distance",
-                    subtitle = "Meter-based",
-                    iconRes = R.drawable.ic_nav_performance_24dp,
-                    modifier = Modifier.weight(1f),
-                    onClick = onQuickDistance
-                )
-            }
+            QuickActionCard(
+                title = "Quick Start",
+                subtitle = "Choose duration, distance, or intervals",
+                iconRes = R.drawable.ic_nav_workouts_24dp,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onQuickDuration
+            )
         }
         gym?.let { HomeProgress(it) }
         Spacer(Modifier.height(24.dp))
-        gym?.getWorkouts()?.list()?.firstOrNull()?.let { LastWorkoutCard(it) }
+        gym?.getWorkouts()?.list()?.firstOrNull()?.let { LastWorkoutCard(it, { onWorkoutDetails(it) }, { onRowAgain(it) }) }
         Spacer(Modifier.height(40.dp))
     }
 }
@@ -147,8 +142,8 @@ private fun HomeProgress(gym: Gym) {
 
 @Composable private fun Stat(label: String, value: String) { Column { Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F)); Text(label, fontSize = 12.sp, color = Color(0xFF53647C)) } }
 
-@Composable private fun LastWorkoutCard(workout: Workout) {
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) { Column(Modifier.padding(20.dp)) { Text("LAST WORKOUT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C)); Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Spacer(Modifier.height(8.dp)); Text("%,d m  •  %d:%02d".format(workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = Color(0xFF53647C)); Spacer(Modifier.height(12.dp)); Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("Row again") } } }
+@Composable private fun LastWorkoutCard(workout: Workout, onDetails: () -> Unit, onRowAgain: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onDetails), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) { Column(Modifier.padding(20.dp)) { Text("LAST WORKOUT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C)); Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Spacer(Modifier.height(8.dp)); Text("%,d m  •  %d:%02d".format(workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = Color(0xFF53647C)); Spacer(Modifier.height(12.dp)); Button(onClick = onRowAgain, modifier = Modifier.fillMaxWidth()) { Text("Row again") } } }
 }
 
 @Composable

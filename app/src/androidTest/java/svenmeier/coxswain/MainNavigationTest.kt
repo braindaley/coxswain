@@ -27,6 +27,6 @@ class MainNavigationTest {
         compose.onNodeWithText("WORKOUT HISTORY").assertIsDisplayed()
 
         compose.onNodeWithContentDescription("More").performClick()
-        compose.onNodeWithText("More Screen").assertIsDisplayed()
+        compose.onNodeWithText("MORE").assertIsDisplayed()
     }
 }

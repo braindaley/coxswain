@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import svenmeier.coxswain.compose.CoxswainTheme
@@ -25,6 +26,7 @@ class WorkoutActivity : ComponentActivity() {
                 // To keep the UI reactive, we'll need a state that updates
                 // whenever the gym measurement changes
                 var tick by remember { mutableIntStateOf(0) }
+                var confirmEnd by remember { mutableStateOf(false) }
                 
                 DisposableEffect(Unit) {
                     listener = Gym.Listener { scope ->
@@ -54,6 +56,16 @@ class WorkoutActivity : ComponentActivity() {
                     },
                     onEditMetric = { /* TODO: Metric picker */ }
                 )
+                BackHandler { confirmEnd = true }
+                if (confirmEnd) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { confirmEnd = false },
+                        title = { androidx.compose.material3.Text("End this session?") },
+                        text = { androidx.compose.material3.Text("Choose End session to save the workout in History, or keep rowing.") },
+                        confirmButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false; if (gym.endEarly() == null) finish() }) { androidx.compose.material3.Text("End session") } },
+                        dismissButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false }) { androidx.compose.material3.Text("Keep rowing") } }
+                    )
+                }
             }
         }
     }

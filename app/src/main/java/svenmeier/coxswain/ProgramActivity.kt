@@ -181,9 +181,10 @@ fun ProgramEditorScreen(
                     onGoalClick = { if (!readOnly) onShowLimitDialog(segment) },
                     onDelete = {
                         if (!readOnly) {
-                            program.segments.get().remove(segment)
+                            program.removeSegment(segment)
                             onMerge()
-                            segments.remove(segment)
+                            segments.clear()
+                            segments.addAll(program.segments.get())
                         }
                     },
                     onCycleDifficulty = {
@@ -229,15 +230,7 @@ fun SegmentCard(
                     .background(getIntensityColor(segment.difficulty.get()))
             )
 
-            // 2. Drag Handle
-            Icon(
-                painter = painterResource(id = R.drawable.ic_reorder_24dp),
-                contentDescription = null,
-                tint = Color(0xFFCAD4E1),
-                modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
-            )
-
-            // 3. Primary Content Column
+            // Primary Content Column
             Column(
                 modifier = Modifier
                     .weight(1f)

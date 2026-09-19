@@ -39,7 +39,7 @@ fun LiveRowScreen(
 ) {
     // Reading this state makes live measurements invalidate the metric grid.
     @Suppress("UNUSED_VARIABLE") val measurementVersion = refreshTick
-    var isPaused by remember { mutableStateOf(false) } 
+    val isPaused = gym.isPaused
     var editMode by remember { mutableStateOf(false) }
     var editingIndex by remember { mutableIntStateOf(-1) }
     val context = LocalContext.current
@@ -107,7 +107,7 @@ fun LiveRowScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = { if (isPaused) onResume() else onPause(); isPaused = !isPaused },
+                    onClick = { if (isPaused) onResume() else onPause() },
                     modifier = Modifier.weight(1f).height(64.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6)),
                     shape = MaterialTheme.shapes.extraLarge

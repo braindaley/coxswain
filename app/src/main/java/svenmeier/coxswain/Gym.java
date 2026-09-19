@@ -272,6 +272,15 @@ public class Gym {
         }
     }
 
+    public boolean hasWorkoutHistory(Program selectedProgram) {
+        if (selectedProgram == null || Row.getID(selectedProgram) == Row.TRANSIENT) return false;
+        Workout prototype = new Workout();
+        return repository.query(prototype, all(
+                equal(prototype.program, selectedProgram),
+                Where.any(equal(prototype.status, WorkoutStatus.COMPLETED), equal(prototype.status, WorkoutStatus.ENDED_EARLY))))
+                .count() > 0;
+    }
+
     public Match<Workout> getWorkouts(long from, long to) {
         Workout prototype = new Workout();
 

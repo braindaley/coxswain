@@ -18,8 +18,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import svenmeier.coxswain.compose.*
 import svenmeier.coxswain.gym.Program
+import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.bluetooth.BluetoothActivity
 import svenmeier.coxswain.bluetooth.BlueWriter
 
@@ -41,6 +45,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainContainer(gym: Gym, activity: MainActivity) {
     var currentTab by remember { mutableIntStateOf(0) }
+    var refreshKey by remember { mutableIntStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) refreshKey++ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     
     val tabs = listOf(
         TabItem("Home", Icons.Default.Home),
@@ -100,6 +111,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
             when (currentTab) {
                 0 -> HomeScreen(
                     gym = gym,
+                    refreshKey = refreshKey,
                     onFreeRow = {
                         gym.startFreeRow()
                         WorkoutActivity.start(activity)
@@ -107,16 +119,23 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     onQuickDuration = { WorkoutSetupActivity.start(activity, "Duration") },
                     onQuickDistance = { WorkoutSetupActivity.start(activity, "Distance") },
                     onMyPrograms = { currentTab = 1 },
-                    onLibrary = { currentTab = 1 }
+                    onLibrary = { currentTab = 1 },
+                    onWorkoutDetails = { WorkoutDetailsActivity.start(activity, it) },
+                    onRowAgain = { workout ->
+                        val definition = WorkoutDefinition.thaw(workout.programDefinition.get())
+                        if (definition == null) gym.startFreeRow() else gym.start(definition, WorkoutDefinition.typeOf(definition))
+                        WorkoutActivity.start(activity)
+                    }
                 )
                 1 -> ProgramsScreen(
                     gym = gym,
+                    refreshKey = refreshKey,
                     onCreateProgram = {
                         val p = gym.newProgram()
                         activity.startActivity(ProgramActivity.createIntent(activity, p))
                     },
                     onEditProgram = { program ->
-                        activity.startActivity(ProgramActivity.createIntent(activity, program))
+                        activity.startActivity(if (gym.hasWorkoutHistory(program)) ProgramActivity.createReadOnlyIntent(activity, program) else ProgramActivity.createIntent(activity, program))
                     },
                     onStartProgram = { program ->
                         gym.select(program)
@@ -134,6 +153,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                 )
                 2 -> WorkoutsScreen(
                     gym = gym,
+                    refreshKey = refreshKey,
                     onWorkoutClick = { WorkoutDetailsActivity.start(activity, it) }
                 )
                 3 -> MoreScreen(

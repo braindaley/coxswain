@@ -27,15 +27,29 @@ import svenmeier.coxswain.gym.Difficulty
 @Composable
 fun ProgramsScreen(
     gym: Gym,
+    refreshKey: Int = 0,
     onCreateProgram: () -> Unit,
     onEditProgram: (Program) -> Unit,
     onStartProgram: (Program) -> Unit
     ,onDuplicateProgram: (Program) -> Unit = {}, onDeleteProgram: (Program) -> Unit = {}, onSaveLibraryProgram: (Program) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var previewProgram by remember { mutableStateOf<Program?>(null) }
+    var pendingDelete by remember { mutableStateOf<Program?>(null) }
     val programs = remember { mutableStateListOf<Program>() }
+    previewProgram?.let { preview ->
+        AlertDialog(
+            onDismissRequest = { previewProgram = null },
+            title = { Text(preview.name.get()) },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { preview.segments.get().forEachIndexed { index, segment -> Text("${index + 1}. ${if (segment.difficulty.get() == Difficulty.REST) "Rest · " else "Row · "}${segment.describeTarget()}") } } },
+            confirmButton = { TextButton(onClick = { previewProgram = null }) { Text("Done") } }
+        )
+    }
+    pendingDelete?.let { target ->
+        AlertDialog(onDismissRequest = { pendingDelete = null }, title = { Text("Delete program?") }, text = { Text("${target.name.get()} will be removed. Completed workout history is preserved.") }, confirmButton = { TextButton(onClick = { onDeleteProgram(target); programs.remove(target); pendingDelete = null }) { Text("Delete") } }, dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } })
+    }
     
-    LaunchedEffect(selectedTab) {
+    LaunchedEffect(selectedTab, refreshKey) {
         programs.clear()
         if (selectedTab == 0) {
             programs.addAll(gym.getPrograms().list())
@@ -103,11 +117,16 @@ fun ProgramsScreen(
             items(programs) { program ->
                 ProgramCard(
                     program = program,
-                    onView = { onEditProgram(program) },
+                    onView = { if (selectedTab == 0) onEditProgram(program) else previewProgram = program },
                     onStart = { onStartProgram(program) },
                     isLibrary = selectedTab == 1,
-                    onDuplicate = { if (selectedTab == 0) onDuplicateProgram(program) else onSaveLibraryProgram(program) },
-                    onDelete = { onDeleteProgram(program) }
+                    onDuplicate = {
+                        if (selectedTab == 0) {
+                            onDuplicateProgram(program)
+                            programs.clear(); programs.addAll(gym.getPrograms().list())
+                        } else onSaveLibraryProgram(program)
+                    },
+                    onDelete = { pendingDelete = program }
                 )
             }
         }
