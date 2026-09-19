@@ -217,7 +217,17 @@ fun ProgramCard(
 fun curatedPrograms(): List<Program> = listOf(
     Program.minutes("Steady 20", 20, Difficulty.EASY),
     Program.meters("Foundation 2K", 2000, Difficulty.MEDIUM),
-    Program.minutes("Power 30", 30, Difficulty.HARD)
+    Program.minutes("Power 30", 30, Difficulty.HARD),
+    Program("Intervals 4 × 2") .also { program ->
+        program.segments.get().clear()
+        program.addSegment(Segment(Difficulty.HARD).setDuration(120))
+        program.addSegment(Segment(Difficulty.REST).setDuration(60))
+        program.addSegment(Segment(Difficulty.HARD).setDuration(120))
+        program.addSegment(Segment(Difficulty.REST).setDuration(60))
+        program.addSegment(Segment(Difficulty.HARD).setDuration(120))
+        program.addSegment(Segment(Difficulty.REST).setDuration(60))
+        program.addSegment(Segment(Difficulty.HARD).setDuration(120))
+    }
 )
 
 fun Segment.describeTarget(): String {

@@ -38,9 +38,10 @@ class WorkoutCompleteActivity : ComponentActivity() {
             return
         }
 
+        val gym = Gym.instance(this)
         setContent {
             CoxswainTheme {
-                WorkoutCompleteScreen(workout = workout, onDone = { finish() })
+                WorkoutCompleteScreen(workout = workout, snapshots = gym.getSnapshots(workout).list(), onDone = { finish() })
             }
         }
     }
@@ -57,7 +58,7 @@ class WorkoutCompleteActivity : ComponentActivity() {
 }
 
 @Composable
-private fun WorkoutCompleteScreen(workout: Workout, onDone: () -> Unit) {
+private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onDone: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -73,26 +74,10 @@ private fun WorkoutCompleteScreen(workout: Workout, onDone: () -> Unit) {
         }
         Text(primary, fontSize = 56.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
-        ResultRow("Distance", "%,d m".format(workout.distance.get()))
-        ResultRow("Time", formatDuration(workout.duration.get()))
-        ResultRow("Calories", workout.energy.get().toString())
+        WorkoutResults(workout, snapshots)
         Spacer(Modifier.weight(1f))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) {
             Text("Done", fontWeight = FontWeight.Bold)
         }
     }
 }
-
-@Composable
-private fun ResultRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, fontWeight = FontWeight.Bold)
-    }
-}
-
-private fun formatDuration(seconds: Int): String =
-    "%d:%02d".format(seconds / 60, seconds % 60)

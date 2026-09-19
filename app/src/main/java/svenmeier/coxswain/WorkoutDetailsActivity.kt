@@ -22,23 +22,21 @@ class WorkoutDetailsActivity : ComponentActivity() {
         val workout = Reference.from<Workout>(intent)?.let { Gym.instance(this).get(it) }
         if (workout == null) { finish(); return }
         val gym = Gym.instance(this)
-        setContent { CoxswainTheme { WorkoutDetailsScreen(workout, onBack = { finish() }, onDelete = { gym.delete(workout); finish() }) } }
+        setContent { CoxswainTheme { WorkoutDetailsScreen(workout, gym.getSnapshots(workout).list(), onBack = { finish() }, onDelete = { gym.delete(workout); finish() }) } }
     }
     companion object { @JvmStatic fun start(activity: Activity, workout: Workout) { activity.startActivity(Intent(activity, WorkoutDetailsActivity::class.java).setData(Reference(workout).toUri())) } }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WorkoutDetailsScreen(workout: Workout, onBack: () -> Unit, onDelete: () -> Unit) {
+private fun WorkoutDetailsScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onBack: () -> Unit, onDelete: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     Scaffold(topBar = { TopAppBar(title = { Text("Workout details") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) }) { pad ->
         Column(Modifier.padding(pad).padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             val primary = if (workout.sessionType.get() == SessionType.DURATION) "%,d m".format(workout.distance.get()) else "%d:%02d".format(workout.duration.get()/60, workout.duration.get()%60)
             Text(primary, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
-            DetailRow("Distance", "%,d m".format(workout.distance.get()))
-            DetailRow("Time", "%d:%02d".format(workout.duration.get()/60, workout.duration.get()%60))
-            DetailRow("Calories", "${workout.energy.get()} kcal")
+            WorkoutResults(workout, snapshots)
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text("Delete workout") }
         }
