@@ -18,7 +18,7 @@ Implemented: CI debug build, unit-test baseline, schema documentation, v1 migrat
 
 - [x] Expand Compose navigation tests beyond switching the four bottom tabs, including Quick Start variants and every More destination.
 - [x] Add migration fixtures containing multiple programs, completed workouts, deleted-program history, and snapshots.
-- [ ] Confirm a clean checkout passes CI after all current changes.
+- [x] Confirm the committed tree passes the CI-equivalent build, unit, instrumentation-APK, and lint tasks from a clean detached checkout.
 
 ## Phase 1 — Workout identity and session lifecycle
 
