@@ -36,8 +36,7 @@ fun LiveRowScreen(
     refreshTick: Int = 0,
     onPause: () -> Unit,
     onResume: () -> Unit,
-    onEnd: () -> Unit,
-    onEditMetric: (Int) -> Unit
+    onEnd: () -> Unit
 ) {
     // Reading this state makes live measurements invalidate the metric grid.
     @Suppress("UNUSED_VARIABLE") val measurementVersion = refreshTick
@@ -84,7 +83,7 @@ fun LiveRowScreen(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                text = if (gym.connected) "● Connected" else "● Disconnected",
+                                text = if (gym.connected) "● ${gym.connectedRowerName ?: "Connected"}" else "● Disconnected",
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 fontSize = 10.sp,
                                 color = if (gym.connected) Color(0xFF22C55E) else Color(0xFFFF7185),
@@ -135,12 +134,12 @@ fun LiveRowScreen(
             val active = gym.progress?.segment
             if (gym.program?.segments?.get()?.size ?: 0 > 1) IntervalStrip(gym)
             if (gym.pace != null) RaceComparison(gym)
-            if (active?.difficulty?.get() == Difficulty.REST) RestCountdown(gym) else LazyVerticalGrid(
+            if (active?.difficulty?.get() == Difficulty.REST) RestCountdown(gym, Modifier.weight(1f)) else LazyVerticalGrid(
                 columns = GridCells.Fixed(2), modifier = Modifier.weight(1f).background(Color(0xFF31505D)),
                 horizontalArrangement = Arrangement.spacedBy(1.dp), verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 itemsIndexed(activeMetrics) { index, binding ->
-                    MetricCell(binding, gym.getMeasurement(), goalVariance(binding, active, gym.getMeasurement())) { if (editMode) { editingIndex = index; onEditMetric(index) } }
+                    MetricCell(binding, gym.getMeasurement(), goalDisplay(binding, active, gym.getMeasurement())) { if (editMode) editingIndex = index }
                 }
             }
             
@@ -155,7 +154,7 @@ fun LiveRowScreen(
 fun MetricCell(
     binding: ValueBinding,
     measurement: Measurement,
-    variance: Int? = null,
+    goal: GoalDisplay? = null,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -165,16 +164,15 @@ fun MetricCell(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (variance == null) Color(0xFF042C3D) else if (variance >= 0) Color(0xFF073E34) else Color(0xFF4A2028))
+            .background(when { goal == null -> Color(0xFF042C3D); goal.state > 0 -> Color(0xFF073E34); goal.state < 0 -> Color(0xFF4A2028); else -> Color(0xFF123F51) })
             .clickable { onClick() }
-            .semantics { contentDescription = "$label metric, $valueStr" }
+            .semantics { contentDescription = if (goal == null) "$label metric, $valueStr" else "$label goal variance ${goal.variance}, current $valueStr, target ${goal.target}" }
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (variance != null) Text(if (variance >= 0) "+$variance" else "$variance", color = if (variance >= 0) Color(0xFF4ADE80) else Color(0xFFFF7185), fontWeight = FontWeight.Bold)
             Text(
-                text = valueStr,
+                text = goal?.variance ?: valueStr,
                 style = MaterialTheme.typography.displayLarge.copy(
                     fontSize = 56.sp,
                     fontWeight = FontWeight.W500,
@@ -184,11 +182,15 @@ fun MetricCell(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = label,
+                text = if (goal == null) label else "$label  $valueStr",
                 style = MaterialTheme.typography.labelMedium,
                 color = Color(0xFFCAD4E1),
                 fontWeight = FontWeight.Bold
             )
+            if (goal != null) {
+                Spacer(Modifier.height(3.dp))
+                Text("Target ${goal.target}", fontSize = 12.sp, color = Color(0xFFB5D3DE))
+            }
         }
     }
 }
@@ -204,39 +206,65 @@ private fun IntervalStrip(gym: Gym) {
 }
 
 @Composable
-private fun RestCountdown(gym: Gym) {
+private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
     val progress = gym.progress
     val segment = progress?.segment
     val remaining = if (segment?.duration?.get() ?: 0 > 0) ((segment!!.duration.get() * (1f - (progress?.completion() ?: 0f))).toInt()).coerceAtLeast(0) else (segment?.getTarget() ?: 0)
-    Column(Modifier.fillMaxWidth().weight(1f).background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    val segments = gym.program?.segments?.get().orEmpty()
+    val index = segments.indexOfFirst { it === segment }.coerceAtLeast(0)
+    val next = segments.getOrNull(index + 1)
+    Column(modifier.fillMaxWidth().background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("SEGMENT ${index + 1} OF ${segments.size}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Text(if (segment?.duration?.get() ?: 0 > 0) "%d:%02d".format(remaining / 60, remaining % 60) else "$remaining m", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
-        Text("Next: Row", color = Color(0xFF83D7FF), fontSize = 18.sp)
+        Text(if (next == null) "Final segment" else "Next: ${segmentTarget(next)} row", color = Color(0xFF83D7FF), fontSize = 18.sp)
     }
 }
 
-private fun goalVariance(binding: ValueBinding, segment: Segment?, measurement: Measurement): Int? {
+data class GoalDisplay(val variance: String, val target: String, val state: Int)
+
+internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement): GoalDisplay? {
     if (segment == null || segment.getLimit() <= 0) return null
-    val actual = getValueForBinding(binding, measurement)
     return when {
-        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> actual - segment.strokeRate.get()
-        binding == ValueBinding.POWER && segment.power.get() > 0 -> actual - segment.power.get()
-        binding == ValueBinding.SPEED && segment.speed.get() > 0 -> actual - segment.speed.get()
-        binding == ValueBinding.SPLIT && segment.speed.get() > 0 -> segment.speed.get() - actual
+        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> signedGoal(measurement.strokeRate - segment.strokeRate.get(), "", "${segment.strokeRate.get()}")
+        binding == ValueBinding.POWER && segment.power.get() > 0 -> signedGoal(measurement.power - segment.power.get(), " W", "${segment.power.get()} W")
+        binding == ValueBinding.SPEED && segment.speed.get() > 0 -> {
+            val difference = measurement.speed - segment.speed.get()
+            GoalDisplay(String.format(java.util.Locale.getDefault(), "%+.1f m/s", difference / 100f), String.format(java.util.Locale.getDefault(), "%.1f m/s", segment.speed.get() / 100f), stateFor(difference, 5))
+        }
+        binding == ValueBinding.SPLIT && segment.speed.get() > 0 && measurement.speed > 0 -> {
+            val targetPace = 50000 / segment.speed.get()
+            val actualPace = 50000 / measurement.speed
+            signedGoal(targetPace - actualPace, " s", "%d:%02d /500 m".format(targetPace / 60, targetPace % 60))
+        }
         else -> null
     }
+}
+
+private fun signedGoal(value: Int, unit: String, target: String) = GoalDisplay(if (value > 0) "+$value$unit" else "$value$unit", target, stateFor(value, 1))
+private fun stateFor(value: Int, tolerance: Int): Int = when { value > tolerance -> 1; value < -tolerance -> -1; else -> 0 }
+
+private fun segmentTarget(segment: Segment): String = when {
+    segment.duration.get() > 0 -> "%d:%02d".format(segment.duration.get() / 60, segment.duration.get() % 60)
+    segment.distance.get() > 0 -> "${segment.distance.get()} m"
+    segment.strokes.get() > 0 -> "${segment.strokes.get()} strokes"
+    else -> "${segment.energy.get()} kcal"
 }
 
 @Composable
 private fun RaceComparison(gym: Gym) {
     val pace = gym.pace ?: return
     val current = gym.getMeasurement()
-    val distanceTarget = (gym.program?.getSegment(0)?.getTarget() ?: pace.distance.get()).coerceAtLeast(1)
-    val currentProgress = (current.distance.toFloat() / distanceTarget).coerceIn(0f, 1f)
-    val bestProgress = (pace.distance.toFloat() / distanceTarget).coerceIn(0f, 1f)
+    val expectedDistance = if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
+    val distanceRace = gym.program?.getSegmentsCount() == 1 && (gym.program?.getSegment(0)?.distance?.get() ?: 0) > 0
+    val target = if (distanceRace) gym.program!!.getSegment(0).distance.get().coerceAtLeast(1) else pace.distance.get().coerceAtLeast(1)
+    val currentProgress = (current.distance.toFloat() / target).coerceIn(0f, 1f)
+    val bestProgress = (expectedDistance / target).coerceIn(0f, 1f)
+    val lead = current.distance - expectedDistance.toInt()
     Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         RaceLine("YOU", currentProgress, Color(0xFF0B8FFF))
         RaceLine("BEST", bestProgress, Color(0xFF9CAFC0))
+        Text(if (lead >= 0) "+$lead m ahead" else "${-lead} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (lead >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
     }
 }
 

@@ -31,6 +31,7 @@ class RaceYourBestActivity : ComponentActivity() {
     companion object { @JvmStatic fun start(activity: Activity, program: Program) { activity.startActivity(Intent(activity, RaceYourBestActivity::class.java).setData(Reference(program).toUri())) } }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RaceYourBestScreen(program: Program, candidates: List<Workout>, onBack: () -> Unit, onStart: (Workout) -> Unit) {
     var selected by remember(candidates) { mutableStateOf(candidates.firstOrNull()) }

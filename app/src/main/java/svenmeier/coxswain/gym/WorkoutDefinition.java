@@ -40,6 +40,30 @@ public final class WorkoutDefinition {
         }
     }
 
+    /**
+     * Returns a stable compatibility signature for racing. The program name is
+     * deliberately excluded: renaming or duplicating an unchanged workout must
+     * not invalidate its history.
+     */
+    public static String compatibilityKey(Program program) {
+        if (program == null) return null;
+        try {
+            JSONObject frozen = new JSONObject(freeze(program));
+            return frozen.getJSONArray("segments").toString();
+        } catch (JSONException impossible) {
+            throw new IllegalStateException(impossible);
+        }
+    }
+
+    public static String compatibilityKey(String definition) {
+        if (definition == null || definition.isEmpty()) return null;
+        try {
+            return new JSONObject(definition).getJSONArray("segments").toString();
+        } catch (JSONException invalidDefinition) {
+            return null;
+        }
+    }
+
     public static Program thaw(String definition) {
         if (definition == null || definition.isEmpty()) {
             return null;

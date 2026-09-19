@@ -31,4 +31,17 @@ public class WorkoutDefinitionTest {
         assertEquals(PerformanceGoal.POWER, workout.goalType.get());
         assertEquals(190, workout.goalTarget.get().intValue());
     }
+
+    @Test
+    public void raceCompatibilityIgnoresProgramNameButIncludesStructureAndGoals() {
+        Program original = Program.meters("Original", 2000, Difficulty.MEDIUM);
+        original.getSegment(0).setStrokeRate(24);
+        Program renamed = Program.meters("Renamed copy", 2000, Difficulty.MEDIUM);
+        renamed.getSegment(0).setStrokeRate(24);
+        Program changedGoal = Program.meters("Original", 2000, Difficulty.MEDIUM);
+        changedGoal.getSegment(0).setStrokeRate(26);
+
+        assertEquals(WorkoutDefinition.compatibilityKey(original), WorkoutDefinition.compatibilityKey(renamed));
+        org.junit.Assert.assertNotEquals(WorkoutDefinition.compatibilityKey(original), WorkoutDefinition.compatibilityKey(changedGoal));
+    }
 }

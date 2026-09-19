@@ -24,6 +24,7 @@ import svenmeier.coxswain.gym.WorkoutStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34)
@@ -40,6 +41,7 @@ public class GymProgressTest {
         Constructor<Gym> constructor = Gym.class.getDeclaredConstructor(Context.class);
         constructor.setAccessible(true);
         gym = constructor.newInstance(context);
+        gym.initialize();
     }
 
     @After
@@ -131,6 +133,34 @@ public class GymProgressTest {
         gym.onMeasured(measurement(15, 200, 24));
         assertEquals(100, gym.progress.achieved());
         assertEquals(0.5f, gym.progress.completion(), 0.001f);
+    }
+
+    @Test
+    public void backupRestorePreservesProgramsResultsSnapshotsAndPreferences() {
+        Program program = Program.meters("Backup 1K", 1000, Difficulty.HARD);
+        gym.mergeProgram(program);
+        gym.select(program);
+        gym.onMeasured(measurement(12, 1000, 26));
+        Workout workout = gym.complete();
+        long start = workout.start.get();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("backup_test", true).commit();
+
+        String backup = gym.createBackup();
+        gym.delete(workout);
+        gym.delete(program);
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean("backup_test", false).commit();
+
+        gym.restoreBackup(backup);
+
+        Workout restored = gym.getWorkouts().list().stream().filter(value -> value.start.get() == start).findFirst().orElse(null);
+        assertNotNull(restored);
+        assertEquals("Backup 1K", restored.programName("Missing"));
+        assertEquals(1000, restored.distance.get().intValue());
+        assertTrue(gym.getSnapshots(restored).count() > 0);
+        assertTrue(androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getBoolean("backup_test", false));
+        Program restoredProgram = gym.getPrograms().list().stream().filter(value -> "Backup 1K".equals(value.name.get())).findFirst().orElse(null);
+        assertNotNull(restoredProgram);
+        assertTrue(gym.hasWorkoutHistory(restoredProgram));
     }
 
     private Measurement measurement(int duration, int distance, int strokeRate) {

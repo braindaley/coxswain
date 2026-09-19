@@ -109,6 +109,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         }
 
         this.foreground = new Foreground();
+        gym.connecting = true;
 
         this.motivator = new DefaultMotivator(getApplicationContext());
 
@@ -121,6 +122,9 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
     private void endRowing() {
         gym.connected = false;
+        gym.connecting = false;
+        gym.connectedRowerName = null;
+        gym.heartSourceName = null;
         this.rower.close();
         this.rower = null;
 
@@ -167,7 +171,10 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         }
 
         gym.connected = true;
+        gym.connecting = false;
+        gym.connectedRowerName = rower.getName();
         this.heart = Heart.create(GymService.this, rower.getMeasurement(), this);
+        gym.heartSourceName = this.heart.getClass().getSimpleName();
 
         foreground.connected();
 

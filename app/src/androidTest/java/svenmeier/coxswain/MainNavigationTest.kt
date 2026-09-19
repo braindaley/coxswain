@@ -29,4 +29,35 @@ class MainNavigationTest {
         compose.onNodeWithContentDescription("More").performClick()
         compose.onNodeWithText("MORE").assertIsDisplayed()
     }
+
+    @Test
+    fun quickStartOpensSharedWorkoutSetup() {
+        compose.onNodeWithText("Quick Start").performClick()
+        compose.onNodeWithText("Duration workout").assertIsDisplayed()
+        compose.onNodeWithText("Distance").performClick()
+        compose.onNodeWithText("Distance workout").assertIsDisplayed()
+        compose.onNodeWithText("Intervals").performClick()
+        compose.onNodeWithText("Intervals workout").assertIsDisplayed()
+        compose.onNodeWithText("Add segment").assertIsDisplayed()
+    }
+
+    @Test
+    fun everyMoreDestinationIsReachable() {
+        compose.onNodeWithContentDescription("More").performClick()
+
+        compose.onNodeWithText("Connect rower").performClick()
+        compose.onNodeWithText("Bluetooth FTMS").assertIsDisplayed()
+        compose.onNodeWithText("Back").performClick()
+
+        compose.onNodeWithText("Data & Export").performClick()
+        compose.onNodeWithText("Sync existing history").assertIsDisplayed()
+        compose.onNodeWithText("Back").performClick()
+
+        compose.onNodeWithText("Diagnostics").performClick()
+        compose.onNodeWithText("Live measurement").assertIsDisplayed()
+        compose.onNodeWithText("Back").performClick()
+
+        compose.onNodeWithText("Help").performClick()
+        compose.onNodeWithText("Race Your Best").assertIsDisplayed()
+    }
 }

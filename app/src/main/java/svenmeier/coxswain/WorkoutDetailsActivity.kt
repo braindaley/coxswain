@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import propoid.db.Reference
 import svenmeier.coxswain.compose.CoxswainTheme
-import svenmeier.coxswain.gym.SessionType
 import svenmeier.coxswain.gym.Workout
 
 class WorkoutDetailsActivity : ComponentActivity() {
@@ -36,11 +35,10 @@ private fun WorkoutDetailsScreen(workout: Workout, snapshots: List<svenmeier.cox
     Scaffold(topBar = { TopAppBar(title = { Text("Workout details") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            val primary = if (workout.sessionType.get() == SessionType.DURATION) "%,d m".format(workout.distance.get()) else "%d:%02d".format(workout.duration.get()/60, workout.duration.get()%60)
-            Text(primary, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+            Text(workoutPrimaryValue(workout), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
             WorkoutResults(workout, snapshots)
             RaceResultSummary(workout)
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(24.dp))
             OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text("Delete workout") }
         }
     }

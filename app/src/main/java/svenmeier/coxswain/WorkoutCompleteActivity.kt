@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import propoid.db.Reference
 import svenmeier.coxswain.compose.CoxswainTheme
-import svenmeier.coxswain.gym.SessionType
 import svenmeier.coxswain.gym.Workout
 
 class WorkoutCompleteActivity : ComponentActivity() {
@@ -69,16 +68,11 @@ private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.co
         Spacer(Modifier.height(12.dp))
         Text(workout.programName("Workout"), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(28.dp))
-        val primary = if (workout.sessionType.get() == SessionType.DURATION) {
-            "%,d m".format(workout.distance.get())
-        } else {
-            formatDuration(workout.duration.get())
-        }
-        Text(primary, fontSize = 56.sp, fontWeight = FontWeight.Bold)
+        Text(workoutPrimaryValue(workout), fontSize = 56.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
         WorkoutResults(workout, snapshots)
         RaceResultSummary(workout)
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) {
             Text("Done", fontWeight = FontWeight.Bold)
         }

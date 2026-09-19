@@ -55,6 +55,8 @@ public class Workout2HealthConnectTest {
 
         HeartRateRecord heartRate = (HeartRateRecord) findRecord(records, HeartRateRecord.class);
         assertTrue(heartRate.getSamples().size() <= Workout2HealthConnect.MAX_SAMPLES);
+        assertEquals("coxswain_workout_1700000000000", records.get(0).getMetadata().getClientRecordId());
+        assertEquals("coxswain_workout_1700000000000_heart", heartRate.getMetadata().getClientRecordId());
     }
 
     private boolean hasRecord(List<Record> records, Class<? extends Record> type) {

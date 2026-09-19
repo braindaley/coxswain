@@ -3,6 +3,9 @@ package svenmeier.coxswain
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -24,8 +27,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import svenmeier.coxswain.compose.*
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.WorkoutDefinition
-import svenmeier.coxswain.bluetooth.BluetoothActivity
-import svenmeier.coxswain.bluetooth.BlueWriter
+import svenmeier.coxswain.google.HealthConnectBridge
+import svenmeier.coxswain.google.HealthConnectExport
 
 class MainActivity : ComponentActivity() {
 
@@ -46,6 +49,16 @@ class MainActivity : ComponentActivity() {
 fun MainContainer(gym: Gym, activity: MainActivity) {
     var currentTab by remember { mutableIntStateOf(0) }
     var refreshKey by remember { mutableIntStateOf(0) }
+    val createBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) runCatching { activity.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(gym.createBackup()) } }
+            .onSuccess { Toast.makeText(activity, "Backup saved", Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(activity, "Backup failed: ${it.message}", Toast.LENGTH_LONG).show() }
+    }
+    val restoreBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) runCatching { activity.contentResolver.openInputStream(uri)?.bufferedReader()?.use { gym.restoreBackup(it.readText()) } ?: error("Could not read backup") }
+            .onSuccess { refreshKey++; Toast.makeText(activity, "Backup restored", Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(activity, "Restore failed: ${it.message}", Toast.LENGTH_LONG).show() }
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) refreshKey++ }
@@ -158,9 +171,15 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     onWorkoutClick = { WorkoutDetailsActivity.start(activity, it) }
                 )
                 3 -> MoreScreen(
-                    onConnect = { BluetoothActivity.start(activity, "Rower", BlueWriter.SERVICE_FITNESS_MACHINE.toString()) },
+                    gym = gym,
+                    onConnect = { GymService.start(activity, GymService.CONNECTOR_BLUETOOTH) },
+                    onDisconnect = { GymService.start(activity, GymService.CONNECTOR_NONE) },
                     onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) },
-                    onDataExport = { activity.startActivity(SettingsActivity.createIntent(activity)) }
+                    onHealthSettings = { runCatching { activity.startActivity(HealthConnectBridge.getSettingsIntent()) } },
+                    onEnableAutomaticHealthExport = { HealthConnectExport.enableAutomatic(activity) },
+                    onSyncHealthHistory = { HealthConnectExport.syncHistory(activity) },
+                    onBackup = { createBackup.launch("coxswain-backup.json") },
+                    onRestore = { restoreBackup.launch(arrayOf("application/json", "application/octet-stream")) }
                 )
             }
         }

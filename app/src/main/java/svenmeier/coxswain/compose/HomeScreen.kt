@@ -109,7 +109,7 @@ fun HomeScreen(
                 onClick = onQuickDuration
             )
         }
-        gym?.let { HomeProgress(it) }
+        gym?.let { HomeProgress(it, onQuickDuration) }
         Spacer(Modifier.height(24.dp))
         gym?.getWorkouts()?.list()?.firstOrNull()?.let { LastWorkoutCard(it, { onWorkoutDetails(it) }, { onRowAgain(it) }) }
         Spacer(Modifier.height(40.dp))
@@ -117,24 +117,27 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeProgress(gym: Gym) {
+private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     var period by remember { mutableStateOf("This week") }
     val now = System.currentTimeMillis()
-    val days = when (period) { "This month" -> 31; "This year" -> 366; else -> 7 }
-    val workouts = gym.getWorkouts(now - days * 86400000L, now).list()
+    val range = calendarRange(period, now)
+    val workouts = gym.getWorkouts(range.first, range.second).list()
+    val previous = gym.getWorkouts(range.first - (range.second - range.first), range.first).list()
     val meters = workouts.sumOf { it.distance.get() }
     val seconds = workouts.sumOf { it.duration.get() }
     val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }
     val bucketMeters = MutableList(bucketCount) { 0 }
-    val nowCalendar = java.util.Calendar.getInstance()
     workouts.forEach { workout ->
-        val ageDays = ((now - workout.start.get()) / 86400000L).toInt().coerceAtLeast(0)
         val workoutCalendar = java.util.Calendar.getInstance().also { it.timeInMillis = workout.start.get() }
-        val monthAge = (nowCalendar.get(java.util.Calendar.YEAR) - workoutCalendar.get(java.util.Calendar.YEAR)) * 12 + nowCalendar.get(java.util.Calendar.MONTH) - workoutCalendar.get(java.util.Calendar.MONTH)
-        val bucket = when (period) { "This year" -> monthAge.coerceIn(0, 11); "This month" -> (ageDays / 7).coerceIn(0, 4); else -> ageDays.coerceIn(0, 6) }
+        val dayFromStart = ((startOfDay(workout.start.get()) - range.first) / 86400000L).toInt()
+        val bucket = when (period) { "This year" -> workoutCalendar.get(java.util.Calendar.MONTH); "This month" -> (dayFromStart / 7).coerceIn(0, 4); else -> dayFromStart.coerceIn(0, 6) }
         bucketMeters[bucket] += workout.distance.get()
     }
+    val labels = bucketLabels(period, range.first, bucketCount)
     val maxBucket = bucketMeters.maxOrNull()?.coerceAtLeast(1) ?: 1
+    val streak = rowingStreak(gym.getWorkouts().list(), now)
+    val priorMeters = previous.sumOf { it.distance.get() }
+    val comparison = if (priorMeters == 0) null else ((meters - priorMeters) * 100 / priorMeters)
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("YOUR ROWING", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C))
@@ -142,14 +145,57 @@ private fun HomeProgress(gym: Gym) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Stat("Meters rowed", "%,d m".format(meters)); Stat("Time rowed", "%d:%02d".format(seconds/60, seconds%60))
             }
-            Text(if (workouts.isEmpty()) "No rowing recorded for this period yet." else "${workouts.size} workout${if (workouts.size == 1) "" else "s"} completed. Keep the streak going.", fontSize = 13.sp, color = Color(0xFF53647C))
-            Text("Activity", fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
-            Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
-                bucketMeters.reversed().forEach { value -> Box(Modifier.weight(1f).height((18 + (value * 102 / maxBucket)).dp).background(if (value > 0) Color(0xFF0B63F6) else Color(0xFFDCE5EF), RoundedCornerShape(4.dp))) }
+            if (workouts.isEmpty()) {
+                Text("Your first row will start your progress chart.", fontSize = 13.sp, color = Color(0xFF53647C))
+                OutlinedButton(onClick = onQuickStart, modifier = Modifier.fillMaxWidth()) { Text("Set up a quick row") }
+            } else {
+                Text(buildString { append("$streak day streak"); comparison?.let { append("  •  "); append(if (it >= 0) "+$it%" else "$it%"); append(" vs prior period") } }, fontSize = 13.sp, color = Color(0xFF53647C))
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("0 m", fontSize = 11.sp); Text(if (period == "This year") "Months" else if (period == "This month") "Weeks" else "Days", fontSize = 11.sp); Text("%,d m".format(maxBucket), fontSize = 11.sp) }
+            Text("Activity", fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+            Row(Modifier.fillMaxWidth().height(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
+                    Text("%,d m".format(maxBucket), fontSize = 10.sp); Text("%,d m".format(maxBucket / 2), fontSize = 10.sp); Text("0 m", fontSize = 10.sp)
+                }
+                Row(Modifier.weight(1f).fillMaxHeight(), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.Bottom) {
+                    bucketMeters.forEach { value -> Box(Modifier.weight(1f).height((10 + (value * 150 / maxBucket)).dp).background(if (value > 0) Color(0xFF0B63F6) else Color(0xFFDCE5EF), RoundedCornerShape(4.dp))) }
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(start = 52.dp), horizontalArrangement = Arrangement.SpaceBetween) { labels.forEach { Text(it, fontSize = 9.sp) } }
         }
     }
+}
+
+private fun calendarRange(period: String, now: Long): Pair<Long, Long> {
+    val start = java.util.Calendar.getInstance().apply { timeInMillis = now; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }
+    when (period) {
+        "This month" -> start.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        "This year" -> { start.set(java.util.Calendar.MONTH, java.util.Calendar.JANUARY); start.set(java.util.Calendar.DAY_OF_MONTH, 1) }
+        else -> { start.firstDayOfWeek = java.util.Calendar.MONDAY; start.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY) }
+    }
+    val end = java.util.Calendar.getInstance().apply { timeInMillis = start.timeInMillis }
+    when (period) { "This month" -> end.add(java.util.Calendar.MONTH, 1); "This year" -> end.add(java.util.Calendar.YEAR, 1); else -> end.add(java.util.Calendar.DAY_OF_MONTH, 7) }
+    return start.timeInMillis to end.timeInMillis
+}
+
+private fun bucketLabels(period: String, start: Long, count: Int): List<String> {
+    val calendar = java.util.Calendar.getInstance().apply { timeInMillis = start }
+    val format = java.text.SimpleDateFormat(if (period == "This year") "MMM" else if (period == "This month") "d" else "EEE", java.util.Locale.getDefault())
+    return List(count) {
+        val label = format.format(calendar.time)
+        calendar.add(if (period == "This year") java.util.Calendar.MONTH else java.util.Calendar.DAY_OF_MONTH, if (period == "This month") 7 else 1)
+        label
+    }
+}
+
+private fun startOfDay(time: Long): Long = java.util.Calendar.getInstance().apply { timeInMillis = time; set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
+
+private fun rowingStreak(workouts: List<Workout>, now: Long): Int {
+    val days = workouts.map { startOfDay(it.start.get()) }.toSet()
+    var cursor = startOfDay(now)
+    if (cursor !in days) cursor -= 86400000L
+    var streak = 0
+    while (cursor in days) { streak++; cursor -= 86400000L }
+    return streak
 }
 
 @Composable private fun Stat(label: String, value: String) { Column { Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F)); Text(label, fontSize = 12.sp, color = Color(0xFF53647C)) } }

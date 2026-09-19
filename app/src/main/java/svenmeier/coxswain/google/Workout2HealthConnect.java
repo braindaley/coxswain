@@ -86,13 +86,13 @@ public class Workout2HealthConnect {
         }
 
         if (!hrSamples.isEmpty()) {
-            records.add(new HeartRateRecord(start, zoneOffset, end, zoneOffset, hrSamples, Metadata.manualEntry((Device) null)));
+            records.add(new HeartRateRecord(start, zoneOffset, end, zoneOffset, hrSamples, Metadata.manualEntry(workoutId + "_heart", 0, (Device) null)));
         }
         if (!speedSamples.isEmpty()) {
-            records.add(new SpeedRecord(start, zoneOffset, end, zoneOffset, speedSamples, Metadata.manualEntry((Device) null)));
+            records.add(new SpeedRecord(start, zoneOffset, end, zoneOffset, speedSamples, Metadata.manualEntry(workoutId + "_speed", 0, (Device) null)));
         }
         if (!powerSamples.isEmpty()) {
-            records.add(new PowerRecord(start, zoneOffset, end, zoneOffset, powerSamples, Metadata.manualEntry((Device) null)));
+            records.add(new PowerRecord(start, zoneOffset, end, zoneOffset, powerSamples, Metadata.manualEntry(workoutId + "_power", 0, (Device) null)));
         }
 
         // 5. Total Calories
@@ -104,7 +104,7 @@ public class Workout2HealthConnect {
                     end,
                     zoneOffset,
                     Energy.kilocalories((double) energy),
-                    Metadata.manualEntry((Device) null)
+                    Metadata.manualEntry(workoutId + "_calories", 0, (Device) null)
             ));
         }
 
@@ -117,7 +117,7 @@ public class Workout2HealthConnect {
                     end,
                     zoneOffset,
                     Length.meters((double) distance),
-                    Metadata.manualEntry((Device) null)
+                    Metadata.manualEntry(workoutId + "_distance", 0, (Device) null)
             ));
         }
 

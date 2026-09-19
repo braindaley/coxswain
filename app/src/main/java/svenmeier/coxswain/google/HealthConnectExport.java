@@ -27,6 +27,7 @@ import svenmeier.coxswain.R;
 import svenmeier.coxswain.gym.Snapshot;
 import svenmeier.coxswain.gym.Workout;
 import svenmeier.coxswain.io.Export;
+import propoid.util.content.Preference;
 
 public class HealthConnectExport extends Export<Workout> {
 
@@ -57,6 +58,10 @@ public class HealthConnectExport extends Export<Workout> {
 
     @Override
     public void start(Workout workout, boolean automatic) {
+        if (wasExported(workout)) {
+            if (!automatic) toast("Workout is already synced with Health Connect");
+            return;
+        }
         if (client == null) {
             toast("Health Connect not available on this device");
             return;
@@ -124,6 +129,7 @@ public class HealthConnectExport extends Export<Workout> {
         Futures.addCallback(insertFuture, new FutureCallback<InsertRecordsResponse>() {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
+                markExported(workout);
                 Log.d(Coxswain.TAG, "Inserted " + result.getRecordIdsList().size() + " records into Health Connect: " + result.getRecordIdsList());
                 toast(context.getString(R.string.healthconnect_export_finished));
             }
@@ -138,5 +144,39 @@ public class HealthConnectExport extends Export<Workout> {
 
     private void toast(final String text) {
         handler.post(() -> Toast.makeText(context, text, Toast.LENGTH_LONG).show());
+    }
+
+    private boolean wasExported(Workout workout) {
+        return context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE)
+                .getBoolean(Long.toString(workout.start.get()), false);
+    }
+
+    private void markExported(Workout workout) {
+        context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).edit()
+                .putBoolean(Long.toString(workout.start.get()), true).apply();
+    }
+
+    /** Syncs every finalized workout. Stable client record IDs and local markers make retries safe. */
+    public static void syncHistory(Context context) {
+        List<Workout> workouts = Gym.instance(context).getWorkouts().list();
+        if (workouts.isEmpty()) {
+            Toast.makeText(context, "No workout history to sync", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        int pending = 0;
+        for (Workout workout : workouts) {
+            HealthConnectExport export = new HealthConnectExport(context);
+            if (!export.wasExported(workout)) {
+                pending++;
+                export.start(workout, false);
+            }
+        }
+        Toast.makeText(context, pending == 0 ? "Health Connect is already up to date" : "Syncing " + pending + " workouts", Toast.LENGTH_LONG).show();
+    }
+
+    public static void enableAutomatic(Context context) {
+        Preference.getString(context, R.string.preference_export_last).set(HealthConnectExport.class.getName());
+        Preference.getBoolean(context, R.string.preference_export_auto).set(true);
+        Toast.makeText(context, "Completed workouts will export to Health Connect automatically", Toast.LENGTH_LONG).show();
     }
 }
