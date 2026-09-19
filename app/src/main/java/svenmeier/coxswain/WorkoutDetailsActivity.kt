@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,11 +34,12 @@ class WorkoutDetailsActivity : ComponentActivity() {
 private fun WorkoutDetailsScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onBack: () -> Unit, onDelete: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     Scaffold(topBar = { TopAppBar(title = { Text("Workout details") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) }) { pad ->
-        Column(Modifier.padding(pad).padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             val primary = if (workout.sessionType.get() == SessionType.DURATION) "%,d m".format(workout.distance.get()) else "%d:%02d".format(workout.duration.get()/60, workout.duration.get()%60)
             Text(primary, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
             WorkoutResults(workout, snapshots)
+            RaceResultSummary(workout)
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text("Delete workout") }
         }

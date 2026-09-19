@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.gym.Snapshot
 import svenmeier.coxswain.gym.Workout
+import svenmeier.coxswain.gym.RaceOutcome
 
 @Composable
 fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
@@ -20,18 +21,38 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     val avgRate = snapshots.map { it.strokeRate.get() }.filter { it > 0 }.average().toInt()
     val maxPower = snapshots.maxOfOrNull { it.power.get() } ?: 0
     val maxRate = snapshots.maxOfOrNull { it.strokeRate.get() } ?: 0
+    val rates = snapshots.map { it.strokeRate.get() }.filter { it > 0 }
+    val splits = snapshots.map { it.speed.get() }.filter { it > 0 }.map { 50000 / it }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         ResultMetricRow("Distance", "%,d m".format(workout.distance.get()))
         ResultMetricRow("Time", "%d:%02d".format(workout.duration.get() / 60, workout.duration.get() % 60))
         ResultMetricRow("Calories", "${workout.energy.get()} kcal")
         ResultMetricRow("Average stroke rate", if (avgRate == 0) "—" else "$avgRate SPM")
         ResultMetricRow("Average power", if (avgPower == 0) "—" else "$avgPower W")
+        ResultMetricRow("Average split", if (splits.isEmpty()) "—" else formatSplit(splits.average().toInt()))
+        ResultMetricRow("Best split", if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
+        ResultMetricRow("Total strokes", "%,d".format(workout.strokes.get()))
+        ResultMetricRow("Stroke rate range", if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
         ResultChart("Split time", snapshots.map { it.speed.get() }, " /500 m")
         ResultChart("Power", snapshots.map { it.power.get() }, " W")
         ResultChart("Stroke rate", snapshots.map { it.strokeRate.get() }, " SPM")
         if (maxPower > 0 || maxRate > 0) Text("Max power $maxPower W  •  Max stroke rate $maxRate SPM", fontSize = 12.sp, color = Color(0xFF53647C))
     }
 }
+
+@Composable
+fun RaceResultSummary(workout: Workout) {
+    val outcome = workout.raceOutcome.get()
+    if (outcome == RaceOutcome.NONE) return
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = if (outcome == RaceOutcome.WON) Color(0xFFE4F7EC) else Color(0xFFFFEEF0))) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(if (outcome == RaceOutcome.WON) "You won the race" else if (outcome == RaceOutcome.TIED) "Race tied" else "Best time ahead", fontWeight = FontWeight.Bold)
+            Text("Margin: ${workout.raceMargin.get()}", fontSize = 13.sp, color = Color(0xFF53647C))
+        }
+    }
+}
+
+private fun formatSplit(seconds: Int): String = "%d:%02d /500 m".format(seconds / 60, seconds % 60)
 
 @Composable private fun ResultMetricRow(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = Color(0xFF53647C)); Text(value, fontWeight = FontWeight.Bold) } }
 

@@ -17,6 +17,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +62,7 @@ class WorkoutCompleteActivity : ComponentActivity() {
 @Composable
 private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onDone: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("WORKOUT COMPLETE", style = MaterialTheme.typography.labelLarge)
@@ -75,6 +77,7 @@ private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.co
         Text(primary, fontSize = 56.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
         WorkoutResults(workout, snapshots)
+        RaceResultSummary(workout)
         Spacer(Modifier.weight(1f))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) {
             Text("Done", fontWeight = FontWeight.Bold)
