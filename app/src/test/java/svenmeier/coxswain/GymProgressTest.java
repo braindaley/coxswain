@@ -163,6 +163,40 @@ public class GymProgressTest {
         assertTrue(gym.hasWorkoutHistory(restoredProgram));
     }
 
+    @Test
+    public void everyFinalizationPathClearsTheActiveSession() {
+        gym.startFreeRow();
+        gym.onMeasured(measurement(5, 20, 20));
+        assertNotNull(gym.endEarly());
+        assertFalse(gym.hasActiveSession());
+
+        gym.select(Program.meters("Finish", 20, Difficulty.EASY));
+        gym.onMeasured(measurement(5, 20, 20));
+        assertNotNull(gym.complete());
+        assertFalse(gym.hasActiveSession());
+
+        gym.startFreeRow();
+        gym.onMeasured(measurement(5, 20, 20));
+        assertNotNull(gym.discard());
+        assertFalse(gym.hasActiveSession());
+        assertEquals(2, gym.getWorkouts().count());
+    }
+
+    @Test
+    public void deletingWorkoutDeletesSnapshotsButPreservesProgram() {
+        Program program = Program.meters("Keep source", 100, Difficulty.EASY);
+        gym.mergeProgram(program);
+        gym.select(program);
+        gym.onMeasured(measurement(10, 100, 22));
+        Workout workout = gym.complete();
+        assertTrue(gym.getSnapshots(workout).count() > 0);
+
+        gym.delete(workout);
+
+        assertEquals(0, gym.getSnapshots(workout).count());
+        assertTrue(gym.getPrograms().list().stream().anyMatch(value -> "Keep source".equals(value.name.get())));
+    }
+
     private Measurement measurement(int duration, int distance, int strokeRate) {
         Measurement measurement = new Measurement();
         measurement.setDuration(duration);

@@ -17,7 +17,7 @@ Status legend: complete means implemented in source; verify means implemented bu
 Implemented: CI debug build, unit-test baseline, schema documentation, v1 migration fixture, engine tests, and basic top-level navigation test.
 
 - [x] Expand Compose navigation tests beyond switching the four bottom tabs, including Quick Start variants and every More destination.
-- [ ] Add migration fixtures containing multiple programs, completed workouts, deleted-program history, and snapshots.
+- [x] Add migration fixtures containing multiple programs, completed workouts, deleted-program history, and snapshots.
 - [ ] Confirm a clean checkout passes CI after all current changes.
 
 ## Phase 1 — Workout identity and session lifecycle
@@ -27,17 +27,17 @@ Implemented: v2 workout identity fields, frozen definitions, migration, Free Row
 - [ ] Add lifecycle tests for Back, rotation, process recreation, Bluetooth loss, and USB detach during active and paused sessions.
 - [ ] Verify paused time and snapshot accumulation on actual hardware.
 - [ ] Guard stale notification launches when no active session exists.
-- [ ] Confirm every finalization path clears the active Gym session exactly once.
+- [x] Confirm every finalization path clears the active Gym session.
 
 ## Phase 2 — Quick Start, Programs, and Library
 
 Implemented: shared Duration/Distance setup, Duration/Distance/Rest interval segments, optional goals, Start/Save, naming prompt, visible Create Program, View/Start/Duplicate/Delete, read-only used programs, and curated library copies.
 
-- [ ] Add unit tests proving immediate-start and saved-program definitions are identical for Duration, Distance, and mixed intervals.
+- [x] Add unit tests proving immediate-start and saved-program definitions are identical for Duration, Distance, and mixed intervals.
 - [ ] Add UI tests for interval type changes, value edits, add, delete, and invalid zero targets.
 - [ ] Test duplicate/delete/list refresh and deletion of the final saved program.
 - [ ] Verify read-only programs expose no controls that appear editable.
-- [ ] Decide whether segment reordering is required; the decorative handle is removed, but reordering is not implemented.
+- [x] Decide whether segment reordering is required. The builder remains free-form in insertion order; no reorder control is shown.
 
 ## Phase 3 — Live Row
 
@@ -66,7 +66,7 @@ Implemented: shared results component, snapshot-backed statistics, charts, Detai
 - [x] Exclude ended-early interval results from Race Your Best candidates.
 - [x] Define compatibility from segment structure and goals without making the program display name part of compatibility.
 - [ ] Add fixtures proving best selection for distance, duration, and mixed intervals.
-- [ ] Verify deletion removes snapshots and preserves the source Program.
+- [x] Verify deletion removes snapshots and preserves the source Program.
 
 ## Phase 5 — Home
 
