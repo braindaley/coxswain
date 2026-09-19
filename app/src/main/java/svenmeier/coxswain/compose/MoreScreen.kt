@@ -10,10 +10,15 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun MoreScreen(onConnect: () -> Unit, onSettings: () -> Unit) {
+    var info by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    info?.let { title -> AlertDialog(onDismissRequest = { info = null }, title = { Text(title) }, text = { Text("This destination is connected to the existing Coxswain tools and will be expanded as the new settings flow is completed.") }, confirmButton = { TextButton(onClick = { info = null }) { Text("Done") } }) }
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("MORE", style = MaterialTheme.typography.labelLarge) }
         item { MoreRow("Connect rower", "Pair or manage a rowing machine", onConnect) }
         item { MoreRow("Settings", "Units, display, heart rate, and data", onSettings) }
+        item { MoreRow("Data & Export", "Export or manage workout data", { info = "Data & Export" }) }
+        item { MoreRow("Diagnostics", "Connection and measurement checks", { info = "Diagnostics" }) }
+        item { MoreRow("Help", "Learn how Coxswain works", { info = "Help" }) }
     }
 }
 
