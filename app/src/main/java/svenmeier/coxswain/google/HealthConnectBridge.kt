@@ -14,6 +14,15 @@ import kotlin.reflect.KClass
 
 object HealthConnectBridge {
     @JvmStatic
+    fun getWritePermissions(): Set<String> = setOf(
+        "android.permission.health.WRITE_EXERCISE",
+        "android.permission.health.WRITE_HEART_RATE",
+        "android.permission.health.WRITE_SPEED",
+        "android.permission.health.WRITE_POWER",
+        "android.permission.health.WRITE_TOTAL_CALORIES_BURNED",
+        "android.permission.health.WRITE_DISTANCE"
+    )
+    @JvmStatic
     fun insertRecordsAsync(
         client: HealthConnectClient,
         records: List<Record>

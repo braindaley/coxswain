@@ -27,8 +27,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import svenmeier.coxswain.compose.*
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.WorkoutDefinition
-import svenmeier.coxswain.google.HealthConnectBridge
 import svenmeier.coxswain.google.HealthConnectExport
+import svenmeier.coxswain.google.HealthConnectManageActivity
 
 class MainActivity : ComponentActivity() {
 
@@ -175,7 +175,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     onConnect = { GymService.start(activity, GymService.CONNECTOR_BLUETOOTH) },
                     onDisconnect = { GymService.start(activity, GymService.CONNECTOR_NONE) },
                     onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) },
-                    onHealthSettings = { runCatching { activity.startActivity(HealthConnectBridge.getSettingsIntent()) } },
+                    onHealthSettings = { HealthConnectManageActivity.start(activity) },
                     onEnableAutomaticHealthExport = { HealthConnectExport.enableAutomatic(activity) },
                     onSyncHealthHistory = { HealthConnectExport.syncHistory(activity) },
                     onBackup = { createBackup.launch("coxswain-backup.json") },

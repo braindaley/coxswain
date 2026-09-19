@@ -88,7 +88,7 @@ Implemented: More shell, Bluetooth FTMS scanner route, existing Settings route, 
 - [x] Build a dedicated Data & Export destination instead of routing to the general Settings screen.
 - [x] Surface real rower and heart-rate connection state in Diagnostics.
 - [x] List supported heart-rate sources and explain that watches must broadcast BLE HR or ANT+.
-- [ ] Add an in-app Health Connect status and permission flow.
+- [x] Add an in-app Health Connect status and permission flow.
 - [x] Expose automatic Health Connect export selection clearly.
 - [x] Implement explicit existing-history Health Connect sync.
 - [x] Persist exported workout identity and stable Health Connect client record IDs so history sync is idempotent.
