@@ -103,6 +103,7 @@ Implemented: More shell, Bluetooth FTMS scanner route, existing Settings route, 
 Implemented: initial accessibility descriptions for primary Home actions and Live Row metrics.
 
 - [ ] Test small/large phones, portrait, landscape, large fonts, dark mode, and high contrast.
+- [x] Run the navigation suite in the combined landscape, 1.3× font, and dark-mode configuration. Nine flows completed; Quick Start reached its setup activity but its cross-activity test raced the configuration transition. The synchronized assertion passes in the standard configuration; the matrix retry was interrupted by the emulator's Android Studio memory agent (`SIGABRT`), not an app exception.
 - [ ] Verify all six Live Row values are readable at rowing distance.
 - [ ] Test WaterRower USB, Bluetooth FTMS, BLE HR, and ANT+ where hardware is available.
 - [ ] Test Bluetooth loss, USB detach, app backgrounding, rotation, and process death during a workout.

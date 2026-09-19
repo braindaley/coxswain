@@ -41,7 +41,11 @@ class MainNavigationTest {
     @Test
     fun quickStartOpensSharedWorkoutSetup() {
         compose.onNodeWithText("Quick Start").performClick()
-        compose.onNodeWithText("Duration workout").fetchSemanticsNode()
+        compose.waitUntil(5_000) {
+            runCatching {
+                compose.onAllNodesWithText("Duration workout").fetchSemanticsNodes().isNotEmpty()
+            }.getOrDefault(false)
+        }
         compose.onNodeWithText("Distance").performClick()
         compose.onNodeWithText("Distance workout").assertIsDisplayed()
         compose.onNodeWithText("Intervals").performClick()
