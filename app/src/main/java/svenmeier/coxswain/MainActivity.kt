@@ -159,7 +159,8 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                 )
                 3 -> MoreScreen(
                     onConnect = { BluetoothActivity.start(activity, "Rower", BlueWriter.SERVICE_FITNESS_MACHINE.toString()) },
-                    onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) }
+                    onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) },
+                    onDataExport = { activity.startActivity(SettingsActivity.createIntent(activity)) }
                 )
             }
         }
