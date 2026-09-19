@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.gym.Measurement
+import svenmeier.coxswain.gym.Difficulty
+import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.view.ValueBinding
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -130,18 +132,14 @@ fun LiveRowScreen(
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.weight(1f).background(Color(0xFF31505D)),
-                horizontalArrangement = Arrangement.spacedBy(1.dp),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+            val active = gym.progress?.segment
+            if (gym.program?.segments?.get()?.size ?: 0 > 1) IntervalStrip(gym)
+            if (active?.difficulty?.get() == Difficulty.REST) RestCountdown(gym) else LazyVerticalGrid(
+                columns = GridCells.Fixed(2), modifier = Modifier.weight(1f).background(Color(0xFF31505D)),
+                horizontalArrangement = Arrangement.spacedBy(1.dp), verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 itemsIndexed(activeMetrics) { index, binding ->
-                    MetricCell(
-                        binding = binding,
-                        measurement = gym.getMeasurement(), // Use getter
-                        onClick = { if (editMode) { editingIndex = index; onEditMetric(index) } }
-                    )
+                    MetricCell(binding, gym.getMeasurement(), goalVariance(binding, active, gym.getMeasurement())) { if (editMode) { editingIndex = index; onEditMetric(index) } }
                 }
             }
             
@@ -156,6 +154,7 @@ fun LiveRowScreen(
 fun MetricCell(
     binding: ValueBinding,
     measurement: Measurement,
+    variance: Int? = null,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -165,13 +164,14 @@ fun MetricCell(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF042C3D))
+            .background(if (variance == null) Color(0xFF042C3D) else if (variance >= 0) Color(0xFF073E34) else Color(0xFF4A2028))
             .clickable { onClick() }
             .semantics { contentDescription = "$label metric, $valueStr" }
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (variance != null) Text(if (variance >= 0) "+$variance" else "$variance", color = if (variance >= 0) Color(0xFF4ADE80) else Color(0xFFFF7185), fontWeight = FontWeight.Bold)
             Text(
                 text = valueStr,
                 style = MaterialTheme.typography.displayLarge.copy(
@@ -189,6 +189,37 @@ fun MetricCell(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Composable
+private fun IntervalStrip(gym: Gym) {
+    Row(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        val active = gym.progress?.segment
+        gym.program?.segments?.get()?.forEach { segment ->
+            Box(Modifier.weight(1f).height(34.dp).background(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF6D8792) else Color(0xFF0B63F6), MaterialTheme.shapes.small), contentAlignment = Alignment.Center) { Text(if (segment.difficulty.get() == Difficulty.REST) "REST" else "ROW", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = if (segment === active) 1f else .65f)) }
+        }
+    }
+}
+
+@Composable
+private fun RestCountdown(gym: Gym) {
+    Column(Modifier.fillMaxWidth().weight(1f).background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text(gym.progress?.describe() ?: "Rest", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
+        Text("Next: Row", color = Color(0xFF83D7FF), fontSize = 18.sp)
+    }
+}
+
+private fun goalVariance(binding: ValueBinding, segment: Segment?, measurement: Measurement): Int? {
+    if (segment == null || segment.getLimit() <= 0) return null
+    val actual = getValueForBinding(binding, measurement)
+    return when {
+        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> actual - segment.strokeRate.get()
+        binding == ValueBinding.POWER && segment.power.get() > 0 -> actual - segment.power.get()
+        binding == ValueBinding.SPEED && segment.speed.get() > 0 -> actual - segment.speed.get()
+        binding == ValueBinding.SPLIT && segment.speed.get() > 0 -> segment.speed.get() - actual
+        else -> null
     }
 }
 
