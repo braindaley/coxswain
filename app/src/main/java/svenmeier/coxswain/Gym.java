@@ -86,6 +86,9 @@ public class Gym {
 
     private SessionType sessionType;
 
+    /** Current hardware connection state, updated by GymService callbacks. */
+    public volatile boolean connected;
+
     private long sessionGeneration;
 
     /**

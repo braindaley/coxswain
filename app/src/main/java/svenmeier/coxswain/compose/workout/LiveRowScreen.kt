@@ -84,10 +84,10 @@ fun LiveRowScreen(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                text = "● Connected",
+                                text = if (gym.connected) "● Connected" else "● Disconnected",
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 fontSize = 10.sp,
-                                color = Color(0xFF22C55E),
+                                color = if (gym.connected) Color(0xFF22C55E) else Color(0xFFFF7185),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -134,6 +134,7 @@ fun LiveRowScreen(
             
             val active = gym.progress?.segment
             if (gym.program?.segments?.get()?.size ?: 0 > 1) IntervalStrip(gym)
+            if (gym.pace != null) RaceComparison(gym)
             if (active?.difficulty?.get() == Difficulty.REST) RestCountdown(gym) else LazyVerticalGrid(
                 columns = GridCells.Fixed(2), modifier = Modifier.weight(1f).background(Color(0xFF31505D)),
                 horizontalArrangement = Arrangement.spacedBy(1.dp), verticalArrangement = Arrangement.spacedBy(1.dp)
@@ -204,9 +205,12 @@ private fun IntervalStrip(gym: Gym) {
 
 @Composable
 private fun RestCountdown(gym: Gym) {
+    val progress = gym.progress
+    val segment = progress?.segment
+    val remaining = if (segment?.duration?.get() ?: 0 > 0) ((segment!!.duration.get() * (1f - (progress?.completion() ?: 0f))).toInt()).coerceAtLeast(0) else (segment?.getTarget() ?: 0)
     Column(Modifier.fillMaxWidth().weight(1f).background(Color(0xFF123F51)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text(gym.progress?.describe() ?: "Rest", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
+        Text(if (segment?.duration?.get() ?: 0 > 0) "%d:%02d".format(remaining / 60, remaining % 60) else "$remaining m", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
         Text("Next: Row", color = Color(0xFF83D7FF), fontSize = 18.sp)
     }
 }
@@ -220,6 +224,28 @@ private fun goalVariance(binding: ValueBinding, segment: Segment?, measurement: 
         binding == ValueBinding.SPEED && segment.speed.get() > 0 -> actual - segment.speed.get()
         binding == ValueBinding.SPLIT && segment.speed.get() > 0 -> segment.speed.get() - actual
         else -> null
+    }
+}
+
+@Composable
+private fun RaceComparison(gym: Gym) {
+    val pace = gym.pace ?: return
+    val current = gym.getMeasurement()
+    val distanceTarget = (gym.program?.getSegment(0)?.getTarget() ?: pace.distance.get()).coerceAtLeast(1)
+    val currentProgress = (current.distance.toFloat() / distanceTarget).coerceIn(0f, 1f)
+    val bestProgress = (pace.distance.toFloat() / distanceTarget).coerceIn(0f, 1f)
+    Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        RaceLine("YOU", currentProgress, Color(0xFF0B8FFF))
+        RaceLine("BEST", bestProgress, Color(0xFF9CAFC0))
+    }
+}
+
+@Composable
+private fun RaceLine(label: String, progress: Float, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, Modifier.width(42.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFCAD4E1))
+        LinearProgressIndicator(progress = { progress }, Modifier.weight(1f).height(7.dp), color = color, trackColor = Color(0xFF53647C), strokeCap = StrokeCap.Round)
+        Text("${(progress * 100).toInt()}%", fontSize = 11.sp, color = Color.White)
     }
 }
 

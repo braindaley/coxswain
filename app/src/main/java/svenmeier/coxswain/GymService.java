@@ -120,6 +120,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
     }
 
     private void endRowing() {
+        gym.connected = false;
         this.rower.close();
         this.rower = null;
 
@@ -165,6 +166,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
             return;
         }
 
+        gym.connected = true;
         this.heart = Heart.create(GymService.this, rower.getMeasurement(), this);
 
         foreground.connected();
@@ -203,6 +205,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
             return;
         }
 
+        gym.connected = false;
         endRowing();
 
         stopSelf();
