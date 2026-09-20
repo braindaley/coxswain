@@ -121,10 +121,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
     }
 
     private void endRowing() {
-        gym.connected = false;
-        gym.connecting = false;
-        gym.connectedRowerName = null;
-        gym.heartSourceName = null;
+        gym.connectionLost();
         this.rower.close();
         this.rower = null;
 
@@ -143,9 +140,6 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
         gym.removeListener(this);
 
-        if (gym.hasActiveSession()) {
-            gym.endEarly();
-        }
     }
 
     @Override

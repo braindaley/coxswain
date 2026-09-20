@@ -24,7 +24,7 @@ Implemented: CI debug build, unit-test baseline, schema documentation, v1 migrat
 
 Implemented: v2 workout identity fields, frozen definitions, migration, Free Row, pause/resume, completion/end/discard, pace conversion, and export-after-finalization.
 
-- [ ] Add lifecycle tests for Back, rotation, process recreation, Bluetooth loss, and USB detach during active and paused sessions.
+- [x] Add lifecycle tests for Back, rotation, process recreation, and connection loss during active and paused sessions. Bluetooth and USB use the same `Rower.Callback.onDisconnected` path; deterministic engine tests prove it pauses and preserves the session, while physical transport validation remains below.
 - [x] Verify Back cancellation, background/foreground, and rotation preserve active and paused session state on the API 37 emulator.
 - [x] Close stale Workout launches safely when process recreation has removed the in-memory session.
 - [ ] Verify paused time and snapshot accumulation on actual hardware.
@@ -106,7 +106,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [x] Run the navigation suite in combined non-default configurations. The landscape, 1.3× font, dark-mode run completed nine flows before an Android Studio memory-agent abort; the compact portrait, 1.3× font, dark-mode, high-contrast run completed the navigation flows, including the scrollable interval builder, with the exact interrupted flow passing on isolated retry.
 - [ ] Verify all six Live Row values are readable at rowing distance.
 - [ ] Test WaterRower USB, Bluetooth FTMS, BLE HR, and ANT+ where hardware is available.
-- [ ] Test Bluetooth loss, USB detach, app backgrounding, rotation, and process death during a workout.
+- [ ] Test Bluetooth loss, USB detach, and process death during a workout on physical hardware. The shared disconnection path is covered by deterministic active/paused tests, and stale post-process-death launches close safely.
 - [x] Test app backgrounding and rotation during an active/paused workout on the API 37 emulator.
 - [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
 - [x] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.

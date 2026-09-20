@@ -9,6 +9,10 @@ while paused do not update workout totals, target progress, or snapshots. On
 resume, cumulative changes reported by the rower during the pause are offset
 from the remainder of the session.
 
+An unexpected Bluetooth loss or USB detach pauses the active session and keeps
+its measurements in memory. Reconnecting does not create a partial history
+entry; the user can resume or explicitly end the preserved session.
+
 Completion and early ending persist status and completion time before automatic
 export is requested. Discard does not trigger export. End Session routes a
 persisted workout to the initial Workout Complete surface and clears the active

@@ -483,6 +483,19 @@ public class Gym {
         fireChanged(null);
     }
 
+    /** Preserve an in-progress workout when its rower connection disappears. */
+    public void connectionLost() {
+        connected = false;
+        connecting = false;
+        connectedRowerName = null;
+        heartSourceName = null;
+        if (hasActiveSession()) {
+            pause();
+        } else {
+            fireChanged(null);
+        }
+    }
+
     public Workout complete() {
         return finalizeSession(WorkoutStatus.COMPLETED);
     }

@@ -137,6 +137,43 @@ public class GymProgressTest {
     }
 
     @Test
+    public void connectionLossPausesAndPreservesActiveWorkout() {
+        gym.startFreeRow();
+        gym.connected = true;
+        gym.connectedRowerName = "Test rower";
+        gym.onMeasured(measurement(10, 100, 24));
+        Workout workout = gym.current;
+
+        gym.connectionLost();
+
+        assertTrue(gym.hasActiveSession());
+        assertTrue(gym.isPaused());
+        assertFalse(gym.connected);
+        assertEquals(null, gym.connectedRowerName);
+        assertEquals(WorkoutStatus.ACTIVE, workout.status.get());
+        assertEquals(0, gym.getWorkouts().count());
+
+        gym.onMeasured(measurement(20, 200, 24));
+        assertEquals(10, workout.duration.get().intValue());
+        assertEquals(100, workout.distance.get().intValue());
+    }
+
+    @Test
+    public void connectionLossKeepsPausedWorkoutPaused() {
+        gym.startFreeRow();
+        gym.onMeasured(measurement(10, 100, 24));
+        Workout workout = gym.current;
+        gym.pause();
+
+        gym.connectionLost();
+
+        assertTrue(gym.hasActiveSession());
+        assertTrue(gym.isPaused());
+        assertEquals(WorkoutStatus.ACTIVE, workout.status.get());
+        assertEquals(0, gym.getWorkouts().count());
+    }
+
+    @Test
     public void backupRestorePreservesProgramsResultsSnapshotsAndPreferences() {
         Program program = Program.meters("Backup 1K", 1000, Difficulty.HARD);
         gym.mergeProgram(program);
