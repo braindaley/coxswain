@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import svenmeier.coxswain.Gym
+import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Segment
@@ -58,12 +60,12 @@ fun LiveRowScreen(
         mutableStateListOf(*(if (saved?.size == 6) saved else fallback).toTypedArray())
     }
     if (editMode && editingIndex >= 0) {
-        AlertDialog(onDismissRequest = { editingIndex = -1 }, title = { Text("Choose metric") },
+        AlertDialog(onDismissRequest = { editingIndex = -1 }, title = { Text(stringResource(R.string.ui_choose_metric)) },
             text = { Column { listOf(ValueBinding.DURATION, ValueBinding.DISTANCE, ValueBinding.SPLIT, ValueBinding.STROKE_RATE, ValueBinding.POWER, ValueBinding.PULSE, ValueBinding.SPEED, ValueBinding.ENERGY).forEach { metric ->
                 Row(Modifier.fillMaxWidth().clickable { activeMetrics[editingIndex] = metric; editingIndex = -1; context.getSharedPreferences("live_row", 0).edit().putString("metrics", activeMetrics.joinToString(",") { it.name }).apply() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = activeMetrics[editingIndex] == metric, onClick = null); Text(metric.name.replace('_', ' '), color = Color.White)
                 }
-            } } }, confirmButton = { TextButton(onClick = { editingIndex = -1 }) { Text("Done") } })
+            } } }, confirmButton = { TextButton(onClick = { editingIndex = -1 }) { Text(stringResource(R.string.ui_done)) } })
     }
 
     Scaffold(
@@ -73,7 +75,7 @@ fun LiveRowScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (gym.program != null) gym.program.name.get().uppercase() else "FREE ROW",
+                            text = if (gym.program != null) gym.program.name.get().uppercase() else stringResource(R.string.ui_free_row).uppercase(),
                             style = MaterialTheme.typography.labelLarge,
                             color = Color(0xFFC8E3E9)
                         )
@@ -83,7 +85,7 @@ fun LiveRowScreen(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                text = if (gym.connected) "● ${gym.connectedRowerName ?: "Connected"}" else "● Disconnected",
+                                text = if (gym.connected) stringResource(R.string.ui_connected_status, gym.connectedRowerName ?: stringResource(R.string.ui_connected)) else stringResource(R.string.ui_disconnected_status),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 fontSize = 10.sp,
                                 color = if (gym.connected) Color(0xFF22C55E) else Color(0xFFFF7185),
@@ -94,7 +96,7 @@ fun LiveRowScreen(
                 },
                 actions = {
                     TextButton(onClick = { editMode = !editMode }) {
-                        Text(if (editMode) "Done" else "Edit display", color = Color(0xFFDCEBFF))
+                        Text(if (editMode) stringResource(R.string.ui_done) else stringResource(R.string.ui_edit_display), color = Color(0xFFDCEBFF))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -115,7 +117,7 @@ fun LiveRowScreen(
                 ) {
                     Icon(if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = null)
                     Spacer(Modifier.width(12.dp))
-                    Text(if (isPaused) "Resume" else "Pause", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(if (isPaused) stringResource(R.string.ui_resume) else stringResource(R.string.ui_pause), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 
                 Button(
@@ -124,7 +126,7 @@ fun LiveRowScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDCEBFF)),
                     shape = MaterialTheme.shapes.extraLarge
                 ) {
-                    Text("End session", color = Color(0xFF10213F), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_end_session), color = Color(0xFF10213F), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -190,7 +192,7 @@ fun MetricCell(
             )
             if (goal != null) {
                 Spacer(Modifier.height(3.dp))
-                Text("Target ${goal.target}", fontSize = 12.sp, color = Color(0xFFB5D3DE))
+                Text(stringResource(R.string.ui_target_value, goal.target), fontSize = 12.sp, color = Color(0xFFB5D3DE))
             }
         }
     }
@@ -208,7 +210,7 @@ private fun IntervalStrip(gym: Gym) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         segments.forEach { segment ->
-            Box(Modifier.weight(1f).height(34.dp).background(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF6D8792) else Color(0xFF0B63F6), MaterialTheme.shapes.small), contentAlignment = Alignment.Center) { Text(if (segment.difficulty.get() == Difficulty.REST) "REST" else "ROW", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = if (segment === active) 1f else .65f)) }
+            Box(Modifier.weight(1f).height(34.dp).background(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF6D8792) else Color(0xFF0B63F6), MaterialTheme.shapes.small), contentAlignment = Alignment.Center) { Text(if (segment.difficulty.get() == Difficulty.REST) stringResource(R.string.ui_rest) else stringResource(R.string.ui_row), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = if (segment === active) 1f else .65f)) }
         }
     }
 }
@@ -223,7 +225,7 @@ private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
         contentDescription = "Rest, segment ${display.position} of ${display.total}, ${display.remaining} remaining, ${display.next}"
     }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("SEGMENT ${display.position} OF ${display.total}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text("REST", color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text(stringResource(R.string.ui_rest), color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Text(display.remaining, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
         Text(display.next, color = Color(0xFF83D7FF), fontSize = 18.sp)
     }
@@ -278,8 +280,8 @@ private fun RaceComparison(gym: Gym) {
     Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
         contentDescription = if (state.leadMeters >= 0) "Race comparison, ${state.leadMeters} meters ahead" else "Race comparison, ${-state.leadMeters} meters behind"
     }.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        RaceLine("YOU", state.currentProgress, Color(0xFF0B8FFF))
-        RaceLine("BEST", state.bestProgress, Color(0xFF9CAFC0))
+        RaceLine(stringResource(R.string.ui_you), state.currentProgress, Color(0xFF0B8FFF))
+        RaceLine(stringResource(R.string.ui_best), state.bestProgress, Color(0xFF9CAFC0))
         Text(if (state.leadMeters >= 0) "+${state.leadMeters} m ahead" else "${-state.leadMeters} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (state.leadMeters >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
     }
 }
@@ -312,11 +314,11 @@ fun TargetProgressBar(gym: Gym) {
             .padding(16.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("WORKOUT PROGRESS", style = MaterialTheme.typography.labelSmall, color = Color(0xFFCAD4E1))
+            Text(stringResource(R.string.ui_workout_progress), style = MaterialTheme.typography.labelSmall, color = Color(0xFFCAD4E1))
             Text("${((gym.progress?.completion() ?: 0f) * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
         }
         Text(
-            text = gym.progress?.describe() ?: "Ready",
+            text = gym.progress?.describe() ?: stringResource(R.string.ui_ready),
             style = MaterialTheme.typography.titleLarge, 
             color = Color.White,
             modifier = Modifier.padding(vertical = 8.dp)

@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import svenmeier.coxswain.compose.CoxswainTheme
 import svenmeier.coxswain.compose.workout.LiveRowScreen
 import svenmeier.coxswain.gym.Workout
@@ -66,10 +67,10 @@ class WorkoutActivity : ComponentActivity() {
                 if (confirmEnd) {
                     androidx.compose.material3.AlertDialog(
                         onDismissRequest = { confirmEnd = false },
-                        title = { androidx.compose.material3.Text("End this session?") },
-                        text = { androidx.compose.material3.Text("Choose End session to save the workout in History, or keep rowing.") },
-                        confirmButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false; if (gym.endEarly() == null) finish() }) { androidx.compose.material3.Text("End session") } },
-                        dismissButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false }) { androidx.compose.material3.Text("Keep rowing") } }
+                        title = { androidx.compose.material3.Text(stringResource(R.string.ui_end_session_question)) },
+                        text = { androidx.compose.material3.Text(stringResource(R.string.ui_end_session_explanation)) },
+                        confirmButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false; if (gym.endEarly() == null) finish() }) { androidx.compose.material3.Text(stringResource(R.string.ui_end_session)) } },
+                        dismissButton = { androidx.compose.material3.TextButton(onClick = { confirmEnd = false }) { androidx.compose.material3.Text(stringResource(R.string.ui_keep_rowing)) } }
                     )
                 }
             }

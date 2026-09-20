@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import propoid.db.Reference
@@ -33,17 +34,17 @@ class WorkoutDetailsActivity : ComponentActivity() {
 @Composable
 private fun WorkoutDetailsScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onBack: () -> Unit, onDelete: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
-    Scaffold(topBar = { TopAppBar(title = { Text("Workout details") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) }) { pad ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.ui_workout_details)) }, navigationIcon = { TextButton(onClick = onBack) { Text(stringResource(R.string.ui_back)) } }) }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(workout.programName(stringResource(R.string.ui_free_row)), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(workoutPrimaryValue(workout), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
             WorkoutResults(workout, snapshots)
             RaceResultSummary(workout)
             Spacer(Modifier.height(24.dp))
-            OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text("Delete workout") }
+            OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_delete_workout)) }
         }
     }
-    if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text("Delete workout?") }, text = { Text("This removes the workout and its recorded snapshots from history.") }, confirmButton = { TextButton(onClick = onDelete) { Text("Delete") } }, dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+    if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text(stringResource(R.string.ui_delete_workout_question)) }, text = { Text(stringResource(R.string.ui_delete_workout_explanation)) }, confirmButton = { TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) } }, dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.ui_cancel)) } })
 }
 
 @Composable private fun DetailRow(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label); Text(value, fontWeight = FontWeight.Bold) } }

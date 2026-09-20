@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import propoid.db.Reference
@@ -35,11 +36,11 @@ class RaceYourBestActivity : ComponentActivity() {
 @Composable
 private fun RaceYourBestScreen(program: Program, candidates: List<Workout>, onBack: () -> Unit, onStart: (Workout) -> Unit) {
     var selected by remember(candidates) { mutableStateOf(candidates.firstOrNull()) }
-    Scaffold(topBar = { TopAppBar(title = { Text("Race your best") }, navigationIcon = { TextButton(onClick = onBack) { Text("Back") } }) }) { pad ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.ui_race_your_best)) }, navigationIcon = { TextButton(onClick = onBack) { Text(stringResource(R.string.ui_back)) } }) }) { pad ->
         Column(Modifier.padding(pad).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(program.name.get(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Choose a compatible completed result to race against.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (candidates.isEmpty()) Text("Complete this program once to create a race target.")
+            Text(stringResource(R.string.ui_race_choose_result), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (candidates.isEmpty()) Text(stringResource(R.string.ui_race_empty))
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(candidates) { candidate ->
                     Card(Modifier.fillMaxWidth().clickable { selected = candidate }, colors = CardDefaults.cardColors(containerColor = if (candidate == selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)) {
@@ -47,7 +48,7 @@ private fun RaceYourBestScreen(program: Program, candidates: List<Workout>, onBa
                     }
                 }
             }
-            Button(onClick = { selected?.let(onStart) }, enabled = selected != null, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Start race", fontWeight = FontWeight.Bold) }
+            Button(onClick = { selected?.let(onStart) }, enabled = selected != null, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.ui_start_race), fontWeight = FontWeight.Bold) }
         }
     }
 }

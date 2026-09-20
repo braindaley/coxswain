@@ -110,6 +110,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [x] Test app backgrounding and rotation during an active/paused workout on the API 37 emulator.
 - [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
 - [ ] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
+- [x] Localize the workout lifecycle surfaces: Live Row controls and states, end-session confirmation, Workout Complete, Workout Details, and Race Your Best now use English, German, and French resources.
 - [ ] Verify locale-aware number, date, time, and unit formatting.
 - [x] Add persisted diagnostics for failed/lost connections, incomplete sessions, export failures, and storage migration fallback.
 - [ ] Run migration, backup/restore, and Health Connect device test scripts.

@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +66,9 @@ private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.co
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("WORKOUT COMPLETE", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.ui_workout_complete), style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(12.dp))
-        Text(workout.programName("Workout"), style = MaterialTheme.typography.headlineMedium)
+        Text(workout.programName(stringResource(R.string.ui_workout)), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(28.dp))
         Text(workoutPrimaryValue(workout), fontSize = 56.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
@@ -75,7 +76,7 @@ private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.co
         RaceResultSummary(workout)
         Spacer(Modifier.height(24.dp))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-            Text("Done", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_done), fontWeight = FontWeight.Bold)
         }
     }
 }

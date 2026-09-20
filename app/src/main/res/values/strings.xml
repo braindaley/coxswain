@@ -1,6 +1,39 @@
 <resources>
     <string name="app_name" translatable="false">Coxswain</string>
 
+    <string name="ui_back">Back</string>
+    <string name="ui_done">Done</string>
+    <string name="ui_cancel">Cancel</string>
+    <string name="ui_workout">Workout</string>
+    <string name="ui_free_row">Free Row</string>
+    <string name="ui_workout_complete">WORKOUT COMPLETE</string>
+    <string name="ui_workout_details">Workout details</string>
+    <string name="ui_delete_workout">Delete workout</string>
+    <string name="ui_delete_workout_question">Delete workout?</string>
+    <string name="ui_delete_workout_explanation">This removes the workout and its recorded snapshots from history.</string>
+    <string name="ui_end_session">End session</string>
+    <string name="ui_end_session_question">End this session?</string>
+    <string name="ui_end_session_explanation">Choose End session to save the workout in History, or keep rowing.</string>
+    <string name="ui_keep_rowing">Keep rowing</string>
+    <string name="ui_race_your_best">Race your best</string>
+    <string name="ui_race_choose_result">Choose a compatible completed result to race against.</string>
+    <string name="ui_race_empty">Complete this program once to create a race target.</string>
+    <string name="ui_start_race">Start race</string>
+    <string name="ui_choose_metric">Choose metric</string>
+    <string name="ui_edit_display">Edit display</string>
+    <string name="ui_pause">Pause</string>
+    <string name="ui_resume">Resume</string>
+    <string name="ui_connected">Connected</string>
+    <string name="ui_connected_status">● %1$s</string>
+    <string name="ui_disconnected_status">● Disconnected</string>
+    <string name="ui_target_value">Target %1$s</string>
+    <string name="ui_row">ROW</string>
+    <string name="ui_rest">REST</string>
+    <string name="ui_workout_progress">WORKOUT PROGRESS</string>
+    <string name="ui_ready">Ready</string>
+    <string name="ui_you">YOU</string>
+    <string name="ui_best">BEST</string>
+
     <string name="action_mock">Mock</string>
     <string name="action_help">Help</string>
     <string name="action_bluetooth">Connect via Bluetooth</string>
