@@ -66,6 +66,18 @@
     <string name="ui_health_check_failed">Zugriff konnte nicht geprüft werden: %1$s</string>
     <string name="ui_health_connected">Verbunden · alle Berechtigungen für Ruderdaten erteilt</string>
     <string name="ui_health_not_connected">Nicht verbunden · Zugriff wurde nicht gewährt</string>
+    <string name="ui_health_already_synced">Das Training wurde bereits mit Health Connect synchronisiert</string>
+    <string name="ui_health_permission_failed">Berechtigungen konnten nicht geprüft werden: %1$s</string>
+    <string name="ui_health_grant_in_settings">Erteile Coxswain die Berechtigungen in den Health-Connect-Einstellungen</string>
+    <string name="ui_health_settings_failed">Health-Connect-Einstellungen konnten nicht geöffnet werden</string>
+    <string name="ui_health_no_data">Keine Trainingsdaten zum Exportieren</string>
+    <string name="ui_health_no_history">Kein Trainingsverlauf zum Synchronisieren</string>
+    <string name="ui_health_up_to_date">Health Connect ist bereits auf dem neuesten Stand</string>
+    <plurals name="ui_health_syncing_history">
+        <item quantity="one">%1$d Training wird synchronisiert</item>
+        <item quantity="other">%1$d Trainings werden synchronisiert</item>
+    </plurals>
+    <string name="ui_health_auto_enabled">Abgeschlossene Trainings werden automatisch nach Health Connect exportiert</string>
     <plurals name="ui_health_partial">
         <item quantity="one">Teilweise verbunden · %1$d von %2$d Berechtigungen erteilt</item>
         <item quantity="other">Teilweise verbunden · %1$d von %2$d Berechtigungen erteilt</item>
@@ -368,6 +380,10 @@
     <string name="googlefit_failed">Google Fit ist nicht verfügbar</string>
     <string name="googlefit_export">Google Fit</string>
     <string name="healthconnect_export">Google Health Connect</string>
+    <string name="healthconnect_export_permissions_manual">Berechtigung erforderlich; starte den Export manuell</string>
+    <string name="healthconnect_export_starting">Export zu Google Health Connect läuft</string>
+    <string name="healthconnect_export_finished">Zu Google Health Connect exportiert</string>
+    <string name="healthconnect_export_failed">Export zu Google Health Connect fehlgeschlagen</string>
     <string name="googlefit_export_permissions_manual">Erlaubnis erforderlich, bitte starte den Export manuell</string>
     <string name="googlefit_export_starting">Exportiere nach Google Fit</string>
     <string name="googlefit_export_finished">Exportiert nach Google Fit</string>

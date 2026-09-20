@@ -68,6 +68,18 @@
     <string name="ui_health_check_failed">Could not check access: %1$s</string>
     <string name="ui_health_connected">Connected · all rowing data permissions granted</string>
     <string name="ui_health_not_connected">Not connected · access has not been granted</string>
+    <string name="ui_health_already_synced">Workout is already synced with Health Connect</string>
+    <string name="ui_health_permission_failed">Permission check failed: %1$s</string>
+    <string name="ui_health_grant_in_settings">Grant Coxswain permissions in Health Connect settings</string>
+    <string name="ui_health_settings_failed">Could not open Health Connect settings</string>
+    <string name="ui_health_no_data">No workout data to export</string>
+    <string name="ui_health_no_history">No workout history to sync</string>
+    <string name="ui_health_up_to_date">Health Connect is already up to date</string>
+    <plurals name="ui_health_syncing_history">
+        <item quantity="one">Syncing %1$d workout</item>
+        <item quantity="other">Syncing %1$d workouts</item>
+    </plurals>
+    <string name="ui_health_auto_enabled">Completed workouts will export to Health Connect automatically</string>
     <plurals name="ui_health_partial">
         <item quantity="one">Partially connected · %1$d of %2$d permission granted</item>
         <item quantity="other">Partially connected · %1$d of %2$d permissions granted</item>
@@ -370,10 +382,10 @@
     <string name="garmin_import_failed">Import of workout failed</string>
 
     <string name="healthconnect_export" translatable="false">Google Health Connect</string>
-    <string name="healthconnect_export_permissions_manual" translatable="false">Permission required, please start export manually</string>
-    <string name="healthconnect_export_starting" translatable="false">Exporting to Google Health Connect</string>
-    <string name="healthconnect_export_finished" translatable="false">Exported to Google Health Connect</string>
-    <string name="healthconnect_export_failed" translatable="false">Export to Google Health Connect failed</string>
+    <string name="healthconnect_export_permissions_manual">Permission required; start the export manually</string>
+    <string name="healthconnect_export_starting">Exporting to Google Health Connect</string>
+    <string name="healthconnect_export_finished">Exported to Google Health Connect</string>
+    <string name="healthconnect_export_failed">Export to Google Health Connect failed</string>
 
     <string name="sensors_heart_rejected">No access to heart rate sensor</string>
     <string name="sensors_heart_not_found">No Heart rate sensor found</string>

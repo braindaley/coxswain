@@ -136,7 +136,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                             Intent legacyIntent = new Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS");
                             startActivity(legacyIntent);
                         } catch (Exception e2) {
-                            Toast.makeText(getActivity(), "Could not open Health Connect settings", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), R.string.ui_health_settings_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
                     return true;

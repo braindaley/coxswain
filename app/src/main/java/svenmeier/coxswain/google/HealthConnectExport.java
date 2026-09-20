@@ -60,11 +60,11 @@ public class HealthConnectExport extends Export<Workout> {
     @Override
     public void start(Workout workout, boolean automatic) {
         if (wasExported(workout)) {
-            if (!automatic) toast("Workout is already synced with Health Connect");
+            if (!automatic) toast(context.getString(R.string.ui_health_already_synced));
             return;
         }
         if (client == null) {
-            toast("Health Connect not available on this device");
+            toast(context.getString(R.string.ui_health_unavailable));
             return;
         }
         checkPermissions(workout);
@@ -86,7 +86,7 @@ public class HealthConnectExport extends Export<Workout> {
             @Override
             public void onFailure(@NonNull Throwable t) {
                 DiagnosticsLog.record(context, "Health Connect permission check failed: " + t.getMessage());
-                toast("Permission check failed: " + t.getMessage());
+                toast(context.getString(R.string.ui_health_permission_failed, t.getMessage()));
             }
         }, ContextCompat.getMainExecutor(context));
     }
@@ -110,9 +110,9 @@ public class HealthConnectExport extends Export<Workout> {
         try {
             Intent intent = HealthConnectBridge.getSettingsIntent();
             context.startActivity(intent);
-            toast("Please grant Coxswain permissions in Health Connect settings");
+            toast(context.getString(R.string.ui_health_grant_in_settings));
         } catch (Exception e) {
-            toast("Could not open Health Connect settings");
+            toast(context.getString(R.string.ui_health_settings_failed));
         }
     }
 
@@ -123,7 +123,7 @@ public class HealthConnectExport extends Export<Workout> {
         List<Record> records = new Workout2HealthConnect().map(workout, snapshots);
 
         if (records.isEmpty()) {
-            toast("No data to export");
+            toast(context.getString(R.string.ui_health_no_data));
             return;
         }
 
@@ -163,7 +163,7 @@ public class HealthConnectExport extends Export<Workout> {
     public static void syncHistory(Context context) {
         List<Workout> workouts = Gym.instance(context).getWorkouts().list();
         if (workouts.isEmpty()) {
-            Toast.makeText(context, "No workout history to sync", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.ui_health_no_history, Toast.LENGTH_SHORT).show();
             return;
         }
         int pending = 0;
@@ -174,12 +174,15 @@ public class HealthConnectExport extends Export<Workout> {
                 export.start(workout, false);
             }
         }
-        Toast.makeText(context, pending == 0 ? "Health Connect is already up to date" : "Syncing " + pending + " workouts", Toast.LENGTH_LONG).show();
+        String message = pending == 0
+                ? context.getString(R.string.ui_health_up_to_date)
+                : context.getResources().getQuantityString(R.plurals.ui_health_syncing_history, pending, pending);
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
     }
 
     public static void enableAutomatic(Context context) {
         Preference.getString(context, R.string.preference_export_last).set(HealthConnectExport.class.getName());
         Preference.getBoolean(context, R.string.preference_export_auto).set(true);
-        Toast.makeText(context, "Completed workouts will export to Health Connect automatically", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, R.string.ui_health_auto_enabled, Toast.LENGTH_LONG).show();
     }
 }
