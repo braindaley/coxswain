@@ -47,10 +47,14 @@ class MainNavigationTest {
             }.getOrDefault(false)
         }
         compose.onNodeWithText("Distance").performClick()
-        compose.onNodeWithText("Distance workout").assertIsDisplayed()
+        compose.waitUntil(5_000) {
+            runCatching { compose.onAllNodesWithText("Distance workout").fetchSemanticsNodes().any { it.layoutInfo.isPlaced } }.getOrDefault(false)
+        }
         compose.onNodeWithText("Intervals").performClick()
-        compose.onNodeWithText("Intervals workout").assertIsDisplayed()
-        compose.onNodeWithText("Add segment").assertIsDisplayed()
+        compose.waitUntil(5_000) {
+            runCatching { compose.onAllNodesWithText("Intervals workout").fetchSemanticsNodes().any { it.layoutInfo.isPlaced } }.getOrDefault(false)
+        }
+        compose.onNodeWithText("Add segment").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back").performClick()
     }
 

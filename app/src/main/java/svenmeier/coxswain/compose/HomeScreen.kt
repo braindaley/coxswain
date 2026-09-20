@@ -150,7 +150,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(stringResource(R.string.ui_your_rowing), fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C))
-            SingleSelectToggleGroup(periodOptions.map { it.second }, periodOptions.first { it.first == period }.second) { selected -> period = periodOptions.first { it.second == selected }.first }
+            SingleSelectToggleGroup(periodOptions.map { it.second }, periodOptions.first { it.first == period }.second, fontSize = 11.sp) { selected -> period = periodOptions.first { it.second == selected }.first }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Stat(stringResource(R.string.ui_meters_rowed), "%,d m".format(java.util.Locale.getDefault(), meters)); Stat(stringResource(R.string.ui_time_rowed), "%d:%02d".format(java.util.Locale.getDefault(), seconds/60, seconds%60))
             }

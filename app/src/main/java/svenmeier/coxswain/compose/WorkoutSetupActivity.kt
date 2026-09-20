@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.R
 import svenmeier.coxswain.WorkoutActivity
@@ -235,6 +236,7 @@ fun SectionLabel(text: String) {
 fun SingleSelectToggleGroup(
     options: List<String>,
     selectedOption: String,
+    fontSize: TextUnit = 14.sp,
     onOptionSelected: (String) -> Unit
 ) {
     Surface(
@@ -256,7 +258,9 @@ fun SingleSelectToggleGroup(
                     Box(modifier = Modifier.padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
                         Text(
                             text = option,
-                            fontSize = 14.sp,
+                            fontSize = fontSize,
+                            maxLines = 1,
+                            softWrap = false,
                             color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF53647C),
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
