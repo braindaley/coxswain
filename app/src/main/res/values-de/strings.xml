@@ -18,6 +18,9 @@
     <string name="ui_race_empty">Schließe dieses Programm einmal ab, um ein Rennziel zu erstellen.</string>
     <string name="ui_start_race">Rennen starten</string>
     <string name="ui_choose_metric">Messwert wählen</string>
+    <string name="ui_metric_accessibility">Messwert %1$s, %2$s</string>
+    <string name="ui_goal_metric_accessibility">%1$s Zielabweichung %2$s, aktuell %3$s, Ziel %4$s</string>
+    <string name="ui_change_metric_accessibility">Messwert %1$s ändern</string>
     <string name="ui_edit_display">Anzeige bearbeiten</string>
     <string name="ui_pause">Pause</string>
     <string name="ui_resume">Fortsetzen</string>

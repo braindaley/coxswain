@@ -20,6 +20,9 @@
     <string name="ui_race_empty">Complete this program once to create a race target.</string>
     <string name="ui_start_race">Start race</string>
     <string name="ui_choose_metric">Choose metric</string>
+    <string name="ui_metric_accessibility">%1$s metric, %2$s</string>
+    <string name="ui_goal_metric_accessibility">%1$s goal variance %2$s, current %3$s, target %4$s</string>
+    <string name="ui_change_metric_accessibility">Change %1$s metric</string>
     <string name="ui_edit_display">Edit display</string>
     <string name="ui_pause">Pause</string>
     <string name="ui_resume">Resume</string>

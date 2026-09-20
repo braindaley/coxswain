@@ -108,7 +108,7 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [ ] Test WaterRower USB, Bluetooth FTMS, BLE HR, and ANT+ where hardware is available.
 - [ ] Test Bluetooth loss, USB detach, and process death during a workout on physical hardware. The shared disconnection path is covered by deterministic active/paused tests, and stale post-process-death launches close safely.
 - [x] Test app backgrounding and rotation during an active/paused workout on the API 37 emulator.
-- [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
+- [ ] Complete the manual TalkBack/focus-order pass on a physical device. Automated semantics checks now prove Live Row metrics are read-only outside Edit display, editable within it, and spoken as one localized summary; interval, rest, race, and progress regions also suppress duplicate child announcements.
 - [x] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
 - [x] Localize the workout lifecycle surfaces: Live Row controls and states, end-session confirmation, Workout Complete, Workout Details, and Race Your Best now use English, German, and French resources.
 - [x] Localize Home, Programs, Workout Setup, Program Builder, History, results, navigation, Connect Rower, Data & Export, Diagnostics, Help, backup/restore feedback, and Health Connect management in English, German, and French.

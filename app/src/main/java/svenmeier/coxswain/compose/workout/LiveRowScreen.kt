@@ -2,6 +2,7 @@ package svenmeier.coxswain.compose.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,8 +19,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,8 +67,8 @@ fun LiveRowScreen(
     if (editMode && editingIndex >= 0) {
         AlertDialog(onDismissRequest = { editingIndex = -1 }, title = { Text(stringResource(R.string.ui_choose_metric)) },
             text = { Column { listOf(ValueBinding.DURATION, ValueBinding.DISTANCE, ValueBinding.SPLIT, ValueBinding.STROKE_RATE, ValueBinding.POWER, ValueBinding.PULSE, ValueBinding.SPEED, ValueBinding.ENERGY).forEach { metric ->
-                Row(Modifier.fillMaxWidth().clickable { activeMetrics[editingIndex] = metric; editingIndex = -1; context.getSharedPreferences("live_row", 0).edit().putString("metrics", activeMetrics.joinToString(",") { it.name }).apply() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = activeMetrics[editingIndex] == metric, onClick = null); Text(metric.name.replace('_', ' '), color = Color.White)
+                Row(Modifier.fillMaxWidth().selectable(selected = activeMetrics[editingIndex] == metric, role = Role.RadioButton, onClick = { activeMetrics[editingIndex] = metric; editingIndex = -1; context.getSharedPreferences("live_row", 0).edit().putString("metrics", activeMetrics.joinToString(",") { it.name }).apply() }).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = activeMetrics[editingIndex] == metric, onClick = null); Text(stringResource(metric.label), color = Color.White)
                 }
             } } }, confirmButton = { TextButton(onClick = { editingIndex = -1 }) { Text(stringResource(R.string.ui_done)) } })
     }
@@ -164,13 +168,25 @@ fun MetricCell(
     val context = LocalContext.current
     val valueStr = binding.format(context, getValueForBinding(binding, measurement), false)
     val label = context.getString(binding.label).uppercase()
+    val description = if (goal == null) {
+        stringResource(R.string.ui_metric_accessibility, label, valueStr)
+    } else {
+        stringResource(R.string.ui_goal_metric_accessibility, label, goal.variance, valueStr, goal.target)
+    }
+    val changeDescription = stringResource(R.string.ui_change_metric_accessibility, label)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(when { goal == null -> Color(0xFF042C3D); goal.state > 0 -> Color(0xFF073E34); goal.state < 0 -> Color(0xFF4A2028); else -> Color(0xFF123F51) })
-            .clickable(enabled = editable) { onClick() }
-            .semantics { contentDescription = if (goal == null) "$label metric, $valueStr" else "$label goal variance ${goal.variance}, current $valueStr, target ${goal.target}" }
+            .clearAndSetSemantics {
+                contentDescription = description
+                if (editable) {
+                    role = Role.Button
+                    onClick(label = changeDescription) { onClick(); true }
+                }
+            }
+            .then(if (editable) Modifier.clickable { onClick() } else Modifier)
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -207,7 +223,7 @@ private fun IntervalStrip(gym: Gym) {
     val intervalDescription = stringResource(R.string.ui_interval_position, activeIndex + 1, segments.size)
     Row(
         Modifier.fillMaxWidth().background(Color(0xFF123F51))
-            .semantics { contentDescription = intervalDescription }
+            .clearAndSetSemantics { contentDescription = intervalDescription }
             .padding(10.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -226,7 +242,7 @@ private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
     val nextText = segments.getOrNull(display.position)?.let { stringResource(R.string.ui_next_row, segmentTarget(it)) }
         ?: stringResource(R.string.ui_final_segment)
     val restDescription = stringResource(R.string.ui_rest_accessibility, display.position, display.total, display.remaining, nextText)
-    Column(modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
+    Column(modifier.fillMaxWidth().background(Color(0xFF123F51)).clearAndSetSemantics {
         contentDescription = restDescription
     }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text(stringResource(R.string.ui_segment_of, display.position, display.total), color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -284,7 +300,7 @@ private fun RaceComparison(gym: Gym) {
     val state = raceDisplay(gym.getMeasurement(), pace, gym.program)
     val leadDistance = kotlin.math.abs(state.leadMeters)
     val raceDescription = pluralStringResource(if (state.leadMeters >= 0) R.plurals.ui_race_comparison_ahead else R.plurals.ui_race_comparison_behind, leadDistance, leadDistance)
-    Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
+    Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).clearAndSetSemantics {
         contentDescription = raceDescription
     }.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         RaceLine(stringResource(R.string.ui_you), state.currentProgress, Color(0xFF0B8FFF))
@@ -319,7 +335,7 @@ fun TargetProgressBar(gym: Gym) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF123F51))
-            .semantics { contentDescription = progressDescription }
+            .clearAndSetSemantics { contentDescription = progressDescription }
             .padding(16.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
