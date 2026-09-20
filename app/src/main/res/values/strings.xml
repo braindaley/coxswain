@@ -53,6 +53,16 @@
     <string name="ui_last_workout">LAST WORKOUT</string>
     <string name="ui_row_again">Row again</string>
     <string name="ui_distance_time_summary">%1$,d m  •  %2$d:%3$02d</string>
+    <string name="ui_health_connect">Health Connect</string>
+    <string name="ui_health_checking">Checking access…</string>
+    <string name="ui_health_unavailable">Health Connect is not available on this device.</string>
+    <string name="ui_health_explanation">Coxswain writes rowing sessions, distance, calories, heart rate, speed, and power. It does not request read access.</string>
+    <string name="ui_health_grant">Grant access</string>
+    <string name="ui_health_open_settings">Open Health Connect settings</string>
+    <string name="ui_health_check_failed">Could not check access: %1$s</string>
+    <string name="ui_health_connected">Connected · all rowing data permissions granted</string>
+    <string name="ui_health_not_connected">Not connected · access has not been granted</string>
+    <string name="ui_health_partial">Partially connected · %1$d of %2$d permissions granted</string>
 
     <string name="action_mock">Mock</string>
     <string name="action_help">Help</string>

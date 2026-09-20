@@ -51,6 +51,16 @@
     <string name="ui_last_workout">LETZTES TRAINING</string>
     <string name="ui_row_again">Noch einmal rudern</string>
     <string name="ui_distance_time_summary">%1$,d m  •  %2$d:%3$02d</string>
+    <string name="ui_health_connect">Health Connect</string>
+    <string name="ui_health_checking">Zugriff wird geprüft…</string>
+    <string name="ui_health_unavailable">Health Connect ist auf diesem Gerät nicht verfügbar.</string>
+    <string name="ui_health_explanation">Coxswain schreibt Rudereinheiten, Distanz, Kalorien, Herzfrequenz, Tempo und Leistung. Es wird kein Lesezugriff angefordert.</string>
+    <string name="ui_health_grant">Zugriff gewähren</string>
+    <string name="ui_health_open_settings">Health-Connect-Einstellungen öffnen</string>
+    <string name="ui_health_check_failed">Zugriff konnte nicht geprüft werden: %1$s</string>
+    <string name="ui_health_connected">Verbunden · alle Berechtigungen für Ruderdaten erteilt</string>
+    <string name="ui_health_not_connected">Nicht verbunden · Zugriff wurde nicht gewährt</string>
+    <string name="ui_health_partial">Teilweise verbunden · %1$d von %2$d Berechtigungen erteilt</string>
     <string name="action_help">Hilfe</string>
     <string name="action_mock">Mock</string>
     <string name="action_bluetooth">Verbinde über Bluetooth</string>

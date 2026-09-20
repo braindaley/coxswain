@@ -51,6 +51,16 @@
     <string name="ui_last_workout">DERNIER ENTRAÎNEMENT</string>
     <string name="ui_row_again">Ramer à nouveau</string>
     <string name="ui_distance_time_summary">%1$,d m  •  %2$d:%3$02d</string>
+    <string name="ui_health_connect">Health Connect</string>
+    <string name="ui_health_checking">Vérification de l’accès…</string>
+    <string name="ui_health_unavailable">Health Connect n’est pas disponible sur cet appareil.</string>
+    <string name="ui_health_explanation">Coxswain enregistre les séances d’aviron, la distance, les calories, la fréquence cardiaque, la vitesse et la puissance. Aucun accès en lecture n’est demandé.</string>
+    <string name="ui_health_grant">Autoriser l’accès</string>
+    <string name="ui_health_open_settings">Ouvrir les réglages Health Connect</string>
+    <string name="ui_health_check_failed">Impossible de vérifier l’accès : %1$s</string>
+    <string name="ui_health_connected">Connecté · toutes les autorisations de données d’aviron sont accordées</string>
+    <string name="ui_health_not_connected">Non connecté · l’accès n’a pas été accordé</string>
+    <string name="ui_health_partial">Connexion partielle · %1$d autorisations sur %2$d accordées</string>
     <string name="action_help">Aide</string>
     <string name="action_mock">Mock</string>
     <string name="action_bluetooth">Connexion via Bluetooth</string>
