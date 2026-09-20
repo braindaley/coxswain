@@ -12,10 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
+import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.RaceOutcome
 import java.text.SimpleDateFormat
@@ -43,7 +45,7 @@ fun WorkoutsScreen(
         Spacer(Modifier.height(24.dp))
         
         Text(
-            text = "WORKOUT HISTORY",
+            text = stringResource(R.string.ui_workout_history),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold, 
                 letterSpacing = 1.sp
@@ -89,10 +91,10 @@ fun WorkoutHistoryCard(workout: Workout, onClick: () -> Unit) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(workout.programName("Free Row"), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+                    Text(workout.programName(stringResource(R.string.ui_free_row)), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
                     if (workout.raceOutcome.get() == RaceOutcome.WON) Text("  🏆", fontSize = 14.sp)
                 }
-                Text("%,d m  •  %d:%02d".format(workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), fontSize = 13.sp, color = Color(0xFF53647C))
+                Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), fontSize = 13.sp, color = Color(0xFF53647C))
             }
         }
     }

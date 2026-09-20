@@ -15,11 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
+import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Difficulty
@@ -38,16 +41,24 @@ fun ProgramsScreen(
     var previewProgram by remember { mutableStateOf<Program?>(null) }
     var pendingDelete by remember { mutableStateOf<Program?>(null) }
     val programs = remember { mutableStateListOf<Program>() }
+    val myProgramsLabel = stringResource(R.string.ui_my_programs)
+    val workoutLibraryLabel = stringResource(R.string.ui_workout_library)
+    val libraryProgramNames = listOf(
+        stringResource(R.string.ui_library_steady_20),
+        stringResource(R.string.ui_library_foundation_2k),
+        stringResource(R.string.ui_library_power_30),
+        stringResource(R.string.ui_library_intervals_4x2)
+    )
     previewProgram?.let { preview ->
         AlertDialog(
             onDismissRequest = { previewProgram = null },
             title = { Text(preview.name.get()) },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { preview.segments.get().forEachIndexed { index, segment -> Text("${index + 1}. ${if (segment.difficulty.get() == Difficulty.REST) "Rest · " else "Row · "}${segment.describeTarget()}") } } },
-            confirmButton = { TextButton(onClick = { previewProgram = null }) { Text("Done") } }
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { preview.segments.get().forEachIndexed { index, segment -> Text(stringResource(R.string.ui_segment_preview, index + 1, stringResource(if (segment.difficulty.get() == Difficulty.REST) R.string.ui_rest else R.string.ui_row), segmentTargetText(segment))) } } },
+            confirmButton = { TextButton(onClick = { previewProgram = null }) { Text(stringResource(R.string.ui_done)) } }
         )
     }
     pendingDelete?.let { target ->
-        AlertDialog(onDismissRequest = { pendingDelete = null }, title = { Text("Delete program?") }, text = { Text("${target.name.get()} will be removed. Completed workout history is preserved.") }, confirmButton = { TextButton(onClick = { onDeleteProgram(target); programs.remove(target); pendingDelete = null }) { Text("Delete") } }, dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } })
+        AlertDialog(onDismissRequest = { pendingDelete = null }, title = { Text(stringResource(R.string.ui_delete_program_question)) }, text = { Text(stringResource(R.string.ui_delete_program_explanation, target.name.get())) }, confirmButton = { TextButton(onClick = { onDeleteProgram(target); programs.remove(target); pendingDelete = null }) { Text(stringResource(R.string.action_delete)) } }, dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.ui_cancel)) } })
     }
     
     LaunchedEffect(selectedTab, refreshKey) {
@@ -55,7 +66,7 @@ fun ProgramsScreen(
         if (selectedTab == 0) {
             programs.addAll(gym.getPrograms().list())
         } else {
-            programs.addAll(curatedPrograms())
+            programs.addAll(curatedPrograms(libraryProgramNames))
         }
     }
 
@@ -68,9 +79,9 @@ fun ProgramsScreen(
         Spacer(Modifier.height(16.dp))
         
         SingleSelectToggleGroup(
-            options = listOf("My Programs", "Workout Library"),
-            selectedOption = if (selectedTab == 0) "My Programs" else "Workout Library",
-            onOptionSelected = { selectedTab = if (it == "My Programs") 0 else 1 }
+            options = listOf(myProgramsLabel, workoutLibraryLabel),
+            selectedOption = if (selectedTab == 0) myProgramsLabel else workoutLibraryLabel,
+            onOptionSelected = { selectedTab = if (it == myProgramsLabel) 0 else 1 }
         )
 
         Spacer(Modifier.height(20.dp))
@@ -84,7 +95,7 @@ fun ProgramsScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Create program", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_create_program), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -95,7 +106,7 @@ fun ProgramsScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = if (selectedTab == 0) "MY PROGRAMS" else "WORKOUT LIBRARY",
+                text = (if (selectedTab == 0) myProgramsLabel else workoutLibraryLabel).uppercase(),
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.Bold, 
                     letterSpacing = 1.sp
@@ -103,7 +114,7 @@ fun ProgramsScreen(
                 color = Color(0xFF53647C)
             )
             Text(
-                text = "${programs.size} programs",
+                text = pluralStringResource(R.plurals.ui_program_count, programs.size, programs.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = Color(0xFF53647C)
             )
@@ -163,9 +174,9 @@ fun ProgramCard(
                     )
                     
                     val segments = program.segments.get()
-                    val summary = if (segments.isEmpty()) "Empty program" 
-                                 else if (segments.size == 1) segments[0].describeTarget()
-                                 else "${segments.size} segments"
+                    val summary = if (segments.isEmpty()) stringResource(R.string.ui_empty_program)
+                                 else if (segments.size == 1) segmentTargetText(segments[0])
+                                 else pluralStringResource(R.plurals.ui_segment_count, segments.size, segments.size)
                                  
                     Text(
                         text = summary,
@@ -177,12 +188,12 @@ fun ProgramCard(
                 var menuOpen by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color(0xFF53647C))
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu), tint = Color(0xFF53647C))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text("View program") }, onClick = { menuOpen = false; onView() })
-                        DropdownMenuItem(text = { Text(if (isLibrary) "Save to My Programs" else "Duplicate") }, onClick = { menuOpen = false; onDuplicate() })
-                        if (!isLibrary) DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.ui_view_program)) }, onClick = { menuOpen = false; onView() })
+                        DropdownMenuItem(text = { Text(stringResource(if (isLibrary) R.string.ui_save_to_my_programs else R.string.action_duplicate)) }, onClick = { menuOpen = false; onDuplicate() })
+                        if (!isLibrary) DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { menuOpen = false; onDelete() })
                     }
                 }
             }
@@ -198,7 +209,7 @@ fun ProgramCard(
                     onClick = onView,
                     contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
-                    Text("View program", color = Color(0xFF0B63F6), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_view_program), color = Color(0xFF0B63F6), fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = onStart,
@@ -209,19 +220,19 @@ fun ProgramCard(
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Start", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_start), fontWeight = FontWeight.Bold)
                 }
             }
-            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text("Race your best", color = Color(0xFF0B63F6)) }
+            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_race_your_best), color = Color(0xFF0B63F6)) }
         }
     }
 }
 
-fun curatedPrograms(): List<Program> = listOf(
-    Program.minutes("Steady 20", 20, Difficulty.EASY),
-    Program.meters("Foundation 2K", 2000, Difficulty.MEDIUM),
-    Program.minutes("Power 30", 30, Difficulty.HARD),
-    Program("Intervals 4 × 2") .also { program ->
+fun curatedPrograms(names: List<String>): List<Program> = listOf(
+    Program.minutes(names[0], 20, Difficulty.EASY),
+    Program.meters(names[1], 2000, Difficulty.MEDIUM),
+    Program.minutes(names[2], 30, Difficulty.HARD),
+    Program(names[3]).also { program ->
         program.segments.get().clear()
         program.addSegment(Segment(Difficulty.HARD).setDuration(120))
         program.addSegment(Segment(Difficulty.REST).setDuration(60))
@@ -232,6 +243,14 @@ fun curatedPrograms(): List<Program> = listOf(
         program.addSegment(Segment(Difficulty.HARD).setDuration(120))
     }
 )
+
+@Composable
+private fun segmentTargetText(segment: Segment): String = when {
+    segment.duration.get() > 0 -> stringResource(R.string.ui_minutes_value, segment.duration.get() / 60)
+    segment.distance.get() > 0 -> stringResource(R.string.ui_meters_value, segment.distance.get())
+    segment.strokes.get() > 0 -> pluralStringResource(R.plurals.ui_strokes_value, segment.strokes.get(), segment.strokes.get())
+    else -> stringResource(R.string.ui_target_set)
+}
 
 fun Segment.describeTarget(): String {
     return if (duration.get() > 0) "${duration.get() / 60} min"

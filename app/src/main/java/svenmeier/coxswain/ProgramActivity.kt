@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -147,7 +148,7 @@ fun ProgramEditorScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.ui_back),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -170,7 +171,7 @@ fun ProgramEditorScreen(
                 contentColor = Color.White,
                 shape = RoundedCornerShape(28.dp),
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Add Segment", fontWeight = FontWeight.Bold) }
+                text = { Text(stringResource(R.string.ui_add_segment), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
@@ -250,12 +251,12 @@ fun SegmentCard(
                 val (value, subtitle) = when {
                     segment.duration.get() > 0 -> {
                         val s = segment.duration.get()
-                        String.format(Locale.getDefault(), "%02d:%02d", s / 60, s % 60) to "Duration"
+                        String.format(Locale.getDefault(), "%02d:%02d", s / 60, s % 60) to stringResource(R.string.ui_duration)
                     }
-                    segment.distance.get() > 0 -> "%,d m".format(Locale.getDefault(), segment.distance.get()) to "Distance"
-                    segment.strokes.get() > 0 -> "%,d".format(Locale.getDefault(), segment.strokes.get()) to "Strokes"
-                    segment.energy.get() > 0 -> "%,d kcal".format(Locale.getDefault(), segment.energy.get()) to "Energy"
-                    else -> "Set target" to "Action"
+                    segment.distance.get() > 0 -> "%,d m".format(Locale.getDefault(), segment.distance.get()) to stringResource(R.string.ui_distance)
+                    segment.strokes.get() > 0 -> "%,d".format(Locale.getDefault(), segment.strokes.get()) to stringResource(R.string.ui_strokes)
+                    segment.energy.get() > 0 -> "%,d kcal".format(Locale.getDefault(), segment.energy.get()) to stringResource(R.string.ui_energy)
+                    else -> stringResource(R.string.ui_set_target) to stringResource(R.string.ui_action)
                 }
 
                 Text(
@@ -273,18 +274,19 @@ fun SegmentCard(
             }
 
             // 4. Goal Chip
+            val hasLimit = segment.strokeRate.get() > 0 || segment.pulse.get() > 0 || segment.speed.get() > 0 || segment.power.get() > 0
             val limitText = when {
                 segment.strokeRate.get() > 0 -> "${segment.strokeRate.get()} SPM"
                 segment.pulse.get() > 0 -> "${segment.pulse.get()} BPM"
                 segment.speed.get() > 0 -> String.format(Locale.US, "%.2f m/s", segment.speed.get() / 100f)
                 segment.power.get() > 0 -> "${segment.power.get()} W"
-                else -> if (readOnly) "No goal" else "+ Set goal"
+                else -> stringResource(if (readOnly) R.string.ui_no_goal else R.string.ui_set_goal)
             }
 
             Surface(
                 onClick = onGoalClick,
                 enabled = !readOnly,
-                color = if (limitText == "+ Set goal" || limitText == "No goal") Color(0xFFF4F7FB) else Color(0xFFDCEBFF),
+                color = if (hasLimit) Color(0xFFDCEBFF) else Color(0xFFF4F7FB),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
@@ -292,7 +294,7 @@ fun SegmentCard(
                     text = limitText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (limitText == "+ Set goal") Color(0xFF53647C) else Color(0xFF0B63F6),
+                    color = if (hasLimit) Color(0xFF0B63F6) else Color(0xFF53647C),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
@@ -322,7 +324,7 @@ fun SegmentCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.action_delete),
                         tint = Color(0xFFBA1A1A).copy(alpha = 0.6f),
                         modifier = Modifier.size(18.dp)
                     )

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
@@ -144,7 +145,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     val streak = rowingStreak(gym.getWorkouts().list(), now)
     val priorMeters = previous.sumOf { it.distance.get() }
     val comparison = if (priorMeters == 0) null else ((meters - priorMeters) * 100 / priorMeters)
-    val streakText = stringResource(R.string.ui_streak, streak)
+    val streakText = pluralStringResource(R.plurals.ui_streak, streak, streak)
     val comparisonText = comparison?.let { stringResource(R.string.ui_prior_period, if (it >= 0) "+$it" else "$it") }
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

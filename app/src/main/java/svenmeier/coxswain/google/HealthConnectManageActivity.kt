@@ -62,7 +62,7 @@ class HealthConnectManageActivity : ComponentActivity() {
         status = when {
             granted.containsAll(required) -> getString(R.string.ui_health_connected)
             granted.isEmpty() -> getString(R.string.ui_health_not_connected)
-            else -> getString(R.string.ui_health_partial, granted.intersect(required).size, required.size)
+            else -> resources.getQuantityString(R.plurals.ui_health_partial, granted.intersect(required).size, granted.intersect(required).size, required.size)
         }
     }
 

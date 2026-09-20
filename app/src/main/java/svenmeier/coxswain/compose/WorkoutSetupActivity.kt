@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -91,21 +93,29 @@ fun WorkoutSetupScreen(
     onSaveAsProgram: (Program) -> Unit
 ) {
     var selectedType by remember(initialType) { mutableStateOf(initialType) }
+    val typeOptions = listOf(
+        "Duration" to stringResource(R.string.ui_duration),
+        "Distance" to stringResource(R.string.ui_distance),
+        "Intervals" to stringResource(R.string.ui_intervals)
+    )
+    val selectedTypeLabel = typeOptions.first { it.first == selectedType }.second
+    val quickWorkoutName = stringResource(R.string.ui_quick_workout)
+    val defaultProgramName = stringResource(R.string.ui_default_program_name)
     var targetValue by remember(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
     var selectedGoal by remember { mutableStateOf("None") }
     var goalValue by remember { mutableIntStateOf(26) }
     var pendingSave by remember { mutableStateOf<Program?>(null) }
-    var programName by remember { mutableStateOf("My workout") }
+    var programName by remember { mutableStateOf(defaultProgramName) }
     val intervalSegments = remember { mutableStateListOf(DraftSegment(SegmentType.DURATION, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.DURATION, 5)) }
     val definitionValid = if (selectedType == "Intervals") intervalSegments.isNotEmpty() && intervalSegments.all { it.value > 0 } else targetValue > 0
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${selectedType} workout", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(stringResource(R.string.ui_workout_title, selectedTypeLabel), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -126,7 +136,7 @@ fun WorkoutSetupScreen(
                     OutlinedButton(
                         enabled = definitionValid,
                         onClick = {
-                            pendingSave = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
+                            pendingSave = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments).apply { name.set(quickWorkoutName) }
                         },
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape = RoundedCornerShape(28.dp),
@@ -135,12 +145,12 @@ fun WorkoutSetupScreen(
                     ) {
                         Icon(painterResource(R.drawable.ic_nav_programs_24dp), contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Save as program", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_save_as_program), fontWeight = FontWeight.Bold)
                     }
                     Button(
                         enabled = definitionValid,
                         onClick = {
-                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
+                            val p = buildProgram(selectedType, targetValue, selectedGoal, goalValue, intervalSegments).apply { name.set(quickWorkoutName) }
                             onStart(p)
                         },
                         modifier = Modifier.weight(1.3f).height(56.dp),
@@ -149,7 +159,7 @@ fun WorkoutSetupScreen(
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Start workout", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.ui_start_workout), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -164,18 +174,18 @@ fun WorkoutSetupScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SectionLabel("PROGRAM TYPE")
+            SectionLabel(stringResource(R.string.ui_program_type))
             SingleSelectToggleGroup(
-                options = listOf("Duration", "Distance", "Intervals"),
-                selectedOption = selectedType,
-                onOptionSelected = { 
-                    selectedType = it
-                    if (it == "Duration") targetValue = 60 else if (it == "Distance") targetValue = 5000
+                options = typeOptions.map { it.second },
+                selectedOption = selectedTypeLabel,
+                onOptionSelected = { selectedLabel ->
+                    selectedType = typeOptions.first { it.second == selectedLabel }.first
+                    if (selectedType == "Duration") targetValue = 60 else if (selectedType == "Distance") targetValue = 5000
                 }
             )
 
             if (selectedType != "Intervals") {
-                SectionLabel("TARGET")
+                SectionLabel(stringResource(R.string.ui_target))
                 TargetInputCard(
                     value = targetValue,
                     unit = if (selectedType == "Duration") "min" else "m",
@@ -188,7 +198,7 @@ fun WorkoutSetupScreen(
                     onDelete = { if (intervalSegments.size > 1) intervalSegments.removeAt(it) })
             }
 
-            SectionLabel("SET GOAL (OPTIONAL)")
+            SectionLabel(stringResource(R.string.ui_set_goal_optional))
             GoalSelector(
                 selectedGoal = selectedGoal,
                 onGoalSelected = { selectedGoal = it },
@@ -196,14 +206,14 @@ fun WorkoutSetupScreen(
                 onGoalValueChange = { goalValue = it }
             )
 
-            SectionLabel("WORKOUT SUMMARY")
+            SectionLabel(stringResource(R.string.ui_workout_summary))
             SummaryCard(selectedType, targetValue, selectedGoal, goalValue, intervalSegments)
             
             Spacer(Modifier.height(40.dp))
         }
     }
     pendingSave?.let { program ->
-        AlertDialog(onDismissRequest = { pendingSave = null }, title = { Text("Save as program") }, text = { OutlinedTextField(value = programName, onValueChange = { programName = it }, label = { Text("Program name") }, singleLine = true) }, confirmButton = { TextButton(enabled = programName.isNotBlank(), onClick = { program.name.set(programName.trim()); onSaveAsProgram(program); pendingSave = null }) { Text("Save") } }, dismissButton = { TextButton(onClick = { pendingSave = null }) { Text("Cancel") } })
+        AlertDialog(onDismissRequest = { pendingSave = null }, title = { Text(stringResource(R.string.ui_save_as_program)) }, text = { OutlinedTextField(value = programName, onValueChange = { programName = it }, label = { Text(stringResource(R.string.ui_program_name)) }, singleLine = true) }, confirmButton = { TextButton(enabled = programName.isNotBlank(), onClick = { program.name.set(programName.trim()); onSaveAsProgram(program); pendingSave = null }) { Text(stringResource(R.string.ui_save)) } }, dismissButton = { TextButton(onClick = { pendingSave = null }) { Text(stringResource(R.string.ui_cancel)) } })
     }
 }
 
@@ -340,12 +350,12 @@ fun GoalSelector(
     goalValue: Int,
     onGoalValueChange: (Int) -> Unit
 ) {
-    data class GoalItem(val name: String, val icon: ImageVector)
+    data class GoalItem(val key: String, val label: String, val icon: ImageVector)
     val goals = listOf(
-        GoalItem("None", Icons.Default.Close),
-        GoalItem("Stroke rate", Icons.Default.Refresh),
-        GoalItem("Speed", Icons.Default.PlayArrow),
-        GoalItem("Power", Icons.Default.Star)
+        GoalItem("None", stringResource(R.string.ui_none), Icons.Default.Close),
+        GoalItem("Stroke rate", stringResource(R.string.ui_stroke_rate), Icons.Default.Refresh),
+        GoalItem("Speed", stringResource(R.string.ui_speed), Icons.Default.PlayArrow),
+        GoalItem("Power", stringResource(R.string.ui_power), Icons.Default.Star)
     )
 
     Card(
@@ -357,12 +367,12 @@ fun GoalSelector(
         Column(modifier = Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 goals.forEach { item ->
-                    val isSelected = selectedGoal == item.name
+                    val isSelected = selectedGoal == item.key
                     Card(
                         modifier = Modifier
                             .weight(1f)
                             .height(84.dp)
-                            .clickable { onGoalSelected(item.name) },
+                            .clickable { onGoalSelected(item.key) },
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected) Color(0xFFEEF6FF) else Color.White
                         ),
@@ -382,7 +392,7 @@ fun GoalSelector(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = item.name, 
+                                text = item.label,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF10213F), 
@@ -407,7 +417,7 @@ fun GoalSelector(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Target $selectedGoal", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_target_metric, goals.first { it.key == selectedGoal }.label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                         Text(
                             text = if (selectedGoal == "Speed") String.format(Locale.getDefault(), "%d:%02d /500m", goalValue/60, goalValue%60) else "$goalValue ${if (selectedGoal == "Power") "W" else "SPM"}",
                             fontSize = 16.sp,
@@ -432,6 +442,11 @@ fun GoalSelector(
 
 @Composable
 fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int, intervals: List<DraftSegment> = emptyList()) {
+    val typeLabel = when (type) {
+        "Duration" -> stringResource(R.string.ui_duration)
+        "Distance" -> stringResource(R.string.ui_distance)
+        else -> stringResource(R.string.ui_intervals)
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
@@ -439,9 +454,9 @@ fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int, interva
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            SummaryRow("Type", type)
-            SummaryRow("Target", if (type == "Intervals") "${intervals.size} segments" else if (type == "Duration") "$target minutes" else "%,d meters".format(target))
-            SummaryRow("Goal", if (goal == "None") "No performance goal" else if (goal == "Speed") String.format(Locale.getDefault(), "%d:%02d /500m", goalValue/60, goalValue%60) else "$goalValue ${if (goal == "Power") "W" else "SPM"}")
+            SummaryRow(stringResource(R.string.ui_type), typeLabel)
+            SummaryRow(stringResource(R.string.ui_target), if (type == "Intervals") pluralStringResource(R.plurals.ui_segment_count, intervals.size, intervals.size) else if (type == "Duration") pluralStringResource(R.plurals.ui_minutes_long, target, target) else pluralStringResource(R.plurals.ui_meters_long, target, target))
+            SummaryRow(stringResource(R.string.ui_goal), if (goal == "None") stringResource(R.string.ui_no_performance_goal) else if (goal == "Speed") String.format(Locale.getDefault(), "%d:%02d /500m", goalValue/60, goalValue%60) else "$goalValue ${if (goal == "Power") "W" else "SPM"}")
         }
     }
 }
@@ -459,20 +474,25 @@ data class DraftSegment(val type: SegmentType, val value: Int)
 
 @Composable
 fun IntervalBuilderCard(segments: MutableList<DraftSegment>, onAdd: () -> Unit, onDelete: (Int) -> Unit) {
+    val typeLabels = mapOf(
+        SegmentType.DURATION to stringResource(R.string.ui_duration),
+        SegmentType.DISTANCE to stringResource(R.string.ui_distance),
+        SegmentType.REST to stringResource(R.string.ui_rest)
+    )
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             segments.forEachIndexed { index, segment ->
                 Column(Modifier.fillMaxWidth().background(Color(0xFFF7FAFD), RoundedCornerShape(12.dp)).padding(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        SegmentType.values().forEach { type -> FilterChip(selected = segment.type == type, onClick = { segments[index] = segment.copy(type = type, value = if (type == SegmentType.DISTANCE) 500 else 1) }, label = { Text(when(type) { SegmentType.DURATION -> "Duration"; SegmentType.DISTANCE -> "Distance"; SegmentType.REST -> "Rest" }) }) }
+                        SegmentType.values().forEach { type -> FilterChip(selected = segment.type == type, onClick = { segments[index] = segment.copy(type = type, value = if (type == SegmentType.DISTANCE) 500 else 1) }, label = { Text(typeLabels.getValue(type)) }) }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(value = segment.value.toString(), onValueChange = { segments[index] = segment.copy(value = it.filter(Char::isDigit).toIntOrNull() ?: 0) }, label = { Text(if (segment.type == SegmentType.DISTANCE) "Meters" else "Minutes") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                        IconButton(onClick = { onDelete(index) }, enabled = segments.size > 1) { Icon(Icons.Default.Delete, contentDescription = "Delete segment") }
+                        OutlinedTextField(value = segment.value.toString(), onValueChange = { segments[index] = segment.copy(value = it.filter(Char::isDigit).toIntOrNull() ?: 0) }, label = { Text(stringResource(if (segment.type == SegmentType.DISTANCE) R.string.ui_meters else R.string.ui_minutes)) }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        IconButton(onClick = { onDelete(index) }, enabled = segments.size > 1) { Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_segment)) }
                     }
                 }
             }
-            OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add segment") }
+            OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.ui_add_segment)) }
         }
     }
 }

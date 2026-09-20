@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -203,9 +204,10 @@ private fun IntervalStrip(gym: Gym) {
     val segments = gym.program?.segments?.get().orEmpty()
     val active = gym.progress?.segment
     val activeIndex = segments.indexOfFirst { it === active }.coerceAtLeast(0)
+    val intervalDescription = stringResource(R.string.ui_interval_position, activeIndex + 1, segments.size)
     Row(
         Modifier.fillMaxWidth().background(Color(0xFF123F51))
-            .semantics { contentDescription = "Interval ${activeIndex + 1} of ${segments.size}" }
+            .semantics { contentDescription = intervalDescription }
             .padding(10.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -221,13 +223,16 @@ private fun RestCountdown(gym: Gym, modifier: Modifier = Modifier) {
     val segment = progress?.segment
     val segments = gym.program?.segments?.get().orEmpty()
     val display = restDisplay(segments, segment, progress?.completion() ?: 0f)
+    val nextText = segments.getOrNull(display.position)?.let { stringResource(R.string.ui_next_row, segmentTarget(it)) }
+        ?: stringResource(R.string.ui_final_segment)
+    val restDescription = stringResource(R.string.ui_rest_accessibility, display.position, display.total, display.remaining, nextText)
     Column(modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
-        contentDescription = "Rest, segment ${display.position} of ${display.total}, ${display.remaining} remaining, ${display.next}"
+        contentDescription = restDescription
     }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("SEGMENT ${display.position} OF ${display.total}", color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.ui_segment_of, display.position, display.total), color = Color(0xFF83D7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.ui_rest), color = Color(0xFFB5D3DE), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Text(display.remaining, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
-        Text(display.next, color = Color(0xFF83D7FF), fontSize = 18.sp)
+        Text(nextText, color = Color(0xFF83D7FF), fontSize = 18.sp)
     }
 }
 
@@ -277,12 +282,14 @@ private fun segmentTarget(segment: Segment): String = when {
 private fun RaceComparison(gym: Gym) {
     val pace = gym.pace ?: return
     val state = raceDisplay(gym.getMeasurement(), pace, gym.program)
+    val leadDistance = kotlin.math.abs(state.leadMeters)
+    val raceDescription = pluralStringResource(if (state.leadMeters >= 0) R.plurals.ui_race_comparison_ahead else R.plurals.ui_race_comparison_behind, leadDistance, leadDistance)
     Column(Modifier.fillMaxWidth().background(Color(0xFF123F51)).semantics {
-        contentDescription = if (state.leadMeters >= 0) "Race comparison, ${state.leadMeters} meters ahead" else "Race comparison, ${-state.leadMeters} meters behind"
+        contentDescription = raceDescription
     }.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         RaceLine(stringResource(R.string.ui_you), state.currentProgress, Color(0xFF0B8FFF))
         RaceLine(stringResource(R.string.ui_best), state.bestProgress, Color(0xFF9CAFC0))
-        Text(if (state.leadMeters >= 0) "+${state.leadMeters} m ahead" else "${-state.leadMeters} m behind", Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (state.leadMeters >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
+        Text(stringResource(if (state.leadMeters >= 0) R.string.ui_race_ahead else R.string.ui_race_behind, kotlin.math.abs(state.leadMeters)), Modifier.align(Alignment.End), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (state.leadMeters >= 0) Color(0xFF4ADE80) else Color(0xFFFF9AAA))
     }
 }
 
@@ -306,16 +313,18 @@ private fun RaceLine(label: String, progress: Float, color: Color) {
 
 @Composable
 fun TargetProgressBar(gym: Gym) {
+    val completionPercent = ((gym.progress?.completion() ?: 0f) * 100).toInt()
+    val progressDescription = pluralStringResource(R.plurals.ui_workout_progress_accessibility, completionPercent, completionPercent, gym.progress?.describe() ?: stringResource(R.string.ui_ready))
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF123F51))
-            .semantics { contentDescription = "Workout progress ${((gym.progress?.completion() ?: 0f) * 100).toInt()} percent, ${gym.progress?.describe() ?: "Ready"}" }
+            .semantics { contentDescription = progressDescription }
             .padding(16.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.ui_workout_progress), style = MaterialTheme.typography.labelSmall, color = Color(0xFFCAD4E1))
-            Text("${((gym.progress?.completion() ?: 0f) * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
+            Text("$completionPercent%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
         }
         Text(
             text = gym.progress?.describe() ?: stringResource(R.string.ui_ready),

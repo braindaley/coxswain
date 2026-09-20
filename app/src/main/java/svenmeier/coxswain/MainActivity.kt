@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,15 +50,21 @@ class MainActivity : ComponentActivity() {
 fun MainContainer(gym: Gym, activity: MainActivity) {
     var currentTab by remember { mutableIntStateOf(0) }
     var refreshKey by remember { mutableIntStateOf(0) }
+    val backupSaved = stringResource(R.string.ui_backup_saved)
+    val backupFailed = stringResource(R.string.ui_backup_failed)
+    val backupRestored = stringResource(R.string.ui_backup_restored)
+    val restoreFailed = stringResource(R.string.ui_restore_failed)
+    val backupReadFailed = stringResource(R.string.ui_backup_read_failed)
+    val programCopy = stringResource(R.string.ui_program_copy)
     val createBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) runCatching { activity.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(gym.createBackup()) } }
-            .onSuccess { Toast.makeText(activity, "Backup saved", Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(activity, "Backup failed: ${it.message}", Toast.LENGTH_LONG).show() }
+            .onSuccess { Toast.makeText(activity, backupSaved, Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(activity, backupFailed.format(it.message), Toast.LENGTH_LONG).show() }
     }
     val restoreBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) runCatching { activity.contentResolver.openInputStream(uri)?.bufferedReader()?.use { gym.restoreBackup(it.readText()) } ?: error("Could not read backup") }
-            .onSuccess { refreshKey++; Toast.makeText(activity, "Backup restored", Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(activity, "Restore failed: ${it.message}", Toast.LENGTH_LONG).show() }
+        if (uri != null) runCatching { activity.contentResolver.openInputStream(uri)?.bufferedReader()?.use { gym.restoreBackup(it.readText()) } ?: error(backupReadFailed) }
+            .onSuccess { refreshKey++; Toast.makeText(activity, backupRestored, Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(activity, restoreFailed.format(it.message), Toast.LENGTH_LONG).show() }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -67,10 +74,10 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
     }
     
     val tabs = listOf(
-        TabItem("Home", Icons.Default.Home),
-        TabItem("Programs", Icons.AutoMirrored.Filled.List),
-        TabItem("History", Icons.Default.Refresh),
-        TabItem("More", Icons.Default.MoreVert)
+        TabItem(stringResource(R.string.ui_home), Icons.Default.Home),
+        TabItem(stringResource(R.string.ui_programs), Icons.AutoMirrored.Filled.List),
+        TabItem(stringResource(R.string.ui_history), Icons.Default.Refresh),
+        TabItem(stringResource(R.string.ui_more), Icons.Default.MoreVert)
     )
 
     Scaffold(
@@ -155,7 +162,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         WorkoutActivity.start(activity)
                     },
                     onDuplicateProgram = { program ->
-                        gym.duplicateProgram(program, "${program.name.get()} copy")
+                        gym.duplicateProgram(program, programCopy.format(program.name.get()))
                     },
                     onDeleteProgram = { program ->
                         gym.delete(program)

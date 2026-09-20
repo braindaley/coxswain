@@ -109,12 +109,14 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [ ] Test Bluetooth loss, USB detach, app backgrounding, rotation, and process death during a workout.
 - [x] Test app backgrounding and rotation during an active/paused workout on the API 37 emulator.
 - [ ] Complete the manual TalkBack/focus-order pass. Live Row metrics are no longer exposed as editable outside Edit display, and interval, rest, race, and progress regions now have explicit spoken summaries.
-- [ ] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
+- [x] Move new hardcoded English UI strings into resources and verify German/French fallback behavior.
 - [x] Localize the workout lifecycle surfaces: Live Row controls and states, end-session confirmation, Workout Complete, Workout Details, and Race Your Best now use English, German, and French resources.
-- [ ] Verify locale-aware number, date, time, and unit formatting.
+- [x] Localize Home, Programs, Workout Setup, Program Builder, History, results, navigation, Connect Rower, Data & Export, Diagnostics, Help, backup/restore feedback, and Health Connect management in English, German, and French.
+- [x] Verify German and French resources on the API 37 emulator. UI hierarchy captures confirmed the localized Home shell, actions, analytics controls, and bottom navigation; plural resources cover program, segment, stroke, duration, distance, streak, progress, permission, and race-distance counts.
+- [x] Verify locale-aware number, date, time, and unit formatting in the Compose surfaces. Dates and grouped numbers use the active locale; compact rowing units remain the standard m, W, SPM, BPM, kcal, and /500 m labels.
 - [x] Add persisted diagnostics for failed/lost connections, incomplete sessions, export failures, and storage migration fallback.
 - [ ] Run migration, backup/restore, and Health Connect device test scripts.
-- [ ] Confirm every designed screen is reachable and every visible primary control performs its stated action.
+- [x] Confirm every designed screen is reachable and every visible primary control performs its stated action through the ten-flow instrumentation suite. The Android Studio JVMTI inspection agent caused one native file-descriptor abort during a monolithic run; the exact failed flow passed on immediate isolated retry, and all navigation, setup, lifecycle, and application tests then passed in stable groups.
 
 ## Recommended execution order
 
@@ -127,4 +129,4 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 
 ## Validation note
 
-The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. AndroidX Test was updated to runner 1.7.0, JUnit 1.3.0, and Espresso 3.7.0 for Android 17 compatibility. All ten Compose/instrumentation tests pass on the available Pixel 9a API 37 emulator, including the complete Race Your Best result path, interval builder interactions, rotation, background/foreground, Back cancellation, and stale workout launch handling. Device runs exposed cursor-lifetime crashes in Home analytics and workout result screens; repository query results are now materialized before later queries can close their cursors.
+The debug build, unit suite, instrumentation APK build, and lint-with-baseline pass. AndroidX Test was updated to runner 1.7.0, JUnit 1.3.0, and Espresso 3.7.0 for Android 17 compatibility. All ten Compose/instrumentation tests pass on the available Pixel 9a API 37 emulator, including the complete Race Your Best result path, interval builder interactions, rotation, background/foreground, Back cancellation, stale workout launch handling, and every More destination. Device runs exposed cursor-lifetime crashes in Home analytics and workout result screens; repository query results are now materialized before later queries can close their cursors. German and French resource selection was also verified against rendered emulator UI trees.
