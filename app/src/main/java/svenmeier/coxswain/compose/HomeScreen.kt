@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -50,12 +51,12 @@ fun HomeScreen(
         Spacer(Modifier.height(12.dp))
         
         Text(
-            text = "Welcome back",
+            text = stringResource(R.string.ui_welcome_back),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Ready to row?",
+            text = stringResource(R.string.ui_ready_to_row),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -75,12 +76,12 @@ fun HomeScreen(
             Box(Modifier.fillMaxSize().padding(24.dp)) {
                 Column(Modifier.align(Alignment.BottomStart)) {
                     Text(
-                        text = "Free Row", 
+                        text = stringResource(R.string.ui_free_row),
                         color = Color.White, 
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Text(
-                        text = "Start rowing without a target", 
+                        text = stringResource(R.string.ui_free_row_subtitle),
                         color = Color.White.copy(alpha = 0.8f), 
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -96,14 +97,14 @@ fun HomeScreen(
 
         Spacer(Modifier.height(32.dp))
 
-        SectionLabel("QUICK START")
+        SectionLabel(stringResource(R.string.ui_quick_start_heading))
         Spacer(Modifier.height(12.dp))
 
         // 2x2 Grid for Quick Actions (matches manifest "Duration, Distance, My Programs, and Library")
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
-                title = "Quick Start",
-                subtitle = "Choose duration, distance, or intervals",
+                title = stringResource(R.string.ui_quick_start),
+                subtitle = stringResource(R.string.ui_quick_start_subtitle),
                 iconRes = R.drawable.ic_nav_workouts_24dp,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onQuickDuration
@@ -119,6 +120,11 @@ fun HomeScreen(
 @Composable
 private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     var period by remember { mutableStateOf("This week") }
+    val periodOptions = listOf(
+        "This week" to stringResource(R.string.ui_this_week),
+        "This month" to stringResource(R.string.ui_this_month),
+        "This year" to stringResource(R.string.ui_this_year)
+    )
     val now = System.currentTimeMillis()
     val range = calendarRange(period, now)
     // Repository lists are cursor-backed. Materialize each query before opening
@@ -138,20 +144,22 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     val streak = rowingStreak(gym.getWorkouts().list(), now)
     val priorMeters = previous.sumOf { it.distance.get() }
     val comparison = if (priorMeters == 0) null else ((meters - priorMeters) * 100 / priorMeters)
+    val streakText = stringResource(R.string.ui_streak, streak)
+    val comparisonText = comparison?.let { stringResource(R.string.ui_prior_period, if (it >= 0) "+$it" else "$it") }
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("YOUR ROWING", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C))
-            SingleSelectToggleGroup(listOf("This week", "This month", "This year"), period) { period = it }
+            Text(stringResource(R.string.ui_your_rowing), fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C))
+            SingleSelectToggleGroup(periodOptions.map { it.second }, periodOptions.first { it.first == period }.second) { selected -> period = periodOptions.first { it.second == selected }.first }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Stat("Meters rowed", "%,d m".format(meters)); Stat("Time rowed", "%d:%02d".format(seconds/60, seconds%60))
+                Stat(stringResource(R.string.ui_meters_rowed), "%,d m".format(java.util.Locale.getDefault(), meters)); Stat(stringResource(R.string.ui_time_rowed), "%d:%02d".format(java.util.Locale.getDefault(), seconds/60, seconds%60))
             }
             if (workouts.isEmpty()) {
-                Text("Your first row will start your progress chart.", fontSize = 13.sp, color = Color(0xFF53647C))
-                OutlinedButton(onClick = onQuickStart, modifier = Modifier.fillMaxWidth()) { Text("Set up a quick row") }
+                Text(stringResource(R.string.ui_first_row_chart), fontSize = 13.sp, color = Color(0xFF53647C))
+                OutlinedButton(onClick = onQuickStart, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_set_up_quick_row)) }
             } else {
-                Text(buildString { append("$streak day streak"); comparison?.let { append("  •  "); append(if (it >= 0) "+$it%" else "$it%"); append(" vs prior period") } }, fontSize = 13.sp, color = Color(0xFF53647C))
+                Text(buildString { append(streakText); comparisonText?.let { append("  •  "); append(it) } }, fontSize = 13.sp, color = Color(0xFF53647C))
             }
-            Text("Activity", fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+            Text(stringResource(R.string.ui_activity), fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
             Row(Modifier.fillMaxWidth().height(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
                     Text("%,d m".format(maxBucket), fontSize = 10.sp); Text("%,d m".format(maxBucket / 2), fontSize = 10.sp); Text("0 m", fontSize = 10.sp)
@@ -207,7 +215,7 @@ internal fun rowingStreak(workouts: List<Workout>, now: Long): Int {
 @Composable private fun Stat(label: String, value: String) { Column { Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F)); Text(label, fontSize = 12.sp, color = Color(0xFF53647C)) } }
 
 @Composable private fun LastWorkoutCard(workout: Workout, onDetails: () -> Unit, onRowAgain: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onDetails), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) { Column(Modifier.padding(20.dp)) { Text("LAST WORKOUT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C)); Text(workout.programName("Free Row"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Spacer(Modifier.height(8.dp)); Text("%,d m  •  %d:%02d".format(workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = Color(0xFF53647C)); Spacer(Modifier.height(12.dp)); Button(onClick = onRowAgain, modifier = Modifier.fillMaxWidth()) { Text("Row again") } } }
+    Card(Modifier.fillMaxWidth().clickable(onClick = onDetails), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = Color.White)) { Column(Modifier.padding(20.dp)) { Text(stringResource(R.string.ui_last_workout), fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color(0xFF53647C)); Text(workout.programName(stringResource(R.string.ui_free_row)), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = Color(0xFF53647C)); Spacer(Modifier.height(12.dp)); Button(onClick = onRowAgain, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_row_again)) } } }
 }
 
 @Composable
