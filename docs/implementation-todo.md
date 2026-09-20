@@ -115,7 +115,8 @@ Implemented: initial accessibility descriptions for primary Home actions and Liv
 - [x] Verify German and French resources on the API 37 emulator. UI hierarchy captures confirmed the localized Home shell, actions, analytics controls, and bottom navigation; plural resources cover program, segment, stroke, duration, distance, streak, progress, permission, and race-distance counts.
 - [x] Verify locale-aware number, date, time, and unit formatting in the Compose surfaces. Dates and grouped numbers use the active locale; compact rowing units remain the standard m, W, SPM, BPM, kcal, and /500 m labels.
 - [x] Add persisted diagnostics for failed/lost connections, incomplete sessions, export failures, and storage migration fallback.
-- [ ] Run migration, backup/restore, and Health Connect device test scripts.
+- [x] Run migration, backup/restore, and Health Connect device test scripts. Android SQLite v1 migration, device-storage backup/restore, and Health Connect SDK/permission-state queries pass on the API 37 emulator.
+- [ ] Complete a permission-approved Health Connect write on a configured physical device or emulator account.
 - [x] Confirm every designed screen is reachable and every visible primary control performs its stated action through the ten-flow instrumentation suite. The Android Studio JVMTI inspection agent caused one native file-descriptor abort during a monolithic run; the exact failed flow passed on immediate isolated retry, and all navigation, setup, lifecycle, and application tests then passed in stable groups.
 
 ## Recommended execution order
