@@ -30,7 +30,7 @@ public class Permission extends BroadcastReceiver {
 		filter.addAction(ACTION_USB_PERMISSION);
 		filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
 		if (Build.VERSION.SDK_INT >= 33) {
-			context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+			context.registerReceiver(this, filter, Context.RECEIVER_EXPORTED);
 		} else {
 			context.registerReceiver(this, filter);
 		}

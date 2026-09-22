@@ -105,7 +105,13 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         } else if (intent.getBooleanExtra(CONNECTOR_MOCK, false)) {
             rower = new MockRower(this, this);
         } else {
-            rower = new UsbRower(this, (UsbDevice) intent.getParcelableExtra(CONNECTOR_USB), this);
+            UsbDevice device;
+            if (Build.VERSION.SDK_INT >= 33) {
+                device = intent.getParcelableExtra(CONNECTOR_USB, UsbDevice.class);
+            } else {
+                device = intent.getParcelableExtra(CONNECTOR_USB);
+            }
+            rower = new UsbRower(this, device, this);
         }
 
         this.foreground = new Foreground();

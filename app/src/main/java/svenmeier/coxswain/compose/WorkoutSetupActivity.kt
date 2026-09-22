@@ -218,59 +218,6 @@ fun WorkoutSetupScreen(
     }
 }
 
-@Composable
-fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge.copy(
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            fontSize = 12.sp
-        ),
-        color = Color(0xFF53647C),
-        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
-    )
-}
-
-@Composable
-fun SingleSelectToggleGroup(
-    options: List<String>,
-    selectedOption: String,
-    fontSize: TextUnit = 14.sp,
-    onOptionSelected: (String) -> Unit
-) {
-    Surface(
-        color = Color(0xFFE8EEF6),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(modifier = Modifier.padding(4.dp)) {
-            options.forEach { option ->
-                val isSelected = option == selectedOption
-                Surface(
-                    color = if (isSelected) Color.White else Color.Transparent,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    shadowElevation = if (isSelected) 1.dp else 0.dp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onOptionSelected(option) }
-                ) {
-                    Box(modifier = Modifier.padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = option,
-                            fontSize = fontSize,
-                            maxLines = 1,
-                            softWrap = false,
-                            color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF53647C),
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TargetInputCard(

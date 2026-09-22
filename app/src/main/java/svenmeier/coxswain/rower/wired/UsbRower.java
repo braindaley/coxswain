@@ -94,9 +94,14 @@ public class UsbRower extends Rower implements Runnable {
 
                 String action = intent.getAction();
                 if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice device;
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
 
-                    if (device.equals(UsbRower.this.device)) {
+                    if (device != null && device.equals(UsbRower.this.device)) {
                         trace.comment(String.format("disconnected from %s", device.getDeviceName()));
                         
 						callback.onDisconnected();

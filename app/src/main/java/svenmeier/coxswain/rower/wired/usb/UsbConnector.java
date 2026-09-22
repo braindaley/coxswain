@@ -30,7 +30,7 @@ public class UsbConnector extends BroadcastReceiver {
 		manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
 		if (Build.VERSION.SDK_INT >= 33) {
-			context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT), Context.RECEIVER_NOT_EXPORTED);
+			context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT), Context.RECEIVER_EXPORTED);
 		} else {
 			context.registerReceiver(this, new IntentFilter(DEVICE_CONNECT));
 		}
@@ -63,9 +63,14 @@ public class UsbConnector extends BroadcastReceiver {
 
 		if (DEVICE_CONNECT.equals(action)) {
 			synchronized (this) {
-				UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+				UsbDevice device;
+				if (Build.VERSION.SDK_INT >= 33) {
+					device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+				} else {
+					device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+				}
 
-				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {
 					onConnected(device);
 				}
 			}

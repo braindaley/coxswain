@@ -21,11 +21,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import svenmeier.coxswain.compose.*
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
+import android.content.Intent
+import android.os.Build
+import android.view.WindowManager
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.google.HealthConnectExport
@@ -37,9 +41,44 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val gym = Gym.instance(this)
 
+        handleIntent(intent, gym)
+
         setContent {
             CoxswainTheme {
                 MainContainer(gym, this)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent, Gym.instance(this))
+    }
+
+    private fun handleIntent(intent: Intent?, gym: Gym) {
+        if (intent == null) return
+
+        if (UsbManager.ACTION_USB_DEVICE_ATTACHED == intent.action) {
+            @Suppress("DEPRECATION")
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+            } else {
+                intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+            }
+            if (device != null) {
+                GymService.start(this, device)
+
+                if (gym.program == null) {
+                    // Switch to home or show connection
+                    window.addFlags(
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                    )
+                } else {
+                    // Program already selected, go to workout
+                    WorkoutActivity.start(this)
+                }
             }
         }
     }
@@ -136,8 +175,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         gym.startFreeRow()
                         WorkoutActivity.start(activity)
                     },
-                    onQuickDuration = { WorkoutSetupActivity.start(activity, "Duration") },
-                    onQuickDistance = { WorkoutSetupActivity.start(activity, "Distance") },
+                    onQuickStart = { WorkoutSetupActivity.start(activity, it) },
                     onMyPrograms = { currentTab = 1 },
                     onLibrary = { currentTab = 1 },
                     onWorkoutDetails = { WorkoutDetailsActivity.start(activity, it) },

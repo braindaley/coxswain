@@ -7,14 +7,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.hardware.usb.UsbDevice
+import propoid.util.content.Preference
 import svenmeier.coxswain.Gym
+import svenmeier.coxswain.GymService
 import svenmeier.coxswain.DiagnosticsLog
 import svenmeier.coxswain.R
+import svenmeier.coxswain.rower.wired.usb.UsbConnector
 
 private enum class MoreDestination { ROOT, CONNECT, DATA, DIAGNOSTICS, HELP }
 
@@ -61,15 +66,115 @@ private fun MoreRoot(onConnect: () -> Unit, onSettings: () -> Unit, onData: () -
 
 @Composable
 private fun ConnectRowerScreen(gym: Gym, onBack: () -> Unit, onConnect: () -> Unit, onDisconnect: () -> Unit) {
+    val context = LocalContext.current
+    var usbDevices by remember { mutableStateOf<List<UsbDevice>>(emptyList()) }
+    var isS3Mode by remember {
+        mutableStateOf(Preference.getBoolean(context, R.string.preference_hardware_legacy).get() ?: false)
+    }
+    var connector by remember { mutableStateOf<UsbConnector?>(null) }
+
+    DisposableEffect(context) {
+        val conn = object : UsbConnector(context) {
+            override fun onConnected(device: UsbDevice?) {
+                if (device != null) {
+                    GymService.start(context, device)
+                }
+            }
+        }
+        connector = conn
+        usbDevices = conn.list().toList()
+        onDispose {
+            conn.destroy()
+        }
+    }
+
     MorePage(stringResource(R.string.ui_connect_rower), onBack) {
-        StatusCard(if (gym.connected) stringResource(R.string.ui_connected) else if (gym.connecting) stringResource(R.string.ui_connecting) else stringResource(R.string.ui_disconnected), gym.connectedRowerName ?: if (gym.connecting) stringResource(R.string.ui_waiting_for_rower) else stringResource(R.string.ui_no_rower_connected))
+        StatusCard(
+            if (gym.connected) stringResource(R.string.ui_connected) else if (gym.connecting) stringResource(R.string.ui_connecting) else stringResource(R.string.ui_disconnected),
+            gym.connectedRowerName ?: if (gym.connecting) stringResource(R.string.ui_waiting_for_rower) else stringResource(R.string.ui_no_rower_connected)
+        )
+        if (gym.connected) {
+            OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.ui_disconnect))
+            }
+        }
+
         Text(stringResource(R.string.ui_bluetooth_ftms), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.ui_bluetooth_ftms_explanation))
-        Button(onClick = onConnect, modifier = Modifier.fillMaxWidth().height(54.dp)) { Text(stringResource(if (gym.connected) R.string.ui_connect_another_rower else R.string.ui_scan_for_rower)) }
-        if (gym.connected) OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_disconnect)) }
+        Button(onClick = onConnect, modifier = Modifier.fillMaxWidth().height(54.dp)) {
+            Text(stringResource(if (gym.connected) R.string.ui_connect_another_rower else R.string.ui_scan_for_rower))
+        }
+
         HorizontalDivider()
+
         Text(stringResource(R.string.ui_usb), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.ui_usb_explanation))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("S3 Monitor Mode", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Enable for WaterRower S3 monitor (1200 baud). Leave off for S4 monitor.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = isS3Mode,
+                onCheckedChange = { checked ->
+                    isS3Mode = checked
+                    Preference.getBoolean(context, R.string.preference_hardware_legacy).set(checked)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OutlinedButton(
+            onClick = {
+                connector?.let { usbDevices = it.list().toList() }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Refresh USB Devices")
+        }
+
+        if (usbDevices.isEmpty()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("No USB devices detected", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Plug in your WaterRower USB cable with a USB-OTG adapter.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            usbDevices.forEach { device ->
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val deviceName = device.productName ?: device.deviceName
+                        Text(deviceName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Vendor: ${device.vendorId} · Product: ${device.productId}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Button(
+                            onClick = { connector?.connect(device) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Connect to $deviceName")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
