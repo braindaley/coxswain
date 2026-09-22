@@ -49,9 +49,12 @@ public class MaterialLimitPickerDialog extends DialogFragment {
 
     public static MaterialLimitPickerDialog create(Segment segment) {
         MaterialLimitPickerDialog dialog = new MaterialLimitPickerDialog();
-        Bundle args = new Bundle();
-        new Reference<>(segment).to(args);
-        dialog.setArguments(args);
+        dialog.segment = segment;
+        if (segment != null && Row.getID(segment) != Row.TRANSIENT) {
+            Bundle args = new Bundle();
+            new Reference<>(segment).to(args);
+            dialog.setArguments(args);
+        }
         return dialog;
     }
 
@@ -59,7 +62,15 @@ public class MaterialLimitPickerDialog extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         gym = Gym.instance(getContext());
-        segment = gym.get(Reference.<Segment>from(getArguments()));
+        if (segment == null) {
+            Bundle args = getArguments();
+            if (args != null) {
+                Reference<Segment> ref = Reference.from(args);
+                if (ref != null) {
+                    segment = gym.get(ref);
+                }
+            }
+        }
 
         if (segment != null) {
             if (segment.strokeRate.get() > 0) {

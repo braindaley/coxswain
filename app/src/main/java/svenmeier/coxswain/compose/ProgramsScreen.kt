@@ -150,11 +150,14 @@ fun ProgramsScreen(
 fun ProgramCard(
     program: Program,
     onView: () -> Unit,
-    onStart: () -> Unit
-    ,isLibrary: Boolean = false, onDuplicate: () -> Unit = {}, onDelete: () -> Unit = {}, onRace: () -> Unit = {}
+    onStart: () -> Unit,
+    isLibrary: Boolean = false,
+    onDuplicate: () -> Unit = {},
+    onDelete: () -> Unit = {},
+    onRace: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().testTag("program-${program.name.get()}"),
+        modifier = Modifier.fillMaxWidth().clickable { onView() }.testTag("program-${program.name.get()}"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

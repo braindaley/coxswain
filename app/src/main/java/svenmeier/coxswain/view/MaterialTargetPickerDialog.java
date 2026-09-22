@@ -52,9 +52,12 @@ public class MaterialTargetPickerDialog extends DialogFragment {
 
     public static MaterialTargetPickerDialog create(Segment segment) {
         MaterialTargetPickerDialog dialog = new MaterialTargetPickerDialog();
-        Bundle args = new Bundle();
-        new Reference<>(segment).to(args);
-        dialog.setArguments(args);
+        dialog.segment = segment;
+        if (segment != null && Row.getID(segment) != Row.TRANSIENT) {
+            Bundle args = new Bundle();
+            new Reference<>(segment).to(args);
+            dialog.setArguments(args);
+        }
         return dialog;
     }
 
@@ -62,9 +65,14 @@ public class MaterialTargetPickerDialog extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         gym = Gym.instance(getContext());
-        Bundle args = getArguments();
-        if (args != null) {
-            segment = gym.get(Reference.from(args));
+        if (segment == null) {
+            Bundle args = getArguments();
+            if (args != null) {
+                Reference<Segment> ref = Reference.from(args);
+                if (ref != null) {
+                    segment = gym.get(ref);
+                }
+            }
         }
 
         if (segment != null) {
