@@ -87,6 +87,12 @@
     <string name="ui_my_programs">Mes programmes</string>
     <string name="ui_workout_library">Bibliothèque d’entraînements</string>
     <string name="ui_create_program">Créer un programme</string>
+    <string name="ui_save_program">Enregistrer le programme</string>
+    <string name="ui_program_saved">Programme enregistré</string>
+    <string name="ui_discard_changes_title">Abandonner les modifications ?</string>
+    <string name="ui_discard_changes_body">Vous avez des modifications non enregistrées. Si vous quittez maintenant, elles seront perdues.</string>
+    <string name="ui_discard">Abandonner</string>
+    <string name="ui_keep_editing">Poursuivre la modification</string>
     <plurals name="ui_program_count">
         <item quantity="one">%1$d programme</item>
         <item quantity="many">%1$d programmes</item>

@@ -55,11 +55,11 @@ public class Utils {
             return (T) activity;
         }
 
-        Application application = activity.getApplication();
+        Application application = activity != null ? activity.getApplication() : null;
         if (application != null && callback.isInstance(application)) {
             return (T) application;
         }
 
-        throw new IllegalStateException("no requested parental callback " + callback.getSimpleName());
+        return null;
     }
 }

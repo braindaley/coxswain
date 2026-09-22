@@ -21,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 
 import propoid.db.Reference;
+import propoid.db.aspect.Row;
 import svenmeier.coxswain.Gym;
 import svenmeier.coxswain.R;
 import svenmeier.coxswain.gym.Segment;
@@ -274,7 +275,12 @@ public class MaterialLimitPickerDialog extends DialogFragment {
                 break;
         }
 
-        gym.mergeSegment(segment);
-        Utils.getCallback(this, AbstractValueFragment.Callback.class).onChanged(segment);
+        if (Row.getID(segment) != Row.TRANSIENT) {
+            gym.mergeSegment(segment);
+        }
+        AbstractValueFragment.Callback callback = Utils.getCallback(this, AbstractValueFragment.Callback.class);
+        if (callback != null) {
+            callback.onChanged(segment);
+        }
     }
 }

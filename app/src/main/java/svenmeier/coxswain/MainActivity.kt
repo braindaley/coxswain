@@ -189,8 +189,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     gym = gym,
                     refreshKey = refreshKey,
                     onCreateProgram = {
-                        val p = gym.newProgram()
-                        activity.startActivity(ProgramActivity.createIntent(activity, p))
+                        activity.startActivity(ProgramActivity.createIntent(activity, null))
                     },
                     onEditProgram = { program ->
                         activity.startActivity(if (gym.hasWorkoutHistory(program)) ProgramActivity.createReadOnlyIntent(activity, program) else ProgramActivity.createIntent(activity, program))

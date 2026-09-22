@@ -3,6 +3,8 @@ package svenmeier.coxswain
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,14 +21,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import propoid.db.Reference
 import svenmeier.coxswain.compose.CoxswainTheme
 import svenmeier.coxswain.compose.getIntensityColor
@@ -40,27 +43,61 @@ import java.util.Locale
 class ProgramActivity : FragmentActivity() {
 
     private lateinit var gym: Gym
-    private var program: Program? = null
+    private var originalProgram: Program? = null
+    private lateinit var draftProgram: Program
+    private val refreshTrigger = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         gym = Gym.instance(this)
 
         val reference = Reference.from<Program>(intent)
-        program = gym.getProgram(reference)
+        originalProgram = if (reference != null) gym.getProgram(reference) else null
 
-        if (program == null) {
-            finish()
-            return
+        val isReadOnly = intent.getBooleanExtra(EXTRA_READ_ONLY, false)
+
+        draftProgram = if (originalProgram != null) {
+            cloneProgram(originalProgram!!)
+        } else {
+            Program(getString(R.string.program_name_new)).apply {
+                segments.get().clear()
+                addSegment(Segment(Difficulty.EASY).setDistance(500))
+            }
         }
+
+        supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
+                if (f is MaterialTargetPickerDialog || f is MaterialLimitPickerDialog) {
+                    refreshTrigger.intValue++
+                }
+            }
+        }, false)
 
         setContent {
             CoxswainTheme {
                 ProgramEditorScreen(
-                    program = program!!,
-                    readOnly = intent.getBooleanExtra(EXTRA_READ_ONLY, false),
+                    draftProgram = draftProgram,
+                    readOnly = isReadOnly,
+                    isNewProgram = (originalProgram == null),
+                    refreshTrigger = refreshTrigger.intValue,
+                    onSave = {
+                        val finalName = draftProgram.name.get()?.trim().orEmpty().ifEmpty { getString(R.string.program_name_new) }
+                        draftProgram.name.set(finalName)
+
+                        if (originalProgram == null) {
+                            gym.mergeProgram(draftProgram)
+                        } else {
+                            originalProgram!!.name.set(finalName)
+                            originalProgram!!.segments.get().clear()
+                            for (segment in draftProgram.segments.get()) {
+                                originalProgram!!.segments.get().add(segment.duplicate())
+                            }
+                            gym.mergeProgram(originalProgram!!)
+                        }
+                        Toast.makeText(this, R.string.ui_program_saved, Toast.LENGTH_SHORT).show()
+                        finish()
+                    },
                     onBack = { finish() },
-                    onMerge = { if (!intent.getBooleanExtra(EXTRA_READ_ONLY, false)) gym.mergeProgram(program) },
                     onShowTargetDialog = { segment ->
                         MaterialTargetPickerDialog.create(segment).show(supportFragmentManager, "target")
                     },
@@ -72,37 +109,83 @@ class ProgramActivity : FragmentActivity() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (!intent.getBooleanExtra(EXTRA_READ_ONLY, false)) program?.let { gym.mergeProgram(it) }
+    private fun cloneProgram(original: Program): Program {
+        val copy = Program(original.name.get() ?: getString(R.string.program_name_new))
+        copy.segments.get().clear()
+        for (s in original.segments.get()) {
+            copy.segments.get().add(s.duplicate())
+        }
+        return copy
     }
 
     companion object {
         private const val EXTRA_READ_ONLY = "readOnly"
+
         @JvmStatic
-        fun createIntent(context: Context, program: Program): Intent {
+        fun createIntent(context: Context, program: Program?): Intent {
             val intent = Intent(context, ProgramActivity::class.java)
-            intent.data = Reference(program).toUri()
+            if (program != null) {
+                intent.data = Reference(program).toUri()
+            }
             return intent
         }
 
         @JvmStatic
-        fun createReadOnlyIntent(context: Context, program: Program): Intent = createIntent(context, program).putExtra(EXTRA_READ_ONLY, true)
+        fun createReadOnlyIntent(context: Context, program: Program): Intent =
+            createIntent(context, program).putExtra(EXTRA_READ_ONLY, true)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgramEditorScreen(
-    program: Program,
+    draftProgram: Program,
     readOnly: Boolean = false,
+    isNewProgram: Boolean = false,
+    refreshTrigger: Int = 0,
+    onSave: () -> Unit,
     onBack: () -> Unit,
-    onMerge: () -> Unit,
     onShowTargetDialog: (Segment) -> Unit,
     onShowLimitDialog: (Segment) -> Unit
 ) {
-    var programName by remember { mutableStateOf(program.name.get() ?: "") }
-    val segments = remember { mutableStateListOf<Segment>().apply { addAll(program.segments.get()) } }
+    @Suppress("UNUSED_VARIABLE") val trigger = refreshTrigger
+    var programName by remember { mutableStateOf(draftProgram.name.get() ?: "") }
+    var isDirty by remember { mutableStateOf(false) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    val segments = remember { mutableStateListOf<Segment>().apply { addAll(draftProgram.segments.get()) } }
+
+    fun handleBack() {
+        if (!readOnly && isDirty) {
+            showDiscardDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    BackHandler {
+        handleBack()
+    }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text(stringResource(R.string.ui_discard_changes_title)) },
+            text = { Text(stringResource(R.string.ui_discard_changes_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onBack()
+                }) {
+                    Text(stringResource(R.string.ui_discard), color = Color(0xFFBA1A1A))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(stringResource(R.string.ui_keep_editing))
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -121,8 +204,8 @@ fun ProgramEditorScreen(
                             value = programName,
                             onValueChange = {
                                 programName = it
-                                program.name.set(it)
-                                onMerge()
+                                draftProgram.name.set(it)
+                                isDirty = true
                             },
                             textStyle = MaterialTheme.typography.titleLarge.copy(
                                 color = MaterialTheme.colorScheme.onPrimary,
@@ -145,7 +228,7 @@ fun ProgramEditorScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { handleBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_back),
@@ -158,21 +241,56 @@ fun ProgramEditorScreen(
                 )
             )
         },
+        bottomBar = {
+            if (!readOnly) {
+                Surface(
+                    color = Color.White,
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Button(
+                            onClick = onSave,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6))
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.ui_save_program),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        },
         floatingActionButton = {
-            if (!readOnly) ExtendedFloatingActionButton(
-                onClick = {
-                    val newSegment = Segment(Difficulty.EASY)
-                    newSegment.distance.set(500)
-                    program.segments.get().add(newSegment)
-                    onMerge()
-                    segments.add(newSegment)
-                },
-                containerColor = Color(0xFF0B63F6),
-                contentColor = Color.White,
-                shape = RoundedCornerShape(28.dp),
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.ui_add_segment), fontWeight = FontWeight.Bold) }
-            )
+            if (!readOnly) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        val newSegment = Segment(Difficulty.EASY)
+                        newSegment.distance.set(500)
+                        draftProgram.segments.get().add(newSegment)
+                        segments.add(newSegment)
+                        isDirty = true
+                    },
+                    containerColor = Color(0xFF0B63F6),
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(28.dp),
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.ui_add_segment), fontWeight = FontWeight.Bold) }
+                )
+            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -183,25 +301,35 @@ fun ProgramEditorScreen(
             contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            itemsIndexed(segments, key = { _, item -> item.hashCode() }) { index, segment ->
+            itemsIndexed(segments, key = { index, _ -> index }) { index, segment ->
                 SegmentCard(
                     segment = segment,
                     readOnly = readOnly,
-                    onTargetClick = { if (!readOnly) onShowTargetDialog(segment) },
-                    onGoalClick = { if (!readOnly) onShowLimitDialog(segment) },
+                    onTargetClick = {
+                        if (!readOnly) {
+                            isDirty = true
+                            onShowTargetDialog(segment)
+                        }
+                    },
+                    onGoalClick = {
+                        if (!readOnly) {
+                            isDirty = true
+                            onShowLimitDialog(segment)
+                        }
+                    },
                     onDelete = {
                         if (!readOnly) {
-                            program.removeSegment(segment)
-                            onMerge()
+                            draftProgram.removeSegment(segment)
                             segments.clear()
-                            segments.addAll(program.segments.get())
+                            segments.addAll(draftProgram.segments.get())
+                            isDirty = true
                         }
                     },
                     onCycleDifficulty = {
                         if (!readOnly) {
                             segment.difficulty.set(segment.difficulty.get().increase())
-                            onMerge()
                             segments[index] = segment
+                            isDirty = true
                         }
                     }
                 )
@@ -223,7 +351,7 @@ fun SegmentCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -287,7 +415,7 @@ fun SegmentCard(
                 onClick = onGoalClick,
                 enabled = !readOnly,
                 color = if (hasLimit) Color(0xFFDCEBFF) else Color(0xFFF4F7FB),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
                 Text(
@@ -304,7 +432,7 @@ fun SegmentCard(
                 onClick = onCycleDifficulty,
                 enabled = !readOnly,
                 color = getIntensityColor(segment.difficulty.get()).copy(alpha = 0.1f),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
                 Text(

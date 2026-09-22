@@ -85,6 +85,12 @@
     <string name="ui_my_programs">Meine Programme</string>
     <string name="ui_workout_library">Trainingsbibliothek</string>
     <string name="ui_create_program">Programm erstellen</string>
+    <string name="ui_save_program">Programm speichern</string>
+    <string name="ui_program_saved">Programm gespeichert</string>
+    <string name="ui_discard_changes_title">Ungespeicherte Änderungen verwerfen?</string>
+    <string name="ui_discard_changes_body">Du hast ungespeicherte Änderungen an diesem Programm. Wenn du jetzt beendest, gehen diese Änderungen verloren.</string>
+    <string name="ui_discard">Verwerfen</string>
+    <string name="ui_keep_editing">Weiter bearbeiten</string>
     <plurals name="ui_program_count">
         <item quantity="one">%1$d Programm</item>
         <item quantity="other">%1$d Programme</item>

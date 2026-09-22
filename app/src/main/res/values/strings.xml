@@ -87,6 +87,12 @@
     <string name="ui_my_programs">My Programs</string>
     <string name="ui_workout_library">Workout Library</string>
     <string name="ui_create_program">Create program</string>
+    <string name="ui_save_program">Save Program</string>
+    <string name="ui_program_saved">Program saved</string>
+    <string name="ui_discard_changes_title">Discard unsaved changes?</string>
+    <string name="ui_discard_changes_body">You have unsaved changes to this program. If you leave now, your changes will be lost.</string>
+    <string name="ui_discard">Discard</string>
+    <string name="ui_keep_editing">Keep Editing</string>
     <plurals name="ui_program_count">
         <item quantity="one">%1$d program</item>
         <item quantity="other">%1$d programs</item>
