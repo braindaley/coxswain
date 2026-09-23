@@ -65,8 +65,7 @@ class WorkoutActivity : ComponentActivity() {
                     onEnd = {
                         val workout = gym.endEarly()
                         if (workout == null) finish()
-                    },
-                    onEditMetric = { /* TODO: Metric picker */ }
+                    }
                 )
                 BackHandler { confirmEnd = true }
                 if (confirmEnd) {
