@@ -123,47 +123,50 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(80.dp)
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    val isSelected = currentTab == index
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            currentTab = index
-                            if (index != 3) connectRequest = 0
-                        },
-                        icon = { 
-                            Surface(
-                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                                shape = MaterialTheme.shapes.extraLarge,
-                                modifier = Modifier.size(width = 64.dp, height = 32.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = tab.icon, 
-                                        contentDescription = tab.title,
-                                        modifier = Modifier.size(24.dp),
-                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+            Column {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                    windowInsets = NavigationBarDefaults.windowInsets
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        val isSelected = currentTab == index
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = {
+                                currentTab = index
+                                if (index != 3) connectRequest = 0
+                            },
+                            icon = {
+                                Surface(
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color.Transparent,
+                                    shape = MaterialTheme.shapes.extraLarge,
+                                    modifier = Modifier.size(width = 56.dp, height = 28.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = tab.icon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(22.dp),
+                                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
-                            }
-                        },
-                        label = { 
-                            Text(
-                                text = tab.title,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ) 
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = MaterialTheme.colorScheme.surface
+                            },
+                            label = {
+                                Text(
+                                    text = tab.title,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
