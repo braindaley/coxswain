@@ -1,12 +1,18 @@
 package svenmeier.coxswain.compose.workout
 
+import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -23,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.R
+import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
@@ -38,10 +45,10 @@ fun LiveRowScreen(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onEnd: () -> Unit,
-    onEditMetric: (Int) -> Unit
+    onEditMetric: (Int) -> Unit = {}
 ) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
-    
+
     val activeMetrics = remember {
         mutableStateListOf(
             ValueBinding.DURATION,
@@ -53,34 +60,45 @@ fun LiveRowScreen(
         )
     }
 
+    var isEditingDisplay by remember { mutableStateOf(false) }
+    var selectedSlotIndex by remember { mutableIntStateOf(-1) }
+
+    val sessionTitle = remember(gym.program, gym.pace) {
+        when {
+            gym.pace != null -> "RACE YOUR BEST"
+            gym.program != null -> gym.program.name.get()?.uppercase() ?: "WORKOUT"
+            else -> "FREE ROW"
+        }
+    }
+
     Scaffold(
-        containerColor = Color(0xFF042C3D), 
+        containerColor = Color(0xFF042C3D),
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (gym.program != null) gym.program.name.get().uppercase() else "FREE ROW",
-                            style = MaterialTheme.typography.labelLarge,
+                            text = sessionTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                             color = Color(0xFFC8E3E9)
                         )
-                        Spacer(Modifier.width(8.dp))
-                        
-                        // Connection Indicator
+                        Spacer(Modifier.width(10.dp))
+
                         val (statusText, statusColor) = when {
                             gym.connected -> "● Connected" to Color(0xFF22C55E)
                             gym.connecting -> "● Connecting..." to Color(0xFFF2BA00)
                             else -> "● Disconnected" to Color(0xFFBA1A1A)
                         }
-                        
+
                         Surface(
-                            color = statusColor.copy(alpha = 0.2f),
-                            shape = MaterialTheme.shapes.small
+                            color = statusColor.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
                                 text = statusText,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 10.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                fontSize = 11.sp,
                                 color = statusColor,
                                 fontWeight = FontWeight.Bold
                             )
@@ -88,8 +106,26 @@ fun LiveRowScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { /* Edit Display */ }) {
-                        Text("Edit display", color = Color(0xFFDCEBFF))
+                    OutlinedButton(
+                        onClick = { isEditingDisplay = !isEditingDisplay },
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, Color(0xFF53647C)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFDCEBFF)
+                        ),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isEditingDisplay) Icons.Default.Check else Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = if (isEditingDisplay) "Done" else "Edit display",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -99,37 +135,60 @@ fun LiveRowScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val isPaused = gym.isPaused
                 Button(
                     onClick = { if (isPaused) onResume() else onPause() },
-                    modifier = Modifier.weight(1f).height(64.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6)),
-                    shape = MaterialTheme.shapes.extraLarge
+                    shape = RoundedCornerShape(28.dp)
                 ) {
-                    Icon(if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = null)
-                    Spacer(Modifier.width(12.dp))
-                    Text(if (isPaused) "Resume" else "Pause", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (isPaused) stringResource(R.string.ui_resume) else stringResource(R.string.ui_pause),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                
+
                 Button(
                     onClick = onEnd,
-                    modifier = Modifier.weight(1f).height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDCEBFF)),
-                    shape = MaterialTheme.shapes.extraLarge
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFDCEBFF),
+                        contentColor = Color(0xFF10213F)
+                    ),
+                    shape = RoundedCornerShape(28.dp)
                 ) {
-                    Text("End session", color = Color(0xFF10213F), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.ui_end_session),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-            
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier.weight(1f).background(Color(0xFF31505D)),
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color(0xFF31505D)),
                 horizontalArrangement = Arrangement.spacedBy(1.dp),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
@@ -137,15 +196,37 @@ fun LiveRowScreen(
                     MetricCell(
                         binding = binding,
                         gym = gym,
-                        onClick = { onEditMetric(index) }
+                        isEditing = isEditingDisplay,
+                        isSelected = (selectedSlotIndex == index),
+                        onClick = {
+                            if (isEditingDisplay) {
+                                selectedSlotIndex = index
+                            } else {
+                                onEditMetric(index)
+                            }
+                        }
                     )
                 }
             }
-            
-            if (gym.program != null) {
+
+            if (gym.pace != null) {
+                RaceProgressBar(gym)
+            } else if (gym.program != null && gym.progress != null) {
                 TargetProgressBar(gym)
             }
         }
+    }
+
+    if (isEditingDisplay && selectedSlotIndex >= 0) {
+        MetricPickerDialog(
+            positionIndex = selectedSlotIndex,
+            currentBinding = activeMetrics[selectedSlotIndex],
+            onDismiss = { selectedSlotIndex = -1 },
+            onSelect = { newBinding ->
+                activeMetrics[selectedSlotIndex] = newBinding
+                selectedSlotIndex = -1
+            }
+        )
     }
 }
 
@@ -153,36 +234,48 @@ fun LiveRowScreen(
 fun MetricCell(
     binding: ValueBinding,
     gym: Gym,
+    isEditing: Boolean = false,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val valueStr = binding.format(context, getValueForBinding(binding, gym), false)
-    val label = context.getString(binding.label).uppercase()
+    val rawValue = getValueForBinding(binding, gym)
+    val valueStr = binding.format(context, rawValue, false)
+    val (titleLabel, unitLabel) = getMetricTitleAndUnit(binding, context)
+
+    val modifier = Modifier
+        .fillMaxSize()
+        .background(Color(0xFF042C3D))
+        .then(
+            if (isEditing && isSelected) {
+                Modifier.border(2.dp, Color(0xFF0B63F6))
+            } else Modifier
+        )
+        .clickable { onClick() }
+        .padding(16.dp)
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF042C3D))
-            .clickable { onClick() }
-            .padding(16.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = valueStr,
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = 56.sp,
-                    fontWeight = FontWeight.W500,
+                    fontSize = 52.sp,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 ),
                 color = Color.White
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFFCAD4E1),
-                fontWeight = FontWeight.Bold
+                text = if (unitLabel.isNotEmpty()) "$titleLabel · $unitLabel" else titleLabel,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                ),
+                color = Color(0xFFCAD4E1)
             )
         }
     }
@@ -190,31 +283,268 @@ fun MetricCell(
 
 @Composable
 fun TargetProgressBar(gym: Gym) {
-    val progress = gym.progress
-    Column(
+    val progress = gym.progress ?: return
+    val program = gym.program
+    val m = gym.getMeasurement()
+    val segment = progress.segment
+    val startM = progress.startMeasurement
+
+    val completion = progress.completion()
+    val percentInt = (completion * 100).toInt().coerceIn(0, 100)
+
+    val primaryText = when {
+        segment.duration.get() > 0 -> {
+            val remSec = maxOf(0, segment.duration.get() - (m.duration - startM.duration))
+            String.format(Locale.getDefault(), "%d:%02d remaining", remSec / 60, remSec % 60)
+        }
+        segment.distance.get() > 0 -> {
+            val remDist = maxOf(0, segment.distance.get() - (m.distance - startM.distance))
+            String.format(Locale.getDefault(), "%,d m remaining", remDist)
+        }
+        segment.strokes.get() > 0 -> {
+            val remStrokes = maxOf(0, segment.strokes.get() - (m.strokes - startM.strokes))
+            String.format(Locale.getDefault(), "%,d strokes remaining", remStrokes)
+        }
+        else -> progress.describe()
+    }
+
+    val (leftMeta, rightMeta) = when {
+        segment.distance.get() > 0 -> {
+            val done = m.distance - startM.distance
+            String.format(Locale.getDefault(), "%,d m complete", done) to String.format(Locale.getDefault(), "%,d m target", segment.distance.get())
+        }
+        segment.duration.get() > 0 -> {
+            val done = m.duration - startM.duration
+            String.format(Locale.getDefault(), "%d:%02d elapsed", done / 60, done % 60) to String.format(Locale.getDefault(), "%d:%02d target", segment.duration.get() / 60, segment.duration.get() % 60)
+        }
+        else -> "" to ""
+    }
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF123F51))
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF123F51))
     ) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("WORKOUT PROGRESS", style = MaterialTheme.typography.labelSmall, color = Color(0xFFCAD4E1))
-            val percent = if (progress != null) (progress.completion() * 100).toInt() else 0
-            Text("$percent%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF83D7FF))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if ((program?.getSegmentsCount() ?: 0) > 1) "TIMED INTERVALS" else "WORKOUT PROGRESS",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFCAD4E1),
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = "$percentInt%",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF83D7FF)
+                )
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                text = primaryText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            LinearProgressIndicator(
+                progress = { completion.coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp),
+                color = Color(0xFF0B8FFF),
+                trackColor = Color(0xFF53647C),
+                strokeCap = StrokeCap.Round
+            )
+
+            if (leftMeta.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(leftMeta, fontSize = 11.sp, color = Color(0xFFCAD4E1))
+                    Text(rightMeta, fontSize = 11.sp, color = Color(0xFFCAD4E1))
+                }
+            }
         }
-        Text(
-            text = if (progress != null) progress.describe() else "Ready", 
-            style = MaterialTheme.typography.titleLarge, 
-            color = Color.White,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        LinearProgressIndicator(
-            progress = { progress?.completion() ?: 0f },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
-            color = Color(0xFF0B8FFF),
-            trackColor = Color(0xFF53647C),
-            strokeCap = StrokeCap.Round
-        )
+    }
+}
+
+@Composable
+fun RaceProgressBar(gym: Gym) {
+    val pace = gym.pace ?: return
+    val current = gym.getMeasurement()
+    val race = raceDisplay(current, pace, gym.program)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF123F51))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "RACE YOUR BEST",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFCAD4E1),
+                    letterSpacing = 0.5.sp
+                )
+                val deltaStr = if (race.leadMeters >= 0) "+${race.leadMeters} m ahead" else "${race.leadMeters} m behind"
+                Text(
+                    text = deltaStr,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (race.leadMeters >= 0) Color(0xFF83D7FF) else Color(0xFFE53935)
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.ui_you),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.width(50.dp)
+                )
+                LinearProgressIndicator(
+                    progress = { race.currentProgress },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp),
+                    color = Color(0xFF0B8FFF),
+                    trackColor = Color(0xFF53647C),
+                    strokeCap = StrokeCap.Round
+                )
+                Text(
+                    text = " %,d m".format(Locale.getDefault(), current.distance),
+                    fontSize = 12.sp,
+                    color = Color(0xFFCAD4E1),
+                    modifier = Modifier.width(70.dp),
+                    textAlign = TextAlign.End
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.ui_best),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFBFEAFF),
+                    modifier = Modifier.width(50.dp)
+                )
+                LinearProgressIndicator(
+                    progress = { race.bestProgress },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp),
+                    color = Color(0xFF83D7FF),
+                    trackColor = Color(0xFF53647C),
+                    strokeCap = StrokeCap.Round
+                )
+                Text(
+                    text = "History",
+                    fontSize = 12.sp,
+                    color = Color(0xFFCAD4E1),
+                    modifier = Modifier.width(70.dp),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MetricPickerDialog(
+    positionIndex: Int,
+    currentBinding: ValueBinding,
+    onDismiss: () -> Unit,
+    onSelect: (ValueBinding) -> Unit
+) {
+    val options = listOf(
+        ValueBinding.DISTANCE to "Distance (m)",
+        ValueBinding.DURATION to "Duration (time)",
+        ValueBinding.SPLIT to "Split (/500m)",
+        ValueBinding.STROKE_RATE to "Stroke Rate (SPM)",
+        ValueBinding.POWER to "Power (W)",
+        ValueBinding.PULSE to "Heart Rate (BPM)",
+        ValueBinding.ENERGY to "Calories (kcal)",
+        ValueBinding.STROKES to "Stroke Count",
+        ValueBinding.SPEED to "Speed (km/h)",
+        ValueBinding.AVERAGE_SPLIT to "Average Split (/500m)"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Display Slot ${positionIndex + 1}") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                options.forEach { (binding, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(binding) }
+                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 15.sp,
+                            fontWeight = if (binding == currentBinding) FontWeight.Bold else FontWeight.Normal,
+                            color = if (binding == currentBinding) Color(0xFF0B63F6) else Color(0xFF10213F)
+                        )
+                        if (binding == currentBinding) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF0B63F6))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ui_cancel))
+            }
+        }
+    )
+}
+
+private fun getMetricTitleAndUnit(binding: ValueBinding, context: Context): Pair<String, String> {
+    return when (binding) {
+        ValueBinding.DISTANCE -> "DISTANCE" to "M"
+        ValueBinding.DURATION -> "DURATION" to "ELAPSED"
+        ValueBinding.SPLIT -> "SPLIT" to "/500 M"
+        ValueBinding.STROKE_RATE -> "STROKE RATE" to "SPM"
+        ValueBinding.POWER -> "POWER" to "W"
+        ValueBinding.PULSE -> "HEART RATE" to "BPM"
+        ValueBinding.ENERGY -> "CALORIES" to "KCAL"
+        ValueBinding.STROKES -> "STROKES" to "COUNT"
+        ValueBinding.SPEED -> "SPEED" to "KM/H"
+        ValueBinding.AVERAGE_SPLIT -> "AVG SPLIT" to "/500 M"
+        else -> context.getString(binding.label).uppercase() to ""
     }
 }
 
