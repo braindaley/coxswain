@@ -38,16 +38,25 @@
     <string name="ui_best">BEST</string>
     <string name="ui_welcome_back">Welcome back</string>
     <string name="ui_ready_to_row">Ready to row?</string>
+    <string name="ui_choose_how_to_start">Choose how you want to start.</string>
     <string name="ui_free_row_subtitle">Start rowing without a target</string>
     <string name="ui_quick_start_heading">QUICK START</string>
     <string name="ui_quick_start">Quick Start</string>
     <string name="ui_quick_start_subtitle">Choose duration, distance, or intervals</string>
     <string name="ui_your_rowing">YOUR ROWING</string>
+    <string name="ui_your_rowing_title">Your rowing</string>
     <string name="ui_this_week">This week</string>
     <string name="ui_this_month">This month</string>
     <string name="ui_this_year">This year</string>
     <string name="ui_meters_rowed">Meters rowed</string>
     <string name="ui_time_rowed">Time rowed</string>
+    <string name="ui_rowing_distance">Rowing distance</string>
+    <string name="ui_last_week">last week</string>
+    <string name="ui_last_month">last month</string>
+    <string name="ui_last_year">last year</string>
+    <string name="ui_vs_prior_period">%1$s%% vs %2$s</string>
+    <string name="ui_home_rowing_ahead">%1$s. Keep your momentum going.</string>
+    <string name="ui_home_rowing_encouragement">Every row adds to your progress. Keep it going.</string>
     <string name="ui_first_row_chart">Your first row will start your progress chart.</string>
     <string name="ui_set_up_quick_row">Set up a quick row</string>
     <string name="ui_activity">Activity</string>
@@ -55,8 +64,13 @@
         <item quantity="one">%1$d day streak</item>
         <item quantity="other">%1$d day streak</item>
     </plurals>
+    <plurals name="ui_rows">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
     <string name="ui_prior_period">%1$s%% vs prior period</string>
     <string name="ui_last_workout">LAST WORKOUT</string>
+    <string name="ui_view_workout_details">View workout details</string>
     <string name="ui_row_again">Row again</string>
     <string name="ui_distance_time_summary">%1$,d m  •  %2$d:%3$02d</string>
     <string name="ui_health_connect">Health Connect</string>

@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainContainer(gym: Gym, activity: MainActivity) {
     var currentTab by remember { mutableIntStateOf(0) }
+    var connectRequest by remember { mutableIntStateOf(0) }
     var refreshKey by remember { mutableIntStateOf(0) }
     val backupSaved = stringResource(R.string.ui_backup_saved)
     val backupFailed = stringResource(R.string.ui_backup_failed)
@@ -131,7 +132,10 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     val isSelected = currentTab == index
                     NavigationBarItem(
                         selected = isSelected,
-                        onClick = { currentTab = index },
+                        onClick = {
+                            currentTab = index
+                            if (index != 3) connectRequest = 0
+                        },
                         icon = { 
                             Surface(
                                 color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
@@ -177,8 +181,8 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         WorkoutActivity.start(activity)
                     },
                     onQuickStart = { WorkoutSetupActivity.start(activity, it) },
-                    onMyPrograms = { currentTab = 1 },
-                    onLibrary = { currentTab = 1 },
+                    onConnectRower = { connectRequest++; currentTab = 3 },
+                    onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) },
                     onWorkoutDetails = { WorkoutDetailsActivity.start(activity, it) },
                     onRowAgain = { workout ->
                         val definition = WorkoutDefinition.thaw(workout.programDefinition.get())
@@ -217,6 +221,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                 )
                 3 -> MoreScreen(
                     gym = gym,
+                    connectRequestKey = connectRequest,
                     onConnect = { GymService.start(activity, GymService.CONNECTOR_BLUETOOTH) },
                     onDisconnect = { GymService.start(activity, GymService.CONNECTOR_NONE) },
                     onSettings = { activity.startActivity(SettingsActivity.createIntent(activity)) },

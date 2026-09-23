@@ -26,6 +26,7 @@ private enum class MoreDestination { ROOT, CONNECT, DATA, DIAGNOSTICS, HELP }
 @Composable
 fun MoreScreen(
     gym: Gym,
+    connectRequestKey: Int = 0,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onSettings: () -> Unit,
@@ -36,6 +37,9 @@ fun MoreScreen(
     onRestore: () -> Unit
 ) {
     var destination by remember { mutableStateOf(MoreDestination.ROOT) }
+    LaunchedEffect(connectRequestKey) {
+        if (connectRequestKey > 0) destination = MoreDestination.CONNECT
+    }
     var update by remember { mutableIntStateOf(0) }
     DisposableEffect(gym) {
         val listener = Gym.Listener { update++ }
