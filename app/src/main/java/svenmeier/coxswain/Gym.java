@@ -896,6 +896,10 @@ public class Gym {
             this.startMeasurement = new Measurement(measurement);
         }
 
+        public Measurement getStartMeasurement() {
+            return startMeasurement;
+        }
+
         public float completion() {
             float achieved = achieved();
             float target = segment.getTarget();

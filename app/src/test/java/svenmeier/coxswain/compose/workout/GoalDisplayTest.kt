@@ -1,15 +1,23 @@
 package svenmeier.coxswain.compose.workout
 
+import android.content.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import svenmeier.coxswain.gym.Measurement
-import svenmeier.coxswain.gym.Segment
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import svenmeier.coxswain.Gym
 import svenmeier.coxswain.gym.Difficulty
+import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
+import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.view.ValueBinding
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class GoalDisplayTest {
     @Test fun strokeRateVarianceHasNeutralBandAndTarget() {
         val segment = Segment().setStrokeRate(24)
@@ -52,5 +60,40 @@ class GoalDisplayTest {
         assertEquals(.55f, display.currentProgress, .001f)
         assertEquals(.5f, display.bestProgress, .001f)
         assertEquals(100, display.leadMeters)
+    }
+
+    @Test fun getValueForBindingCountsDownForTargetAndCountsUpForFreeRow() {
+        val context = RuntimeEnvironment.getApplication()
+        context.deleteDatabase("gym")
+        val constructor = Gym::class.java.getDeclaredConstructor(Context::class.java)
+        constructor.isAccessible = true
+        val gym = constructor.newInstance(context)
+        val initMethod = Gym::class.java.getDeclaredMethod("initialize")
+        initMethod.isAccessible = true
+        initMethod.invoke(gym)
+
+        // 1. Distance target program (e.g. 5,000m):
+        val distanceProgram = Program.meters("5K", 5000, Difficulty.EASY)
+        gym.select(distanceProgram)
+        gym.onMeasured(Measurement().apply { duration = 1; distance = 1 })
+        assertEquals(4999, getValueForBinding(ValueBinding.DISTANCE, gym))
+
+        gym.onMeasured(Measurement().apply { duration = 60; distance = 250 })
+        assertEquals(4750, getValueForBinding(ValueBinding.DISTANCE, gym))
+
+        // 2. Duration target program (e.g. 20 min = 1200s):
+        val durationProgram = Program.minutes("20min", 20, Difficulty.EASY)
+        gym.select(durationProgram)
+        gym.onMeasured(Measurement().apply { duration = 1; distance = 1 })
+        assertEquals(1199, getValueForBinding(ValueBinding.DURATION, gym))
+
+        gym.onMeasured(Measurement().apply { duration = 100; distance = 400 })
+        assertEquals(1100, getValueForBinding(ValueBinding.DURATION, gym))
+
+        // 3. Free Row (no target):
+        gym.startFreeRow()
+        gym.onMeasured(Measurement().apply { duration = 120; distance = 500 })
+        assertEquals(500, getValueForBinding(ValueBinding.DISTANCE, gym))
+        assertEquals(120, getValueForBinding(ValueBinding.DURATION, gym))
     }
 }

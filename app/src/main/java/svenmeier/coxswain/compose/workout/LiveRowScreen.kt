@@ -136,7 +136,7 @@ fun LiveRowScreen(
                 itemsIndexed(activeMetrics) { index, binding ->
                     MetricCell(
                         binding = binding,
-                        measurement = gym.getMeasurement(),
+                        gym = gym,
                         onClick = { onEditMetric(index) }
                     )
                 }
@@ -152,11 +152,11 @@ fun LiveRowScreen(
 @Composable
 fun MetricCell(
     binding: ValueBinding,
-    measurement: Measurement,
+    gym: Gym,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val valueStr = binding.format(context, getValueForBinding(binding, measurement), false)
+    val valueStr = binding.format(context, getValueForBinding(binding, gym), false)
     val label = context.getString(binding.label).uppercase()
 
     Box(
@@ -270,7 +270,45 @@ internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?)
     return RaceDisplay((current.distance.toFloat() / target).coerceIn(0f, 1f), (expectedDistance / target).coerceIn(0f, 1f), current.distance - expectedDistance.toInt())
 }
 
-private fun getValueForBinding(binding: ValueBinding, m: Measurement): Int {
+internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
+    val m = gym.getMeasurement()
+    val progress = gym.progress
+    if (progress != null) {
+        val startM = progress.startMeasurement
+        val segment = progress.segment
+        when (binding) {
+            ValueBinding.DURATION -> {
+                val target = segment.duration.get()
+                if (target > 0) {
+                    val achieved = m.duration - startM.duration
+                    return maxOf(0, target - achieved)
+                }
+            }
+            ValueBinding.DISTANCE -> {
+                val target = segment.distance.get()
+                if (target > 0) {
+                    val achieved = m.distance - startM.distance
+                    return maxOf(0, target - achieved)
+                }
+            }
+            ValueBinding.STROKES -> {
+                val target = segment.strokes.get()
+                if (target > 0) {
+                    val achieved = m.strokes - startM.strokes
+                    return maxOf(0, target - achieved)
+                }
+            }
+            ValueBinding.ENERGY -> {
+                val target = segment.energy.get()
+                if (target > 0) {
+                    val achieved = m.energy - startM.energy
+                    return maxOf(0, target - achieved)
+                }
+            }
+            else -> {}
+        }
+    }
+
     return when (binding) {
         ValueBinding.DURATION -> m.duration
         ValueBinding.DISTANCE -> m.distance
