@@ -47,20 +47,20 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
 fun RaceResultSummary(workout: Workout) {
     val outcome = workout.raceOutcome.get()
     if (outcome == RaceOutcome.NONE) return
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = if (outcome == RaceOutcome.WON) Color(0xFFE4F7EC) else Color(0xFFFFEEF0))) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = if (outcome == RaceOutcome.WON) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer)) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(if (outcome == RaceOutcome.WON) R.string.ui_race_won else if (outcome == RaceOutcome.TIED) R.string.ui_race_tied else R.string.ui_race_best_ahead), fontWeight = FontWeight.Bold)
             val timed = workoutDefinitionType(workout) == SessionType.DURATION
             val margin = workout.raceMargin.get()
             val formatted = if (timed) "${kotlin.math.abs(margin)} m" else String.format("%.1f s", kotlin.math.abs(margin) / 1000f)
-            Text(stringResource(R.string.ui_margin, formatted), fontSize = 13.sp, color = Color(0xFF53647C))
+            Text(stringResource(R.string.ui_margin, formatted), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 private fun formatSplit(seconds: Int): String = "%d:%02d /500 m".format(seconds / 60, seconds % 60)
 
-@Composable private fun ResultMetricRow(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = Color(0xFF53647C)); Text(value, fontWeight = FontWeight.Bold) } }
+@Composable private fun ResultMetricRow(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(value, fontWeight = FontWeight.Bold) } }
 
 fun workoutDefinitionType(workout: Workout): SessionType {
     if (workout.sessionType.get() != SessionType.RACE) return workout.sessionType.get()
@@ -81,15 +81,15 @@ fun workoutPrimaryValue(workout: Workout): String = when (workoutDefinitionType(
     val visible = values.filter { it > 0 }.takeLast(24)
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(title, fontWeight = FontWeight.Bold)
-        Text(if (visible.isEmpty()) stringResource(R.string.ui_no_samples) else statistics, fontSize = 11.sp, color = Color(0xFF53647C))
-        Row(Modifier.fillMaxWidth().height(190.dp).background(Color(0xFFF4F7FB), RoundedCornerShape(12.dp)).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(if (visible.isEmpty()) stringResource(R.string.ui_no_samples) else statistics, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth().height(190.dp).background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp)).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val max = (visible.maxOrNull() ?: 1).coerceAtLeast(1)
             Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
                 Text("$max", fontSize = 10.sp); Text("${max / 2}", fontSize = 10.sp); Text("0 $unit", fontSize = 10.sp)
             }
             Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                if (visible.isEmpty()) Text(stringResource(R.string.ui_no_recorded_samples), color = Color(0xFF53647C), modifier = Modifier.align(Alignment.CenterVertically))
-                visible.forEach { value -> Box(Modifier.weight(1f).height((10 + (value * 145 / max)).dp).background(Color(0xFF0B63F6), RoundedCornerShape(3.dp))) }
+                if (visible.isEmpty()) Text(stringResource(R.string.ui_no_recorded_samples), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterVertically))
+                visible.forEach { value -> Box(Modifier.weight(1f).height((10 + (value * 145 / max)).dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(3.dp))) }
             }
         }
         Row(Modifier.fillMaxWidth().padding(start = 46.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text("0:00", fontSize = 10.sp); Text(formatAxisTime(durationSeconds / 2), fontSize = 10.sp); Text(formatAxisTime(durationSeconds), fontSize = 10.sp) }

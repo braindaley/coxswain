@@ -125,7 +125,7 @@ fun WorkoutSetupScreen(
         bottomBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
-                border = BorderStroke(1.dp, Color(0xFFE0E7F0)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 shadowElevation = 0.dp
             ) {
                 Row(
@@ -141,8 +141,8 @@ fun WorkoutSetupScreen(
                         },
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape = RoundedCornerShape(28.dp),
-                        border = BorderStroke(1.dp, Color(0xFF0B63F6)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF0B63F6))
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(painterResource(R.drawable.ic_nav_programs_24dp), contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
@@ -156,7 +156,7 @@ fun WorkoutSetupScreen(
                         },
                         modifier = Modifier.weight(1.3f).height(56.dp),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
@@ -229,7 +229,7 @@ fun TargetInputCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -247,13 +247,13 @@ fun TargetInputCard(
                         fontWeight = FontWeight.W500,
                         textAlign = TextAlign.Center,
                         fontSize = 52.sp,
-                        color = Color(0xFF10213F)
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF0B63F6),
-                        unfocusedIndicatorColor = Color(0xFF0B63F6)
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(140.dp)
@@ -261,7 +261,7 @@ fun TargetInputCard(
                 Text(
                     text = unit,
                     fontSize = 17.sp,
-                    color = Color(0xFF53647C),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
                 )
             }
@@ -275,7 +275,7 @@ fun TargetInputCard(
                     val isSelected = value == preset
                     Surface(
                         onClick = { onValueChange(preset) },
-                        color = if (isSelected) Color(0xFFDCEBFF) else Color(0xFFEFF4FA),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                         modifier = Modifier.padding(vertical = 4.dp).height(44.dp).width(90.dp)
                     ) {
@@ -284,7 +284,7 @@ fun TargetInputCard(
                                 text = if (preset >= 1000) "${preset / 1000}K" else preset.toString(),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF10213F)
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -312,7 +312,7 @@ fun GoalSelector(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -325,9 +325,9 @@ fun GoalSelector(
                             .height(84.dp)
                             .clickable { onGoalSelected(item.key) },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) Color(0xFFEEF6FF) else Color.White
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ),
-                        border = if (isSelected) BorderStroke(2.dp, Color(0xFF0B63F6)) else BorderStroke(1.dp, Color(0xFFD5DEE9)),
+                        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                     ) {
                         Column(
@@ -338,7 +338,7 @@ fun GoalSelector(
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(0xFF0B63F6) else Color(0xFF10213F),
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(Modifier.height(4.dp))
@@ -346,7 +346,7 @@ fun GoalSelector(
                                 text = item.label,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF10213F), 
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 12.sp
                             )
@@ -360,7 +360,7 @@ fun GoalSelector(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFF7FAFD), androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
                         .padding(12.dp)
                 ) {
                     Row(
@@ -373,7 +373,7 @@ fun GoalSelector(
                             text = if (selectedGoal == "Speed") String.format(Locale.getDefault(), "%d:%02d /500m", goalValue/60, goalValue%60) else "$goalValue ${if (selectedGoal == "Power") "W" else "SPM"}",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0B63F6)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -388,7 +388,7 @@ fun GoalSelector(
                                 onGoalValueChange(maxOf(minVal, goalValue - step))
                             },
                             modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFFE8EEF6), contentColor = Color(0xFF0B63F6))
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
@@ -399,8 +399,8 @@ fun GoalSelector(
                             valueRange = if (selectedGoal == "Stroke rate") 14f..40f else if (selectedGoal == "Power") 50f..400f else 90f..240f,
                             modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                             colors = SliderDefaults.colors(
-                                thumbColor = Color.White,
-                                activeTrackColor = Color(0xFF0B63F6)
+                                thumbColor = MaterialTheme.colorScheme.surface,
+                                activeTrackColor = MaterialTheme.colorScheme.primary
                             )
                         )
 
@@ -411,7 +411,7 @@ fun GoalSelector(
                                 onGoalValueChange(minOf(maxVal, goalValue + step))
                             },
                             modifier = Modifier.size(36.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFFE8EEF6), contentColor = Color(0xFF0B63F6))
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
@@ -426,8 +426,8 @@ fun GoalSelector(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(minLabel, fontSize = 11.sp, color = Color(0xFF53647C))
-                        Text(maxLabel, fontSize = 11.sp, color = Color(0xFF53647C))
+                        Text(minLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(maxLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -445,7 +445,7 @@ fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int, interva
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -459,8 +459,8 @@ fun SummaryCard(type: String, target: Int, goal: String, goalValue: Int, interva
 @Composable
 fun SummaryRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
-        Text(value, fontSize = 14.sp, color = Color(0xFF53647C))
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(value, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -474,10 +474,10 @@ fun IntervalBuilderCard(segments: MutableList<DraftSegment>, onAdd: () -> Unit, 
         SegmentType.DISTANCE to stringResource(R.string.ui_distance),
         SegmentType.REST to stringResource(R.string.ui_rest)
     )
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             segments.forEachIndexed { index, segment ->
-                Column(Modifier.fillMaxWidth().background(Color(0xFFF7FAFD), RoundedCornerShape(12.dp)).padding(10.dp)) {
+                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp)).padding(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         SegmentType.values().forEach { type -> FilterChip(selected = segment.type == type, onClick = { segments[index] = segment.copy(type = type, value = if (type == SegmentType.DISTANCE) 500 else 1) }, label = { Text(typeLabels.getValue(type)) }) }
                     }

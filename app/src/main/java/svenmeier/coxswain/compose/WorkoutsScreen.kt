@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,7 +38,7 @@ fun WorkoutsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF4F7FB))
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp)
     ) {
         Spacer(Modifier.height(24.dp))
@@ -50,7 +49,7 @@ fun WorkoutsScreen(
                 fontWeight = FontWeight.Bold, 
                 letterSpacing = 1.sp
             ),
-            color = Color(0xFF53647C),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp)
         )
 
@@ -75,7 +74,7 @@ fun WorkoutHistoryCard(workout: Workout, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -86,15 +85,15 @@ fun WorkoutHistoryCard(workout: Workout, onClick: () -> Unit) {
                     text = dateStr,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10213F)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(workout.programName(stringResource(R.string.ui_free_row)), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+                    Text(workout.programName(stringResource(R.string.ui_free_row)), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     if (workout.raceOutcome.get() == RaceOutcome.WON) Text("  🏆", fontSize = 14.sp)
                 }
-                Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), fontSize = 13.sp, color = Color(0xFF53647C))
+                Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

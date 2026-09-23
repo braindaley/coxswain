@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,7 +72,7 @@ fun ProgramsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF4F7FB))
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp)
     ) {
         Spacer(Modifier.height(16.dp))
@@ -91,7 +90,7 @@ fun ProgramsScreen(
                 onClick = onCreateProgram,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = MaterialTheme.shapes.extraLarge,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -111,12 +110,12 @@ fun ProgramsScreen(
                     fontWeight = FontWeight.Bold, 
                     letterSpacing = 1.sp
                 ),
-                color = Color(0xFF53647C)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = pluralStringResource(R.plurals.ui_program_count, programs.size, programs.size),
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF53647C)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -159,7 +158,7 @@ fun ProgramCard(
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onView() }.testTag("program-${program.name.get()}"),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -173,7 +172,7 @@ fun ProgramCard(
                         text = program.name.get(),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF10213F)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     val segments = program.segments.get()
@@ -184,14 +183,14 @@ fun ProgramCard(
                     Text(
                         text = summary,
                         fontSize = 14.sp,
-                        color = Color(0xFF53647C),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
                 var menuOpen by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu), tint = Color(0xFF53647C))
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.ui_view_program)) }, onClick = { menuOpen = false; onView() })
@@ -212,12 +211,12 @@ fun ProgramCard(
                     onClick = onView,
                     contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
-                    Text(stringResource(R.string.ui_view_program), color = Color(0xFF0B63F6), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_view_program), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = onStart,
                     shape = MaterialTheme.shapes.extraLarge,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     modifier = Modifier.height(44.dp)
                 ) {
@@ -226,7 +225,7 @@ fun ProgramCard(
                     Text(stringResource(R.string.ui_start), fontWeight = FontWeight.Bold)
                 }
             }
-            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_race_your_best), color = Color(0xFF0B63F6)) }
+            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_race_your_best), color = MaterialTheme.colorScheme.primary) }
         }
     }
 }

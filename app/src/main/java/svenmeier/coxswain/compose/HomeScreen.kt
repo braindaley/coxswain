@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -58,13 +57,13 @@ fun HomeScreen(
         Text(
             text = stringResource(R.string.ui_welcome_back),
             style = MaterialTheme.typography.titleMedium,
-            color = Color(0xFF53647C),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp)
         )
         Text(
             text = stringResource(R.string.ui_ready_to_row),
             style = MaterialTheme.typography.headlineLarge,
-            color = Color(0xFF10213F),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 4.dp)
         )
 
@@ -77,27 +76,27 @@ fun HomeScreen(
                 .height(140.dp)
                 .clickable { onFreeRow() },
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0B63F6)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Box(Modifier.fillMaxSize().padding(24.dp)) {
                 Column(Modifier.align(Alignment.BottomStart)) {
                     Text(
                         text = stringResource(R.string.ui_free_row),
-                        color = Color.White, 
+                        color = MaterialTheme.colorScheme.onPrimary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = stringResource(R.string.ui_free_row_subtitle),
-                        color = Color.White.copy(alpha = 0.8f), 
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(48.dp).align(Alignment.CenterEnd)
                 )
             }
@@ -174,27 +173,27 @@ fun QuickActionCard(
             .clickable { onClick() }
             .semantics { contentDescription = "$title: $subtitle" },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = Color(0xFF0B63F6),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(26.dp)
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = title, 
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF10213F),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = subtitle, 
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF53647C)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -213,7 +212,7 @@ fun QuickActionListCard(
             .clickable { onClick() }
             .semantics { contentDescription = "$title: $subtitle" },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -222,7 +221,7 @@ fun QuickActionListCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Surface(
-                color = Color(0xFFDCEBFF),
+                color = MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.size(44.dp)
             ) {
@@ -230,7 +229,7 @@ fun QuickActionListCard(
                     Icon(
                         painter = painterResource(iconRes),
                         contentDescription = null,
-                        tint = Color(0xFF0B63F6),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -241,19 +240,19 @@ fun QuickActionListCard(
                     text = title, 
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10213F)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle, 
                     fontSize = 13.sp,
-                    color = Color(0xFF53647C)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
-                tint = Color(0xFFCAD4E1),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -293,7 +292,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(), 
         shape = RoundedCornerShape(24.dp), 
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -303,19 +302,19 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
                 Locale.getDefault(), seconds/60, seconds%60))
             }
             if (workouts.isEmpty()) {
-                Text(stringResource(R.string.ui_first_row_chart), fontSize = 13.sp, color = Color(0xFF53647C))
-                OutlinedButton(onClick = onQuickStart, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, Color(0xFF0B63F6))) { Text(stringResource(R.string.ui_set_up_quick_row), color = Color(0xFF0B63F6)) }
+                Text(stringResource(R.string.ui_first_row_chart), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedButton(onClick = onQuickStart, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.ui_set_up_quick_row), color = MaterialTheme.colorScheme.primary) }
             } else {
-                Text(buildString { append(streakText); if (comparisonText != null) { append("  •  "); append(comparisonText) } }, fontSize = 13.sp, color = Color(0xFF53647C))
+                Text(buildString { append(streakText); if (comparisonText != null) { append("  •  "); append(comparisonText) } }, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(stringResource(R.string.ui_activity), fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+            Text(stringResource(R.string.ui_activity), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Row(Modifier.fillMaxWidth().height(160.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
                     Text("%,d m".format(Locale.getDefault(), maxBucket), fontSize = 10.sp); Text("%,d m".format(
                     Locale.getDefault(), maxBucket / 2), fontSize = 10.sp); Text("0 m", fontSize = 10.sp)
                 }
                 Row(Modifier.weight(1f).fillMaxHeight(), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.Bottom) {
-                    bucketMeters.forEach { value -> Box(Modifier.weight(1f).height((8 + (value * 130 / maxBucket)).dp).background(if (value > 0) Color(0xFF0B63F6) else Color(0xFFEFF4FA), RoundedCornerShape(4.dp))) }
+                    bucketMeters.forEach { value -> Box(Modifier.weight(1f).height((8 + (value * 130 / maxBucket)).dp).background(if (value > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))) }
                 }
             }
             Row(Modifier.fillMaxWidth().padding(start = 52.dp), horizontalArrangement = Arrangement.SpaceBetween) { labels.forEach { label: String -> Text(label, fontSize = 9.sp) } }
@@ -323,21 +322,21 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     }
 }
 
-@Composable private fun Stat(label: String, value: String) { Column { Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10213F)); Text(label, fontSize = 12.sp, color = Color(0xFF53647C)) } }
+@Composable private fun Stat(label: String, value: String) { Column { Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface); Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
 
 @Composable private fun LastWorkoutCard(workout: Workout, onDetails: () -> Unit, onRowAgain: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onDetails), 
         shape = RoundedCornerShape(24.dp), 
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) { 
         Column(Modifier.padding(20.dp)) { 
-            Text(workout.programName(stringResource(R.string.ui_free_row)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF10213F))
+            Text(workout.programName(stringResource(R.string.ui_free_row)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = Color(0xFF53647C))
+            Text(stringResource(R.string.ui_distance_time_summary, workout.distance.get(), workout.duration.get()/60, workout.duration.get()%60), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(16.dp))
-            Button(onClick = onRowAgain, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6))) { 
+            Button(onClick = onRowAgain, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
                 Text(stringResource(R.string.ui_row_again), fontWeight = FontWeight.Bold) 
             } 
         } 

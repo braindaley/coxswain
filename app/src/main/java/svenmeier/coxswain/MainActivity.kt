@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -124,7 +123,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
                 modifier = Modifier.height(80.dp)
             ) {
@@ -135,7 +134,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         onClick = { currentTab = index },
                         icon = { 
                             Surface(
-                                color = if (isSelected) Color(0xFFDCEBFF) else Color.Transparent,
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                                 shape = MaterialTheme.shapes.extraLarge,
                                 modifier = Modifier.size(width = 64.dp, height = 32.dp)
                             ) {
@@ -144,7 +143,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                                         imageVector = tab.icon, 
                                         contentDescription = tab.title,
                                         modifier = Modifier.size(24.dp),
-                                        tint = if (isSelected) Color(0xFF0B63F6) else Color(0xFF53647C)
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -154,11 +153,11 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                                 text = tab.title,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF53647C)
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             ) 
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = Color.Transparent
+                            indicatorColor = MaterialTheme.colorScheme.surface
                         )
                     )
                 }

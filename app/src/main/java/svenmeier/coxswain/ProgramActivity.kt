@@ -21,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -271,7 +270,7 @@ fun ProgramEditorScreen(
                     showDiscardDialog = false
                     onBack()
                 }) {
-                    Text(stringResource(R.string.ui_discard), color = Color(0xFFBA1A1A))
+                    Text(stringResource(R.string.ui_discard), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -314,7 +313,7 @@ fun ProgramEditorScreen(
         bottomBar = {
             if (!readOnly) {
                 Surface(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp,
                     shadowElevation = 8.dp,
                     modifier = Modifier.fillMaxWidth()
@@ -333,7 +332,7 @@ fun ProgramEditorScreen(
                                 .fillMaxWidth()
                                 .height(52.dp),
                             shape = RoundedCornerShape(26.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Icon(Icons.Default.Check, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
@@ -352,7 +351,7 @@ fun ProgramEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF4F7FB))
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -361,7 +360,7 @@ fun ProgramEditorScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -377,7 +376,7 @@ fun ProgramEditorScreen(
                         enabled = !readOnly,
                         textStyle = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10213F)
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -428,7 +427,7 @@ fun ProgramEditorScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(
@@ -479,11 +478,11 @@ fun ProgramEditorScreen(
                                 },
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(24.dp),
-                                border = BorderStroke(1.dp, Color(0xFF0B63F6))
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF0B63F6))
+                                Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.ui_add_segment), color = Color(0xFF0B63F6), fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.ui_add_segment), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -537,8 +536,8 @@ fun SegmentCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF7FAFD)),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -576,12 +575,12 @@ fun SegmentCard(
                     text = value,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10213F)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
                     fontSize = 12.sp,
-                    color = Color(0xFF53647C)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -598,7 +597,7 @@ fun SegmentCard(
             Surface(
                 onClick = onGoalClick,
                 enabled = !readOnly,
-                color = if (hasLimit) Color(0xFFDCEBFF) else Color(0xFFE8EEF6),
+                color = if (hasLimit) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
@@ -606,7 +605,7 @@ fun SegmentCard(
                     text = limitText,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (hasLimit) Color(0xFF0B63F6) else Color(0xFF53647C),
+                    color = if (hasLimit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                 )
             }
@@ -637,7 +636,7 @@ fun SegmentCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.action_delete),
-                        tint = Color(0xFFBA1A1A).copy(alpha = 0.7f),
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                         modifier = Modifier.size(18.dp)
                     )
                 }
