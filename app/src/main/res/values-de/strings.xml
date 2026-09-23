@@ -85,6 +85,7 @@
     <string name="ui_my_programs">Meine Programme</string>
     <string name="ui_workout_library">Trainingsbibliothek</string>
     <string name="ui_create_program">Programm erstellen</string>
+    <string name="ui_edit_program">Programm bearbeiten</string>
     <string name="ui_save_program">Programm speichern</string>
     <string name="ui_program_saved">Programm gespeichert</string>
     <string name="ui_discard_changes_title">Ungespeicherte Änderungen verwerfen?</string>

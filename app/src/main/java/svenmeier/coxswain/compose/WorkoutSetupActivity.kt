@@ -376,15 +376,59 @@ fun GoalSelector(
                             color = Color(0xFF0B63F6)
                         )
                     }
-                    Slider(
-                        value = goalValue.toFloat(),
-                        onValueChange = { onGoalValueChange(it.toInt()) },
-                        valueRange = if (selectedGoal == "Stroke rate") 14f..40f else if (selectedGoal == "Power") 50f..400f else 90f..240f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = Color.White,
-                            activeTrackColor = Color(0xFF0B63F6)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilledIconButton(
+                            onClick = {
+                                val step = if (selectedGoal == "Power") 5 else 1
+                                val minVal = if (selectedGoal == "Stroke rate") 14 else if (selectedGoal == "Power") 50 else 90
+                                onGoalValueChange(maxOf(minVal, goalValue - step))
+                            },
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFFE8EEF6), contentColor = Color(0xFF0B63F6))
+                        ) {
+                            Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Slider(
+                            value = goalValue.toFloat(),
+                            onValueChange = { onGoalValueChange(it.toInt()) },
+                            valueRange = if (selectedGoal == "Stroke rate") 14f..40f else if (selectedGoal == "Power") 50f..400f else 90f..240f,
+                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color.White,
+                                activeTrackColor = Color(0xFF0B63F6)
+                            )
                         )
-                    )
+
+                        FilledIconButton(
+                            onClick = {
+                                val step = if (selectedGoal == "Power") 5 else 1
+                                val maxVal = if (selectedGoal == "Stroke rate") 40 else if (selectedGoal == "Power") 400 else 240
+                                onGoalValueChange(minOf(maxVal, goalValue + step))
+                            },
+                            modifier = Modifier.size(36.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFFE8EEF6), contentColor = Color(0xFF0B63F6))
+                        ) {
+                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    val (minLabel, maxLabel) = when (selectedGoal) {
+                        "Stroke rate" -> "14" to "40"
+                        "Power" -> "50 W" to "400 W"
+                        else -> "1:30" to "4:00"
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(minLabel, fontSize = 11.sp, color = Color(0xFF53647C))
+                        Text(maxLabel, fontSize = 11.sp, color = Color(0xFF53647C))
+                    }
                 }
             }
         }
