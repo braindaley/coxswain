@@ -3,6 +3,7 @@ package svenmeier.coxswain
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -22,6 +23,7 @@ class WorkoutActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setShowWhenLocked(true)
         setTurnScreenOn(true)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         gym = Gym.instance(this)
         // The OS can recreate this activity after the app process and its
         // in-memory Gym session have gone away. Do not present an empty live
