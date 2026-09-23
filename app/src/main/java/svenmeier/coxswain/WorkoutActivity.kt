@@ -20,6 +20,8 @@ class WorkoutActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
         gym = Gym.instance(this)
         // The OS can recreate this activity after the app process and its
         // in-memory Gym session have gone away. Do not present an empty live
