@@ -19,13 +19,34 @@ import svenmeier.coxswain.view.ValueBinding
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class GoalDisplayTest {
-    @Test fun strokeRateVarianceHasNeutralBandAndTarget() {
+    @Test fun strokeRateShowsTargetWhenMatchedAndSignedDifferenceOtherwise() {
         val segment = Segment().setStrokeRate(24)
-        val measurement = Measurement().apply { strokeRate = 25 }
-        val goal = goalDisplay(ValueBinding.STROKE_RATE, segment, measurement)!!
-        assertEquals("+1", goal.variance)
-        assertEquals("24", goal.target)
-        assertEquals(0, goal.state)
+        val onTarget = goalDisplay(ValueBinding.STROKE_RATE, segment, Measurement().apply { strokeRate = 24 })!!
+        assertEquals("24", onTarget.variance)
+        assertEquals("24", onTarget.target)
+        assertEquals(0, onTarget.state)
+
+        val below = goalDisplay(ValueBinding.STROKE_RATE, segment, Measurement().apply { strokeRate = 23 })!!
+        assertEquals("-1", below.variance)
+        assertEquals(-1, below.state)
+
+        val above = goalDisplay(ValueBinding.STROKE_RATE, segment, Measurement().apply { strokeRate = 25 })!!
+        assertEquals("+1", above.variance)
+        assertEquals(1, above.state)
+    }
+
+    @Test fun powerUsesSameTargetAndSignedDifferenceBehavior() {
+        val segment = Segment().setPower(180)
+        assertEquals("180", goalDisplay(ValueBinding.POWER, segment, Measurement().apply { power = 180 })!!.variance)
+        assertEquals("-5", goalDisplay(ValueBinding.POWER, segment, Measurement().apply { power = 175 })!!.variance)
+        assertEquals("+5", goalDisplay(ValueBinding.POWER, segment, Measurement().apply { power = 185 })!!.variance)
+    }
+
+    @Test fun speedUsesTargetSpeedWhenMatchedAndSignedDifferenceOtherwise() {
+        val segment = Segment().setSpeed(400)
+        assertEquals("4.0", goalDisplay(ValueBinding.SPEED, segment, Measurement().apply { speed = 400 })!!.variance)
+        assertEquals("-0.1", goalDisplay(ValueBinding.SPEED, segment, Measurement().apply { speed = 390 })!!.variance)
+        assertEquals("+0.1", goalDisplay(ValueBinding.SPEED, segment, Measurement().apply { speed = 410 })!!.variance)
     }
 
     @Test fun splitVarianceUsesSecondsPerFiveHundredMeters() {

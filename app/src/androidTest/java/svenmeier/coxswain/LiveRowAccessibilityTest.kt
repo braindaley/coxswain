@@ -57,7 +57,7 @@ class LiveRowAccessibilityTest {
         }
 
         compose.onNodeWithContentDescription(
-            "STROKE RATE goal variance -2, target 26"
+            "STROKE RATE -2, target 26"
         ).assertHasClickAction().performClick()
         assertEquals(1, edits)
     }

@@ -352,7 +352,7 @@ fun MetricCell(
         else -> Color(0xFF042C3D)
     }
     val accessibleDescription = if (goalState != null && targetDescription != null) {
-        "$titleLabel goal variance $valueStr, target $targetDescription"
+        "$titleLabel $valueStr, target $targetDescription"
     } else "$titleLabel $valueStr"
     val cellModifier = modifier
         .background(cellColor)
@@ -780,25 +780,30 @@ data class GoalDisplay(val variance: String, val target: String, val state: Int)
 internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement): GoalDisplay? {
     if (segment == null || segment.getLimit() <= 0) return null
     return when {
-        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> signedGoal(measurement.strokeRate - segment.strokeRate.get(), "", "${segment.strokeRate.get()}")
-        binding == ValueBinding.POWER && segment.power.get() > 0 -> signedGoal(measurement.power - segment.power.get(), " W", "${segment.power.get()} W")
-        binding == ValueBinding.PULSE && segment.pulse.get() > 0 -> signedGoal(measurement.pulse - segment.pulse.get(), "", "${segment.pulse.get()} BPM")
+        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> signedGoal(measurement.strokeRate - segment.strokeRate.get(), "${segment.strokeRate.get()}", "", "${segment.strokeRate.get()}")
+        binding == ValueBinding.POWER && segment.power.get() > 0 -> signedGoal(measurement.power - segment.power.get(), "${segment.power.get()}", "", "${segment.power.get()} W")
+        binding == ValueBinding.PULSE && segment.pulse.get() > 0 -> signedGoal(measurement.pulse - segment.pulse.get(), "${segment.pulse.get()}", "", "${segment.pulse.get()} BPM")
         binding == ValueBinding.SPEED && segment.speed.get() > 0 -> {
             val difference = measurement.speed - segment.speed.get()
-            GoalDisplay(String.format(Locale.getDefault(), "%+.1f m/s", difference / 100f), String.format(
-                Locale.getDefault(), "%.1f m/s", segment.speed.get() / 100f), stateFor(difference, 5))
+            val actual = String.format(Locale.getDefault(), "%.1f", measurement.speed / 100f)
+            val value = if (difference == 0) actual else String.format(Locale.getDefault(), "%+.1f", difference / 100f)
+            GoalDisplay(value, String.format(Locale.getDefault(), "%.1f m/s", segment.speed.get() / 100f), stateFor(difference))
         }
         binding == ValueBinding.SPLIT && segment.speed.get() > 0 && measurement.speed > 0 -> {
             val targetPace = 50000 / segment.speed.get()
             val actualPace = 50000 / measurement.speed
-            signedGoal(targetPace - actualPace, " s", "%d:%02d /500 m".format(targetPace / 60, targetPace % 60))
+            signedGoal(targetPace - actualPace, "%d:%02d".format(targetPace / 60, targetPace % 60), " s", "%d:%02d /500 m".format(targetPace / 60, targetPace % 60))
         }
         else -> null
     }
 }
 
-private fun signedGoal(value: Int, unit: String, target: String) = GoalDisplay(if (value > 0) "+$value$unit" else "$value$unit", target, stateFor(value, 1))
-private fun stateFor(value: Int, tolerance: Int): Int = when { value > tolerance -> 1; value < -tolerance -> -1; else -> 0 }
+private fun signedGoal(value: Int, atTarget: String, unit: String, target: String) = GoalDisplay(
+    if (value == 0) atTarget else if (value > 0) "+$value$unit" else "$value$unit",
+    target,
+    stateFor(value)
+)
+private fun stateFor(value: Int): Int = when { value > 0 -> 1; value < 0 -> -1; else -> 0 }
 
 private fun segmentTarget(segment: Segment): String = when {
     segment.duration.get() > 0 -> "%d:%02d".format(segment.duration.get() / 60, segment.duration.get() % 60)
