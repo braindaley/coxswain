@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -97,13 +98,13 @@ private fun HomeHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(stringResource(R.string.app_name).uppercase(Locale.getDefault()), color = Color.White, fontSize = 18.sp, letterSpacing = 4.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val connectDescription = stringResource(R.string.ui_connect_rower)
                 val connectedDescription = stringResource(R.string.ui_connected)
-                Box(Modifier.size(38.dp)) {
+                Box(Modifier.size(48.dp).clip(CircleShape).background(HeroControl)) {
                     IconButton(
                         onClick = onConnectRower,
-                        modifier = Modifier.fillMaxSize().background(HeroControl, RoundedCornerShape(19.dp))
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(
                             Icons.Default.Link,
@@ -112,10 +113,15 @@ private fun HomeHeader(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    if (connected) Box(Modifier.align(Alignment.TopEnd).size(9.dp).background(Color(0xFF25C778), RoundedCornerShape(50)))
+                    if (connected) Box(
+                        Modifier.align(Alignment.TopEnd).padding(top = 5.dp, end = 5.dp)
+                            .size(9.dp).background(Color(0xFF25C778), CircleShape)
+                    )
                 }
-                IconButton(onClick = onSettings, modifier = Modifier.size(38.dp).background(HeroControl, RoundedCornerShape(19.dp))) {
-                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings), tint = Color.White, modifier = Modifier.size(20.dp))
+                Box(Modifier.size(48.dp).clip(CircleShape).background(HeroControl)) {
+                    IconButton(onClick = onSettings, modifier = Modifier.fillMaxSize()) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings), tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
                 }
             }
         }
