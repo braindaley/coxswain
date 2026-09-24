@@ -243,6 +243,8 @@ fun TargetInputCard(
                         val v = it.filter { char -> char.isDigit() }.toIntOrNull() ?: 0
                         onValueChange(v) 
                     },
+                    singleLine = true,
+                    maxLines = 1,
                     textStyle = MaterialTheme.typography.displayLarge.copy(
                         fontWeight = FontWeight.W500,
                         textAlign = TextAlign.Center,
@@ -256,7 +258,9 @@ fun TargetInputCard(
                         unfocusedIndicatorColor = MaterialTheme.colorScheme.primary
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.width(140.dp)
+                    // Leave enough room for five-digit targets such as 5,000 without
+                    // Compose wrapping the value onto a second line on phone screens.
+                    modifier = Modifier.width(220.dp)
                 )
                 Text(
                     text = unit,
