@@ -280,7 +280,12 @@ private fun MetricGrid(
         val density = LocalDensity.current
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
-            val value = if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ') else binding.format(context, getValueForBinding(binding, gym), false)
+            val rawValue = getValueForBinding(binding, gym)
+            val value = when {
+                binding == goalBinding && goal != null -> goal.variance.substringBefore(' ')
+                binding == ValueBinding.DISTANCE -> java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(rawValue)
+                else -> binding.format(context, rawValue, false)
+            }
             value
         }
         val availableWidthPx = with(density) { (cellWidth - 24.dp).roundToPx() }.coerceAtLeast(1)
