@@ -41,7 +41,7 @@ fun WorkoutsScreen(
 
     LaunchedEffect(refreshKey) {
         workouts.clear()
-        workouts.addAll(gym.getWorkouts().list())
+        workouts.addAll(gym.getAllWorkouts().list())
     }
 
     val filters = listOf(

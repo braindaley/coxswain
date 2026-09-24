@@ -299,6 +299,18 @@ public class Gym {
         return repository.query(prototype, finalized);
     }
 
+    /** All evaluated completed workouts in the requested time window, independent of selection. */
+    public Match<Workout> getAllWorkouts(long from, long to) {
+        Workout prototype = new Workout();
+        return repository.query(prototype, all(
+                equal(prototype.evaluate, true),
+                Where.any(
+                        equal(prototype.status, WorkoutStatus.COMPLETED),
+                        equal(prototype.status, WorkoutStatus.ENDED_EARLY)),
+                greaterEqual(prototype.start, from),
+                lessThan(prototype.start, to)));
+    }
+
     public boolean hasWorkoutHistory(Program selectedProgram) {
         if (selectedProgram == null || Row.getID(selectedProgram) == Row.TRANSIENT) return false;
         Workout prototype = new Workout();

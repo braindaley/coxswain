@@ -59,12 +59,22 @@ class MainNavigationTest {
     @Test
     fun freeRowAndQuickStartReachLiveRow() {
         compose.onNodeWithText("Free Row").performClick()
+        compose.activityRule.scenario.onActivity { activity ->
+            Gym.instance(activity).onMeasured(Measurement().apply { duration = 5; distance = 20; strokeRate = 24 })
+        }
         compose.onNodeWithText("End session").assertIsDisplayed().performClick()
+        compose.onNodeWithText("WORKOUT COMPLETE").assertIsDisplayed()
+        compose.onNodeWithText("Done").performClick()
         compose.onNodeWithText("Ready to row?").assertIsDisplayed()
 
         compose.onNodeWithText("Quick Start").performClick()
         compose.onNodeWithText("Start workout").performClick()
+        compose.activityRule.scenario.onActivity { activity ->
+            Gym.instance(activity).onMeasured(Measurement().apply { duration = 5; distance = 20; strokeRate = 24 })
+        }
         compose.onNodeWithText("End session").assertIsDisplayed().performClick()
+        compose.onNodeWithText("WORKOUT COMPLETE").assertIsDisplayed()
+        compose.onNodeWithText("Done").performClick()
         compose.onNodeWithText("Ready to row?").assertIsDisplayed()
     }
 
@@ -137,6 +147,31 @@ class MainNavigationTest {
         compose.onNodeWithContentDescription("Delete from History").performClick()
         compose.onNodeWithText("Delete").performClick()
         compose.onNodeWithTag("history-title").assertIsDisplayed()
+    }
+
+    @Test
+    fun historyShowsAllProgramsWhenAnotherProgramIsSelected() {
+        val suffix = System.nanoTime().toString()
+        val firstName = "Audit first $suffix"
+        val selectedName = "Audit selected $suffix"
+        compose.activityRule.scenario.onActivity { activity ->
+            val gym = Gym.instance(activity)
+            val first = Program.meters(firstName, 100, Difficulty.EASY)
+            gym.mergeProgram(first)
+            gym.start(first, svenmeier.coxswain.gym.SessionType.DISTANCE)
+            gym.onMeasured(Measurement().apply { duration = 30; distance = 100; strokeRate = 24 })
+            gym.complete()
+
+            val selected = Program.meters(selectedName, 200, Difficulty.EASY)
+            gym.mergeProgram(selected)
+            gym.start(selected, svenmeier.coxswain.gym.SessionType.DISTANCE)
+            gym.onMeasured(Measurement().apply { duration = 45; distance = 200; strokeRate = 24 })
+            gym.complete()
+        }
+
+        compose.onNodeWithText("History").performClick()
+        compose.onNodeWithText(firstName).assertIsDisplayed()
+        compose.onNodeWithText(selectedName).assertIsDisplayed()
     }
 
     @Test

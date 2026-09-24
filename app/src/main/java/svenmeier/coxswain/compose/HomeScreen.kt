@@ -71,7 +71,7 @@ fun HomeScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            gym?.getWorkouts()?.list()?.maxByOrNull { it.start.get() }?.let { last ->
+            gym?.getAllWorkouts()?.list()?.maxByOrNull { it.start.get() }?.let { last ->
                 LastWorkoutCard(last, { onWorkoutDetails(last) }, { onRowAgain(last) })
             }
             gym?.let { HomeProgress(it) { onQuickStart("Duration") } }
@@ -210,10 +210,10 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     val now = System.currentTimeMillis()
     val range = calendarRange(period, now)
     // Matches are cursor-backed; materialize each before opening the next.
-    val workouts = ArrayList(gym.getWorkouts(range.first, range.second).list())
+    val workouts = ArrayList(gym.getAllWorkouts(range.first, range.second).list())
     val previousRange = previousCalendarRange(period, range.first)
-    val previous = ArrayList(gym.getWorkouts(previousRange.first, previousRange.second).list())
-    val allWorkouts = ArrayList(gym.getWorkouts().list())
+    val previous = ArrayList(gym.getAllWorkouts(previousRange.first, previousRange.second).list())
+    val allWorkouts = ArrayList(gym.getAllWorkouts().list())
     val meters = workouts.sumOf { it.distance.get() }
     val seconds = workouts.sumOf { it.duration.get() }
     val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }
