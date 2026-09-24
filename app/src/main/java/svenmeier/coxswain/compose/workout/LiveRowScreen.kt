@@ -819,40 +819,19 @@ internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?)
 internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
     val m = gym.getMeasurement()
     val progress = gym.progress
-    if (progress != null) {
-        val startM = progress.startMeasurement
-        val segment = progress.segment
-        when (binding) {
-            ValueBinding.DURATION -> {
-                val target = segment.duration.get()
-                if (target > 0) {
-                    val achieved = m.duration - startM.duration
-                    return maxOf(0, target - achieved)
-                }
-            }
-            ValueBinding.DISTANCE -> {
-                val target = segment.distance.get()
-                if (target > 0) {
-                    val achieved = m.distance - startM.distance
-                    return maxOf(0, target - achieved)
-                }
-            }
-            ValueBinding.STROKES -> {
-                val target = segment.strokes.get()
-                if (target > 0) {
-                    val achieved = m.strokes - startM.strokes
-                    return maxOf(0, target - achieved)
-                }
-            }
-            ValueBinding.ENERGY -> {
-                val target = segment.energy.get()
-                if (target > 0) {
-                    val achieved = m.energy - startM.energy
-                    return maxOf(0, target - achieved)
-                }
-            }
-            else -> {}
+    val segment = progress?.segment ?: gym.program?.let { program ->
+        if (program.getSegmentsCount() > 0) program.getSegment(0) else null
+    }
+    if (segment != null) {
+        val start = progress?.startMeasurement ?: Measurement()
+        val (target, completed) = when (binding) {
+            ValueBinding.DURATION -> segment.duration.get() to (m.duration - start.duration)
+            ValueBinding.DISTANCE -> segment.distance.get() to (m.distance - start.distance)
+            ValueBinding.STROKES -> segment.strokes.get() to (m.strokes - start.strokes)
+            ValueBinding.ENERGY -> segment.energy.get() to (m.energy - start.energy)
+            else -> 0 to 0
         }
+        if (target > 0) return (target - completed).coerceAtLeast(0)
     }
 
     return when (binding) {
