@@ -189,7 +189,13 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     onWorkoutDetails = { WorkoutDetailsActivity.start(activity, it) },
                     onRowAgain = { workout ->
                         val definition = WorkoutDefinition.thaw(workout.programDefinition.get())
-                        if (definition == null) gym.startFreeRow() else gym.start(definition, WorkoutDefinition.typeOf(definition))
+                        if (definition == null) {
+                            gym.startFreeRow()
+                        } else {
+                            val raceCandidates = gym.getRaceCandidates(definition)
+                            if (raceCandidates.isNotEmpty()) gym.race(definition, raceCandidates.first())
+                            else gym.select(definition)
+                        }
                         WorkoutActivity.start(activity)
                     }
                 )

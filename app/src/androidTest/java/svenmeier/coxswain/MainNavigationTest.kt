@@ -149,6 +149,7 @@ class MainNavigationTest {
         compose.onNodeWithText("Programs").performClick()
         compose.onNodeWithText("Home").performClick()
         compose.onNodeWithText("Row again").performScrollTo().performClick()
+        compose.onNodeWithText("RACE PROGRESS").assertIsDisplayed()
         compose.onNodeWithText("End session").assertIsDisplayed().performClick()
 
         compose.onNodeWithText("History").performClick()
