@@ -37,9 +37,12 @@ import svenmeier.coxswain.compose.*
 import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
+import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.view.MaterialLimitPickerDialog
 import svenmeier.coxswain.view.MaterialTargetPickerDialog
 import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class ProgramActivity : FragmentActivity() {
 
@@ -58,6 +61,36 @@ class ProgramActivity : FragmentActivity() {
         originalProgram = if (reference != null) gym.getProgram(reference) else null
 
         val isReadOnly = intent.getBooleanExtra(EXTRA_READ_ONLY, false)
+
+        if (isReadOnly && originalProgram != null) {
+            val program = originalProgram!!
+            val compatibility = WorkoutDefinition.compatibilityKey(program)
+            val history = ArrayList(gym.getAllWorkouts().list()).filter { workout ->
+                WorkoutDefinition.compatibilityKey(workout.programDefinition.get()) == compatibility ||
+                    workout.programName.get() == program.name.get()
+            }.sortedByDescending { it.start.get() }
+            val raceCandidates = gym.getRaceCandidates(program)
+            setContent {
+                CoxswainTheme {
+                    ProgramDetailsScreen(
+                        program = program,
+                        history = history,
+                        raceCandidates = raceCandidates,
+                        onBack = { finish() },
+                        onStart = { gym.select(program); WorkoutActivity.start(this); finish() },
+                        onRace = { RaceYourBestActivity.start(this, program) },
+                        onEdit = { startActivity(createIntent(this, program)); finish() },
+                        onDuplicate = {
+                            gym.duplicateProgram(program, getString(R.string.ui_program_copy, program.name.get()))
+                            Toast.makeText(this, R.string.ui_program_saved, Toast.LENGTH_SHORT).show()
+                            finish()
+                        },
+                        onDelete = { gym.delete(program); finish() }
+                    )
+                }
+            }
+            return
+        }
 
         draftProgram = if (originalProgram != null) {
             cloneProgram(originalProgram!!)
@@ -138,6 +171,201 @@ class ProgramActivity : FragmentActivity() {
             createIntent(context, program).putExtra(EXTRA_READ_ONLY, true)
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProgramDetailsScreen(
+    program: Program,
+    history: List<svenmeier.coxswain.gym.Workout>,
+    raceCandidates: List<svenmeier.coxswain.gym.Workout>,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+    onRace: () -> Unit,
+    onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val hasHistory = history.isNotEmpty()
+    val type = WorkoutDefinition.typeOf(program)
+    val segments = program.segments.get()
+    val target = when (type) {
+        svenmeier.coxswain.gym.SessionType.DURATION -> stringResource(R.string.ui_minutes_value, segments.firstOrNull()?.duration?.get()?.div(60) ?: 0)
+        svenmeier.coxswain.gym.SessionType.DISTANCE -> stringResource(R.string.ui_meters_value, segments.firstOrNull()?.distance?.get() ?: 0)
+        else -> pluralStringResource(R.plurals.ui_segment_count, segments.size, segments.size)
+    }
+    val goal = when (val value = WorkoutDefinition.goalOf(program)) {
+        svenmeier.coxswain.gym.PerformanceGoal.NONE -> stringResource(R.string.ui_no_performance_goal)
+        svenmeier.coxswain.gym.PerformanceGoal.STROKE_RATE -> "${WorkoutDefinition.goalTargetOf(program)} SPM"
+        svenmeier.coxswain.gym.PerformanceGoal.POWER -> "${WorkoutDefinition.goalTargetOf(program)} W"
+        svenmeier.coxswain.gym.PerformanceGoal.PULSE -> "${WorkoutDefinition.goalTargetOf(program)} BPM"
+        svenmeier.coxswain.gym.PerformanceGoal.SPEED -> {
+            val pace = speedToPaceSeconds(WorkoutDefinition.goalTargetOf(program))
+            "%d:%02d /500 m".format(Locale.getDefault(), pace / 60, pace % 60)
+        }
+    }
+    val timed = type == svenmeier.coxswain.gym.SessionType.DURATION
+    val best = if (timed) history.maxByOrNull { it.distance.get() } else history.minByOrNull { it.duration.get() }
+    val averageResult = if (history.isEmpty()) null else if (timed) history.map { it.distance.get() }.average().toInt() else history.map { it.duration.get() }.average().toInt()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.ui_program_details)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_back))
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu))
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            if (!hasHistory) DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ui_edit_program)) },
+                                onClick = { menuOpen = false; onEdit() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_duplicate)) },
+                                onClick = { menuOpen = false; onDuplicate() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_delete)) },
+                                onClick = { menuOpen = false; confirmDelete = true }
+                            )
+                        }
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Column {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Button(
+                        onClick = onStart,
+                        modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp).height(54.dp),
+                        shape = RoundedCornerShape(27.dp)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.ui_start_workout), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    ) { inset ->
+        Column(
+            Modifier.fillMaxSize().padding(inset).verticalScroll(rememberScrollState()).padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(program.name.get(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+
+            SectionLabel(stringResource(R.string.ui_workout_summary))
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DetailValueRow(stringResource(R.string.ui_type), stringResource(when (type) {
+                        svenmeier.coxswain.gym.SessionType.DURATION -> R.string.ui_duration
+                        svenmeier.coxswain.gym.SessionType.DISTANCE -> R.string.ui_distance
+                        else -> R.string.ui_intervals
+                    }))
+                    DetailValueRow(stringResource(R.string.ui_target), target)
+                    DetailValueRow(stringResource(R.string.ui_goal), goal)
+                }
+            }
+
+            if (type == svenmeier.coxswain.gym.SessionType.INTERVAL) {
+                SectionLabel(stringResource(R.string.ui_intervals).uppercase(Locale.getDefault()))
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                        segments.forEachIndexed { index, segment ->
+                            Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    stringResource(if (segment.difficulty.get() == Difficulty.REST) R.string.ui_rest else R.string.ui_row),
+                                    modifier = Modifier.weight(1f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    when {
+                                        segment.duration.get() > 0 -> "%d:%02d".format(segment.duration.get() / 60, segment.duration.get() % 60)
+                                        segment.distance.get() > 0 -> "%,d m".format(Locale.getDefault(), segment.distance.get())
+                                        segment.strokes.get() > 0 -> "${segment.strokes.get()} strokes"
+                                        else -> stringResource(R.string.ui_target_set)
+                                    },
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (index < segments.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        }
+                    }
+                }
+            }
+
+            SectionLabel(stringResource(R.string.ui_program_history))
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(pluralStringResource(R.plurals.ui_workouts_completed, history.size, history.size), fontWeight = FontWeight.Bold)
+                    if (best != null) {
+                        DetailValueRow(stringResource(R.string.ui_best), if (timed) "%,d m".format(Locale.getDefault(), best.distance.get()) else formatProgramTime(best.duration.get()))
+                        averageResult?.let { average ->
+                            DetailValueRow(stringResource(R.string.ui_average), if (timed) "%,d m".format(Locale.getDefault(), average) else formatProgramTime(average))
+                        }
+                        val latest = history.first()
+                        Text(
+                            stringResource(R.string.ui_program_last_completed, SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(latest.start.get()))),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(stringResource(R.string.ui_program_no_history), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.ui_race_your_best), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (raceCandidates.isEmpty()) stringResource(R.string.ui_race_empty)
+                        else stringResource(R.string.ui_program_race_description),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (raceCandidates.isNotEmpty()) {
+                        val reference = raceCandidates.first()
+                        Text(
+                            stringResource(R.string.ui_program_race_record, if (timed) "%,d m".format(Locale.getDefault(), reference.distance.get()) else formatProgramTime(reference.duration.get())),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        OutlinedButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_start_race)) }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+
+    if (confirmDelete) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text(stringResource(R.string.ui_delete_program_question)) },
+        text = { Text(stringResource(R.string.ui_delete_program_explanation, program.name.get())) },
+        confirmButton = { TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.ui_cancel)) } }
+    )
+}
+
+@Composable
+private fun DetailValueRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.End)
+    }
+}
+
+private fun formatProgramTime(seconds: Int): String = "%d:%02d".format(Locale.getDefault(), seconds / 60, seconds % 60)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

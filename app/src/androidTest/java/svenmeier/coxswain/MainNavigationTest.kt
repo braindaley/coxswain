@@ -2,10 +2,8 @@ package svenmeier.coxswain
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -32,7 +30,7 @@ class MainNavigationTest {
         compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
 
         compose.onNodeWithText("History").performClick()
-        compose.onNodeWithText("WORKOUT HISTORY").assertIsDisplayed()
+        compose.onNodeWithTag("history-title").assertIsDisplayed()
 
         compose.onNodeWithText("More").performClick()
         compose.onNodeWithText("MORE").assertIsDisplayed()
@@ -88,7 +86,8 @@ class MainNavigationTest {
         }
 
         compose.onNodeWithText("Programs").performClick()
-        compose.onNode(hasText("Race your best") and hasAnyAncestor(hasTestTag("program-$raceName"))).performClick()
+        compose.onNodeWithTag("program-$raceName").performClick()
+        compose.onNodeWithText("Start race").performClick()
         compose.onNodeWithText("Choose a compatible completed result to race against.").assertIsDisplayed()
         compose.onNodeWithText("Start race").performClick()
         compose.onNodeWithText("End session").assertIsDisplayed()
@@ -101,10 +100,9 @@ class MainNavigationTest {
         }
         compose.onNodeWithText("End session").performClick()
         compose.onNodeWithText("WORKOUT COMPLETE").assertIsDisplayed()
-        compose.onNodeWithText("Done").performScrollTo().assertIsDisplayed().performClick()
-        compose.waitUntil(5_000) {
-            compose.onAllNodesWithText("Programs").fetchSemanticsNodes().isNotEmpty()
-        }
+        compose.onNodeWithText("Done").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Program details").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Programs").performClick()
         compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
 
@@ -135,9 +133,10 @@ class MainNavigationTest {
 
         compose.onNodeWithText("History").performClick()
         compose.onNodeWithText("E2E 100 m").performClick()
-        compose.onNodeWithText("Delete workout").performScrollTo().performClick()
+        compose.onNodeWithText("Workout details").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Delete from History").performClick()
         compose.onNodeWithText("Delete").performClick()
-        compose.onNodeWithText("WORKOUT HISTORY").assertIsDisplayed()
+        compose.onNodeWithTag("history-title").assertIsDisplayed()
     }
 
     @Test

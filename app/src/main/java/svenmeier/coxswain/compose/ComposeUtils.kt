@@ -44,12 +44,13 @@ fun SingleSelectToggleGroup(
     options: List<String>,
     selectedOption: String,
     fontSize: TextUnit = 14.sp,
+    modifier: Modifier = Modifier,
     onOptionSelected: (String) -> Unit
 ) {
     Surface(
         color = Color(0xFFE8EEF6),
         shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(modifier = Modifier.padding(4.dp)) {
             options.forEach { option ->

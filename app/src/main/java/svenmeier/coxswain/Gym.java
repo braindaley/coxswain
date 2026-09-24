@@ -275,18 +275,28 @@ public class Gym {
     }
 
     public Match<Workout> getWorkouts() {
+        if (program == null) {
+            return getAllWorkouts();
+        }
         Workout prototype = new Workout();
         Where finalized = Where.any(
                 equal(prototype.status, WorkoutStatus.COMPLETED),
                 equal(prototype.status, WorkoutStatus.ENDED_EARLY));
 
-        if (program == null) {
-            return repository.query(prototype, finalized);
-        } else if (Row.getID(program) == Row.TRANSIENT) {
+        if (Row.getID(program) == Row.TRANSIENT) {
             return repository.query(prototype, Where.none());
         } else {
             return repository.query(prototype, all(equal(prototype.program, program), finalized));
         }
+    }
+
+    /** All completed workouts, independent of the currently selected workout program. */
+    public Match<Workout> getAllWorkouts() {
+        Workout prototype = new Workout();
+        Where finalized = Where.any(
+                equal(prototype.status, WorkoutStatus.COMPLETED),
+                equal(prototype.status, WorkoutStatus.ENDED_EARLY));
+        return repository.query(prototype, finalized);
     }
 
     public boolean hasWorkoutHistory(Program selectedProgram) {

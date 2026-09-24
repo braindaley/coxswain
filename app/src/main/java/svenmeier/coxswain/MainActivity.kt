@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -117,8 +117,8 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
     val tabs = listOf(
         TabItem(stringResource(R.string.ui_home), Icons.Default.Home),
         TabItem(stringResource(R.string.ui_programs), Icons.AutoMirrored.Filled.List),
-        TabItem(stringResource(R.string.ui_history), Icons.Default.Refresh),
-        TabItem(stringResource(R.string.ui_more), Icons.Default.MoreVert)
+        TabItem(stringResource(R.string.ui_history), Icons.Default.History),
+        TabItem(stringResource(R.string.ui_more), Icons.Default.MoreHoriz)
     )
 
     Scaffold(
@@ -200,7 +200,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         activity.startActivity(ProgramActivity.createIntent(activity, null))
                     },
                     onEditProgram = { program ->
-                        activity.startActivity(if (gym.hasWorkoutHistory(program)) ProgramActivity.createReadOnlyIntent(activity, program) else ProgramActivity.createIntent(activity, program))
+                        activity.startActivity(ProgramActivity.createReadOnlyIntent(activity, program))
                     },
                     onStartProgram = { program ->
                         gym.select(program)
@@ -214,8 +214,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                     },
                     onSaveLibraryProgram = { program ->
                         gym.duplicateProgram(program, program.name.get())
-                    },
-                    onRaceProgram = { RaceYourBestActivity.start(activity, it) }
+                    }
                 )
                 2 -> WorkoutsScreen(
                     gym = gym,

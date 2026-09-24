@@ -13,8 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +33,9 @@ import androidx.compose.ui.unit.sp
 import propoid.db.Reference
 import svenmeier.coxswain.compose.CoxswainTheme
 import svenmeier.coxswain.gym.Workout
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class WorkoutCompleteActivity : ComponentActivity() {
 
@@ -62,21 +70,43 @@ class WorkoutCompleteActivity : ComponentActivity() {
 
 @Composable
 private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.coxswain.gym.Snapshot>, onDone: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(stringResource(R.string.ui_workout_complete), style = MaterialTheme.typography.labelLarge)
-        Spacer(Modifier.height(12.dp))
-        Text(workout.programName(stringResource(R.string.ui_workout)), style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(28.dp))
-        Text(workoutPrimaryValue(workout), fontSize = 56.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(24.dp))
-        WorkoutResults(workout, snapshots)
-        RaceResultSummary(workout)
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-            Text(stringResource(R.string.ui_done), fontWeight = FontWeight.Bold)
+    Scaffold(
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.surface) {
+                Column {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Button(
+                        onClick = onDone,
+                        modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp).height(56.dp),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
+                        Text(stringResource(R.string.ui_done), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    ) { insets ->
+        Column(
+            modifier = Modifier.padding(insets).fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(stringResource(R.string.ui_workout_complete), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            Text(workout.programName(stringResource(R.string.ui_workout)), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            val finished = workout.completed.get().takeIf { it > 0L } ?: workout.start.get()
+            Text(
+                SimpleDateFormat("MMM d · h:mm a", Locale.getDefault()).format(Date(finished)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(24.dp))
+            Text(workoutPrimaryValue(workout), fontSize = 56.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(22.dp))
+            Text(stringResource(R.string.ui_workout_summary), modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            WorkoutResults(workout, snapshots)
+            RaceResultSummary(workout)
+            Spacer(Modifier.height(20.dp))
         }
     }
 }

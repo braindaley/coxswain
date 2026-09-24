@@ -7,6 +7,7 @@
     <string name="ui_workout_complete">ENTRAÎNEMENT TERMINÉ</string>
     <string name="ui_workout_details">Détails de l\'entraînement</string>
     <string name="ui_delete_workout">Supprimer l\'entraînement</string>
+    <string name="ui_delete_from_history">Supprimer de l’historique</string>
     <string name="ui_delete_workout_question">Supprimer l\'entraînement ?</string>
     <string name="ui_delete_workout_explanation">L\'entraînement et ses mesures enregistrées seront supprimés de l\'historique.</string>
     <string name="ui_end_session">Terminer la séance</string>
@@ -88,6 +89,17 @@
     <string name="ui_workout_library">Bibliothèque d’entraînements</string>
     <string name="ui_create_program">Créer un programme</string>
     <string name="ui_edit_program">Modifier le programme</string>
+    <string name="ui_program_details">Détails du programme</string>
+    <string name="ui_program_history">HISTORIQUE DU PROGRAMME</string>
+    <string name="ui_average">Moyenne</string>
+    <string name="ui_program_no_history">Terminez ce programme pour créer son historique et son meilleur résultat.</string>
+    <string name="ui_program_last_completed">Dernière séance · %1$s</string>
+    <string name="ui_program_race_description">Comparez cette séance à votre résultat compatible le plus rapide.</string>
+    <string name="ui_program_race_record">Meilleur résultat · %1$s</string>
+    <plurals name="ui_workouts_completed">
+        <item quantity="one">%1$d séance terminée</item>
+        <item quantity="other">%1$d séances terminées</item>
+    </plurals>
     <string name="ui_save_program">Enregistrer le programme</string>
     <string name="ui_program_saved">Programme enregistré</string>
     <string name="ui_discard_changes_title">Abandonner les modifications ?</string>
@@ -184,6 +196,12 @@
     <string name="ui_race_best_ahead">Le record est devant</string>
     <string name="ui_margin">Écart : %1$s</string>
     <string name="ui_workout_history">HISTORIQUE DES ENTRAÎNEMENTS</string>
+    <string name="ui_all">Tout</string>
+    <string name="ui_free_rows">Rame libre</string>
+    <string name="ui_races">Courses</string>
+    <string name="ui_search_history">Rechercher des séances</string>
+    <string name="ui_close_search">Fermer la recherche</string>
+    <string name="ui_no_workouts_found">Aucune séance trouvée.</string>
     <string name="ui_home">Accueil</string>
     <string name="ui_programs">Programmes</string>
     <string name="ui_history">Historique</string>

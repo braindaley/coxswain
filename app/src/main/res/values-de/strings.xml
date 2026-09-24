@@ -7,6 +7,7 @@
     <string name="ui_workout_complete">TRAINING ABGESCHLOSSEN</string>
     <string name="ui_workout_details">Trainingsdetails</string>
     <string name="ui_delete_workout">Training löschen</string>
+    <string name="ui_delete_from_history">Aus Verlauf löschen</string>
     <string name="ui_delete_workout_question">Training löschen?</string>
     <string name="ui_delete_workout_explanation">Das Training und seine aufgezeichneten Messpunkte werden aus dem Verlauf entfernt.</string>
     <string name="ui_end_session">Einheit beenden</string>
@@ -86,6 +87,17 @@
     <string name="ui_workout_library">Trainingsbibliothek</string>
     <string name="ui_create_program">Programm erstellen</string>
     <string name="ui_edit_program">Programm bearbeiten</string>
+    <string name="ui_program_details">Programmdetails</string>
+    <string name="ui_program_history">PROGRAMMVERLAUF</string>
+    <string name="ui_average">Durchschnitt</string>
+    <string name="ui_program_no_history">Schließe dieses Programm ab, um Verlauf und Bestwert zu erfassen.</string>
+    <string name="ui_program_last_completed">Zuletzt abgeschlossen · %1$s</string>
+    <string name="ui_program_race_description">Vergleiche diese Einheit mit deiner schnellsten passenden Runde.</string>
+    <string name="ui_program_race_record">Bestwert · %1$s</string>
+    <plurals name="ui_workouts_completed">
+        <item quantity="one">%1$d Training abgeschlossen</item>
+        <item quantity="other">%1$d Trainings abgeschlossen</item>
+    </plurals>
     <string name="ui_save_program">Programm speichern</string>
     <string name="ui_program_saved">Programm gespeichert</string>
     <string name="ui_discard_changes_title">Ungespeicherte Änderungen verwerfen?</string>
@@ -177,6 +189,12 @@
     <string name="ui_race_best_ahead">Bestzeit liegt vorn</string>
     <string name="ui_margin">Abstand: %1$s</string>
     <string name="ui_workout_history">TRAININGSVERLAUF</string>
+    <string name="ui_all">Alle</string>
+    <string name="ui_free_rows">Freies Rudern</string>
+    <string name="ui_races">Wettkämpfe</string>
+    <string name="ui_search_history">Trainings suchen</string>
+    <string name="ui_close_search">Suche schließen</string>
+    <string name="ui_no_workouts_found">Keine Trainings gefunden.</string>
     <string name="ui_home">Start</string>
     <string name="ui_programs">Programme</string>
     <string name="ui_history">Verlauf</string>

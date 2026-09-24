@@ -33,8 +33,10 @@ fun ProgramsScreen(
     refreshKey: Int = 0,
     onCreateProgram: () -> Unit,
     onEditProgram: (Program) -> Unit,
-    onStartProgram: (Program) -> Unit
-    ,onDuplicateProgram: (Program) -> Unit = {}, onDeleteProgram: (Program) -> Unit = {}, onSaveLibraryProgram: (Program) -> Unit = {}, onRaceProgram: (Program) -> Unit = {}
+    onStartProgram: (Program) -> Unit,
+    onDuplicateProgram: (Program) -> Unit = {},
+    onDeleteProgram: (Program) -> Unit = {},
+    onSaveLibraryProgram: (Program) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var previewProgram by remember { mutableStateOf<Program?>(null) }
@@ -130,7 +132,6 @@ fun ProgramsScreen(
                     program = program,
                     onView = { if (selectedTab == 0) onEditProgram(program) else previewProgram = program },
                     onStart = { onStartProgram(program) },
-                    onRace = { if (selectedTab == 0) onRaceProgram(program) },
                     isLibrary = selectedTab == 1,
                     onDuplicate = {
                         if (selectedTab == 0) {
@@ -152,27 +153,27 @@ fun ProgramCard(
     onStart: () -> Unit,
     isLibrary: Boolean = false,
     onDuplicate: () -> Unit = {},
-    onDelete: () -> Unit = {},
-    onRace: () -> Unit = {}
+    onDelete: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onView() }.testTag("program-${program.name.get()}"),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.Top
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = program.name.get(),
-                        fontSize = 18.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
                     )
                     
                     val segments = program.segments.get()
@@ -187,10 +188,20 @@ fun ProgramCard(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+                Button(
+                    onClick = onStart,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.ui_start), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
                 var menuOpen by remember { mutableStateOf(false) }
                 Box {
-                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.ui_menu), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.ui_view_program)) }, onClick = { menuOpen = false; onView() })
@@ -199,33 +210,6 @@ fun ProgramCard(
                     }
                 }
             }
-
-            Spacer(Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = onView,
-                    contentPadding = PaddingValues(horizontal = 8.dp)
-                ) {
-                    Text(stringResource(R.string.ui_view_program), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = onStart,
-                    shape = MaterialTheme.shapes.extraLarge,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    modifier = Modifier.height(44.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.ui_start), fontWeight = FontWeight.Bold)
-                }
-            }
-            if (!isLibrary) TextButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_race_your_best), color = MaterialTheme.colorScheme.primary) }
         }
     }
 }
