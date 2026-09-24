@@ -34,7 +34,7 @@ fun SectionLabel(text: String) {
             letterSpacing = 1.sp,
             fontSize = 12.sp
         ),
-        color = Color(0xFF53647C),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
     )
 }
@@ -48,7 +48,7 @@ fun SingleSelectToggleGroup(
     onOptionSelected: (String) -> Unit
 ) {
     Surface(
-        color = Color(0xFFE8EEF6),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shape = RoundedCornerShape(24.dp),
         modifier = modifier.fillMaxWidth()
     ) {
@@ -56,7 +56,7 @@ fun SingleSelectToggleGroup(
             options.forEach { option ->
                 val isSelected = option == selectedOption
                 Surface(
-                    color = if (isSelected) Color.White else Color.Transparent,
+                    color = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                     shadowElevation = if (isSelected) 1.dp else 0.dp,
                     modifier = Modifier
@@ -69,7 +69,7 @@ fun SingleSelectToggleGroup(
                             fontSize = fontSize,
                             maxLines = 1,
                             softWrap = false,
-                            color = if (isSelected) Color(0xFF0B63F6) else Color(0xFF53647C),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }

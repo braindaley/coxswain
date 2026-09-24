@@ -130,9 +130,9 @@ fun LiveRowScreen(
                         Spacer(Modifier.width(10.dp))
 
                         val (statusText, statusColor) = when {
-                            gym.connected -> "● Connected" to Color(0xFF22C55E)
-                            gym.connecting -> "● Connecting..." to Color(0xFFF2BA00)
-                            else -> "● Disconnected" to Color(0xFFBA1A1A)
+                            gym.connected -> "● Connected" to Color(0xFF6DE0A8)
+                            gym.connecting -> "● Connecting..." to Color(0xFFFFD166)
+                            else -> "● Disconnected" to Color(0xFFFF8A80)
                         }
 
                         Surface(
@@ -154,7 +154,7 @@ fun LiveRowScreen(
                         OutlinedButton(
                             onClick = { isEditingDisplay = !isEditingDisplay; selectedSlotIndex = -1 },
                             shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, Color(0xFF53647C)),
+                            border = BorderStroke(1.dp, Color(0xFF60758A)),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDCEBFF)),
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
@@ -189,7 +189,7 @@ fun LiveRowScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B63F6)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E69F4)),
                     shape = RoundedCornerShape(28.dp)
                 ) {
                     Icon(
@@ -503,7 +503,7 @@ fun TargetProgressBar(gym: Gym, rest: RestDisplay? = null) {
                     progress = { completion.coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth().height(6.dp),
                     color = Color(0xFF0B8FFF),
-                    trackColor = Color(0xFF53647C),
+                    trackColor = Color(0xFF60758A),
                     strokeCap = StrokeCap.Round
                 )
                 if (leftMeta.isNotEmpty()) {
@@ -618,7 +618,7 @@ fun RaceProgressBar(gym: Gym) {
                     text = deltaStr,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (race.leadMeters >= 0) Color(0xFF83D7FF) else Color(0xFFE53935)
+                    color = if (race.leadMeters >= 0) Color(0xFF83D7FF) else Color(0xFFFF8A80)
                 )
             }
 
@@ -656,7 +656,7 @@ private fun RaceLane(label: String, progress: Float, value: String, color: Color
             color = if (label.equals("Best", ignoreCase = true)) Color(0xFFBFEAFF) else Color.White
         )
         BoxWithConstraints(Modifier.weight(1f).height(12.dp), contentAlignment = Alignment.CenterStart) {
-            Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0xFF53647C), RoundedCornerShape(3.dp)))
+            Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0xFF60758A), RoundedCornerShape(3.dp)))
             Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(4.dp).background(color, RoundedCornerShape(3.dp)))
             Box(
                 Modifier.offset(x = (maxWidth * markerProgress) - 6.dp)

@@ -98,12 +98,19 @@ private fun HomeHeader(
         ) {
             Text(stringResource(R.string.app_name).uppercase(Locale.getDefault()), color = Color.White, fontSize = 18.sp, letterSpacing = 4.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                val connectDescription = stringResource(R.string.ui_connect_rower)
+                val connectedDescription = stringResource(R.string.ui_connected)
                 Box(Modifier.size(38.dp)) {
                     IconButton(
                         onClick = onConnectRower,
                         modifier = Modifier.fillMaxSize().background(HeroControl, RoundedCornerShape(19.dp))
                     ) {
-                        Icon(Icons.Default.Link, contentDescription = stringResource(R.string.ui_connect_rower), tint = Color.White, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Link,
+                            contentDescription = if (connected) "$connectDescription, $connectedDescription" else connectDescription,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     if (connected) Box(Modifier.align(Alignment.TopEnd).size(9.dp).background(Color(0xFF25C778), RoundedCornerShape(50)))
                 }

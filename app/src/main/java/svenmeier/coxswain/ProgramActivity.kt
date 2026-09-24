@@ -850,7 +850,7 @@ fun SegmentCard(
                     text = segment.difficulty.get().name.take(1),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = getIntensityColor(segment.difficulty.get()),
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                 )
             }

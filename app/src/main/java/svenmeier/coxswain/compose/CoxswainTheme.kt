@@ -69,8 +69,9 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHigh = Color(0xFF1D2D3D),
     onSurface = Color(0xFFF3F6FA),
     onSurfaceVariant = Color(0xFFAAB8C7),
-    outline = Color(0xFF405267),
-    outlineVariant = Color(0xFF2A3A4B),
+    // Keep field borders and card/divider edges visible against dark surfaces.
+    outline = Color(0xFF60758A),
+    outlineVariant = Color(0xFF596D82),
     error = Color(0xFFFFB4AB),
     onError = Color(0xFF690005),
     errorContainer = Color(0xFF8C1D18),
