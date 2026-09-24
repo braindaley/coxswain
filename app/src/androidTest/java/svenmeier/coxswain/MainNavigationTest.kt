@@ -1,5 +1,6 @@
 package svenmeier.coxswain
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -9,12 +10,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
+import svenmeier.coxswain.gym.Workout
+import svenmeier.coxswain.gym.WorkoutStatus
 
 @RunWith(AndroidJUnit4::class)
 class MainNavigationTest {
@@ -81,8 +85,9 @@ class MainNavigationTest {
     @Test
     fun programCreationAndRaceRoutesAreReachable() {
         var raceName = ""
-        compose.activityRule.scenario.onActivity { activity ->
-            val gym = Gym.instance(activity)
+        val appContext = ApplicationProvider.getApplicationContext<Context>()
+        run {
+            val gym = Gym.instance(appContext)
             val raceProgram = gym.programs.list().first()
             raceName = raceProgram.name.get()
             gym.select(raceProgram)
@@ -97,21 +102,26 @@ class MainNavigationTest {
 
         compose.onNodeWithText("Programs").performClick()
         compose.onNodeWithTag("program-$raceName").performClick()
+        compose.onNodeWithText("Program details").assertIsDisplayed()
+        compose.onNodeWithText("Start race").assertIsDisplayed()
         compose.onNodeWithText("Start race").performClick()
-        compose.onNodeWithText("Choose a compatible completed result to race against.").assertIsDisplayed()
-        compose.onNodeWithText("Start race").performClick()
-        compose.onNodeWithText("End session").assertIsDisplayed()
-        compose.activityRule.scenario.onActivity { activity ->
-            Gym.instance(activity).onMeasured(Measurement().apply {
+        compose.onNodeWithText("RACE PROGRESS").assertIsDisplayed()
+        run {
+            Gym.instance(appContext).onMeasured(Measurement().apply {
                 duration = 10
                 distance = 100
                 strokeRate = 24
             })
         }
-        compose.onNodeWithText("End session").performClick()
-        compose.onNodeWithText("WORKOUT COMPLETE").assertIsDisplayed()
-        compose.onNodeWithText("Done").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Program details").assertIsDisplayed()
+        Gym.instance(appContext).discard()
+        compose.waitUntil(5_000) {
+            runCatching { compose.onAllNodesWithText("MY PROGRAMS").fetchSemanticsNodes().any { it.layoutInfo.isPlaced } }.getOrDefault(false)
+        }
+        compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
+        compose.onNodeWithTag("program-$raceName").performClick()
+        compose.onNodeWithText("Start race").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Race your best").performClick()
+        compose.onNodeWithText("Start workout").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Programs").performClick()
         compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
@@ -172,6 +182,24 @@ class MainNavigationTest {
         compose.onNodeWithText("History").performClick()
         compose.onNodeWithText(firstName).assertIsDisplayed()
         compose.onNodeWithText(selectedName).assertIsDisplayed()
+    }
+
+    @Test
+    fun raceTargetsExcludeEarlyEndedWorkouts() {
+        var candidateCount = -1
+        compose.activityRule.scenario.onActivity { activity ->
+            val gym = Gym.instance(activity)
+            val program = Program.meters("Audit unfinished target ${System.nanoTime()}", 987654, Difficulty.EASY)
+            gym.mergeProgram(program)
+            val unfinished = Workout(program).apply {
+                status.set(WorkoutStatus.ENDED_EARLY)
+                distance.set(100)
+                duration.set(10)
+            }
+            gym.mergeWorkout(unfinished)
+            candidateCount = gym.getRaceCandidates(program).size
+        }
+        org.junit.Assert.assertEquals(0, candidateCount)
     }
 
     @Test

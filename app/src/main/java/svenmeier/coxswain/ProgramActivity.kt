@@ -23,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -77,8 +79,11 @@ class ProgramActivity : FragmentActivity() {
                         history = history,
                         raceCandidates = raceCandidates,
                         onBack = { finish() },
-                        onStart = { gym.select(program); WorkoutActivity.start(this); finish() },
-                        onRace = { RaceYourBestActivity.start(this, program) },
+                        onStart = { raceAgainstBest ->
+                            if (raceAgainstBest) gym.race(program, raceCandidates.first()) else gym.select(program)
+                            WorkoutActivity.start(this)
+                            finish()
+                        },
                         onEdit = { startActivity(createIntent(this, program)); finish() },
                         onDuplicate = {
                             gym.duplicateProgram(program, getString(R.string.ui_program_copy, program.name.get()))
@@ -179,14 +184,14 @@ private fun ProgramDetailsScreen(
     history: List<svenmeier.coxswain.gym.Workout>,
     raceCandidates: List<svenmeier.coxswain.gym.Workout>,
     onBack: () -> Unit,
-    onStart: () -> Unit,
-    onRace: () -> Unit,
+    onStart: (raceAgainstBest: Boolean) -> Unit,
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var raceAgainstBest by remember(program) { mutableStateOf(raceCandidates.isNotEmpty()) }
     val hasHistory = history.isNotEmpty()
     val type = WorkoutDefinition.typeOf(program)
     val segments = program.segments.get()
@@ -206,6 +211,7 @@ private fun ProgramDetailsScreen(
         }
     }
     val timed = type == svenmeier.coxswain.gym.SessionType.DURATION
+    val raceToggleDescription = stringResource(R.string.ui_race_your_best)
     val best = if (timed) history.maxByOrNull { it.distance.get() } else history.minByOrNull { it.duration.get() }
     val averageResult = if (history.isEmpty()) null else if (timed) history.map { it.distance.get() }.average().toInt() else history.map { it.duration.get() }.average().toInt()
 
@@ -246,13 +252,16 @@ private fun ProgramDetailsScreen(
                 Column {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Button(
-                        onClick = onStart,
+                        onClick = { onStart(raceAgainstBest) },
                         modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp).height(54.dp),
                         shape = RoundedCornerShape(27.dp)
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.ui_start_workout), fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(if (raceAgainstBest) R.string.ui_start_race else R.string.ui_start_workout),
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -328,7 +337,20 @@ private fun ProgramDetailsScreen(
 
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.ui_race_your_best), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            stringResource(R.string.ui_race_your_best),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Switch(
+                            checked = raceAgainstBest,
+                            onCheckedChange = { raceAgainstBest = it },
+                            enabled = raceCandidates.isNotEmpty(),
+                            modifier = Modifier.semantics { contentDescription = raceToggleDescription }
+                        )
+                    }
                     Text(
                         if (raceCandidates.isEmpty()) stringResource(R.string.ui_race_empty)
                         else stringResource(R.string.ui_program_race_description),
@@ -340,7 +362,6 @@ private fun ProgramDetailsScreen(
                             stringResource(R.string.ui_program_race_record, if (timed) "%,d m".format(Locale.getDefault(), reference.distance.get()) else formatProgramTime(reference.duration.get())),
                             fontWeight = FontWeight.SemiBold
                         )
-                        OutlinedButton(onClick = onRace, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_start_race)) }
                     }
                 }
             }

@@ -323,13 +323,10 @@ public class Gym {
     public List<Workout> getRaceCandidates(Program selectedProgram) {
         if (selectedProgram == null) return new ArrayList<>();
         Workout prototype = new Workout();
-        boolean interval = WorkoutDefinition.typeOf(selectedProgram) == SessionType.INTERVAL;
         String compatibility = WorkoutDefinition.compatibilityKey(selectedProgram);
         List<Workout> candidates = new ArrayList<>();
-        for (Workout candidate : repository.query(prototype, Where.any(
-                equal(prototype.status, WorkoutStatus.COMPLETED),
-                equal(prototype.status, WorkoutStatus.ENDED_EARLY))).list()) {
-            if (interval && candidate.status.get() != WorkoutStatus.COMPLETED) continue;
+        for (Workout candidate : repository.query(prototype,
+                equal(prototype.status, WorkoutStatus.COMPLETED)).list()) {
             if (compatibility.equals(WorkoutDefinition.compatibilityKey(candidate.programDefinition.get()))) {
                 candidates.add(candidate);
             }
@@ -432,6 +429,16 @@ public class Gym {
 
         this.pace = pace;
         this.program = program;
+        prepareSession(SessionType.RACE);
+    }
+
+    /** Start this selected program against its completed best-result benchmark. */
+    public void race(Program selectedProgram, Workout pace) {
+        if (selectedProgram == null || pace == null || pace.status.get() != WorkoutStatus.COMPLETED) {
+            throw new IllegalArgumentException("A race requires a selected program and a completed result");
+        }
+        this.pace = pace;
+        this.program = selectedProgram;
         prepareSession(SessionType.RACE);
     }
 
