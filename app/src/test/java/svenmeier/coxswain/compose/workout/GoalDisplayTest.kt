@@ -15,6 +15,7 @@ import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.view.ValueBinding
+import java.util.Locale
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -116,5 +117,17 @@ class GoalDisplayTest {
         gym.onMeasured(Measurement().apply { duration = 120; distance = 500 })
         assertEquals(500, getValueForBinding(ValueBinding.DISTANCE, gym))
         assertEquals(120, getValueForBinding(ValueBinding.DURATION, gym))
+    }
+
+    @Test fun liveMetricFormattingPreservesRealisticLargeValues() {
+        val context = RuntimeEnvironment.getApplication()
+        val tenThousand = "%,d".format(Locale.getDefault(), 10_000)
+        assertEquals(tenThousand, formatMetricValue(ValueBinding.DISTANCE, 10_000, context))
+        assertEquals(tenThousand, formatMetricValue(ValueBinding.STROKES, 10_000, context))
+        assertEquals(tenThousand, formatMetricValue(ValueBinding.ENERGY, 10_000, context))
+        assertEquals("120:00", formatMetricValue(ValueBinding.DURATION, 7_200, context))
+        assertEquals("+${tenThousand}", formatMetricValue(ValueBinding.DELTA_DISTANCE, 10_000, context))
+        assertEquals("-${tenThousand}", formatMetricValue(ValueBinding.DELTA_DISTANCE, -10_000, context))
+        assertEquals("-120:00", formatMetricValue(ValueBinding.DELTA_DURATION, -7_200, context))
     }
 }

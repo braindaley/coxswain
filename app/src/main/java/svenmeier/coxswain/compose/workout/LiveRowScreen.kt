@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.TextUnit
@@ -120,12 +121,15 @@ fun LiveRowScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = sessionTitle,
+                            modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFC8E3E9)
+                            color = Color(0xFFC8E3E9),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Spacer(Modifier.width(10.dp))
 
@@ -281,12 +285,8 @@ private fun MetricGrid(
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
             val rawValue = getValueForBinding(binding, gym)
-            val value = when {
-                binding == goalBinding && goal != null -> goal.variance.substringBefore(' ')
-                binding == ValueBinding.DISTANCE -> java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(rawValue)
-                else -> binding.format(context, rawValue, false)
-            }
-            value
+            if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ')
+            else formatMetricValue(binding, rawValue, context)
         }
         val availableWidthPx = with(density) { (cellWidth - 24.dp).roundToPx() }.coerceAtLeast(1)
         val availableHeightPx = with(density) { (cellHeight - 52.dp).roundToPx() }.coerceAtLeast(1)
@@ -761,6 +761,22 @@ private fun goalBinding(segment: Segment): ValueBinding? = when {
 private fun formatClock(seconds: Int): String {
     val value = seconds.coerceAtLeast(0)
     return "%d:%02d".format(Locale.getDefault(), value / 60, value % 60)
+}
+
+internal fun formatMetricValue(binding: ValueBinding, value: Int, context: Context): String = when (binding) {
+    ValueBinding.DISTANCE, ValueBinding.STROKES, ValueBinding.ENERGY ->
+        java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(value)
+    ValueBinding.DURATION -> formatClock(value)
+    ValueBinding.DELTA_DISTANCE -> {
+        val sign = when { value > 0 -> "+"; value < 0 -> "-"; else -> "" }
+        sign + java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(kotlin.math.abs(value.toLong()))
+    }
+    ValueBinding.DELTA_DURATION -> {
+        val sign = when { value > 0 -> "+"; value < 0 -> "-"; else -> "" }
+        val absolute = kotlin.math.abs(value.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        "$sign${formatClock(absolute)}"
+    }
+    else -> binding.format(context, value, false)
 }
 
 data class RestDisplay(val position: Int, val total: Int, val remaining: String, val next: String)
