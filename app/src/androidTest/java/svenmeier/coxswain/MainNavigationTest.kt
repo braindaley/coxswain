@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Rule
@@ -128,6 +129,8 @@ class MainNavigationTest {
 
         compose.onNodeWithText("Create program").performClick()
         compose.onNodeWithText("Intervals").performClick()
+        compose.onAllNodesWithText("Name this interval").get(0).performTextInput("Warm up")
+        compose.onNodeWithText("Warm up").assertIsDisplayed()
         compose.onNodeWithText("Add rest").performScrollTo().assertIsDisplayed().performClick()
         compose.onNodeWithText("01:00").assertIsDisplayed()
         compose.onNodeWithText("Save Program").performClick()

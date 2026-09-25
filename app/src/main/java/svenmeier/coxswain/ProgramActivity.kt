@@ -458,6 +458,9 @@ fun ProgramEditorScreen(
 
     var selectedGoal by remember { mutableStateOf(initialGoalKey) }
     var goalValue by remember { mutableIntStateOf(initialGoalVal) }
+    val segmentNames = remember { mutableStateMapOf<Segment, String>().apply {
+        initialSegments.forEach { segment -> segment.name.get()?.let { put(segment, it) } }
+    } }
 
     fun syncProgram() {
         draftProgram.name.set(programName.trim())
@@ -690,9 +693,10 @@ fun ProgramEditorScreen(
                                 segment = segment,
                                 readOnly = readOnly,
                                 allowName = selectedType == "Intervals",
+                                nameValue = segmentNames[segment] ?: segment.name.get().orEmpty(),
                                 onNameChange = { name ->
                                     segment.name.set(name)
-                                    segments[index] = segment
+                                    segmentNames[segment] = name
                                     isDirty = true
                                 },
                                 onTargetClick = {
@@ -805,6 +809,7 @@ fun SegmentCard(
     segment: Segment,
     readOnly: Boolean = false,
     allowName: Boolean = false,
+    nameValue: String = segment.name.get().orEmpty(),
     onNameChange: (String) -> Unit = {},
     onTargetClick: () -> Unit,
     onGoalClick: () -> Unit,
@@ -820,7 +825,7 @@ fun SegmentCard(
         Column {
             if (allowName && (!readOnly || !segment.name.get().isNullOrBlank())) {
                 OutlinedTextField(
-                    value = segment.name.get().orEmpty(),
+                    value = nameValue,
                     onValueChange = onNameChange,
                     enabled = !readOnly,
                     placeholder = { if (!readOnly) Text(stringResource(R.string.ui_interval_name_hint), fontSize = 13.sp) },
