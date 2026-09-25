@@ -31,6 +31,7 @@
     <string name="ui_target_value">Ziel %1$s</string>
     <string name="ui_row">RUDERN</string>
     <string name="ui_rest">PAUSE</string>
+    <string name="ui_rest_remaining">Verbleibende Pause</string>
     <string name="ui_workout_progress">TRAININGSFORTSCHRITT</string>
     <string name="ui_ready">Bereit</string>
     <string name="ui_you">DU</string>

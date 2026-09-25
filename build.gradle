@@ -14,4 +14,12 @@ allprojects {
         mavenCentral()
         maven { url 'https://jitpack.io' }
     }
+    configurations.configureEach {
+        resolutionStrategy {
+            dependencySubstitution {
+                substitute module('org.jetbrains.kotlin:kotlin-stdlib-jdk7') using module('org.jetbrains.kotlin:kotlin-stdlib:2.0.0')
+                substitute module('org.jetbrains.kotlin:kotlin-stdlib-jdk8') using module('org.jetbrains.kotlin:kotlin-stdlib:2.0.0')
+            }
+        }
+    }
 }

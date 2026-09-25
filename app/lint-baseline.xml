@@ -228,7 +228,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/view/MaterialLimitPickerDialog.java"
-            line="87"
+            line="99"
             column="21"/>
     </issue>
 
@@ -239,7 +239,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/view/MaterialTargetPickerDialog.java"
-            line="90"
+            line="99"
             column="21"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/view/MaterialLimitPickerDialog.java"
-            line="238"
+            line="250"
             column="25"/>
     </issue>
 
@@ -426,7 +426,7 @@
         errorLine2="                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/WorkoutResults.kt"
-            line="53"
+            line="55"
             column="76"/>
     </issue>
 
@@ -524,11 +524,11 @@
         errorLine2="~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
-            line="102"
+            line="107"
             column="1"/>
         <location
             file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
-            line="100"
+            line="105"
             column="1"
             message="Previous line indentation here"/>
     </issue>
@@ -540,11 +540,11 @@
         errorLine2="    ~">
         <location
             file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
-            line="133"
+            line="138"
             column="5"/>
         <location
             file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
-            line="131"
+            line="136"
             column="5"
             message="Previous line indentation here"/>
     </issue>
@@ -754,7 +754,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="153"
+            line="154"
             column="13"/>
     </issue>
 
@@ -765,7 +765,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="165"
+            line="166"
             column="13"/>
     </issue>
 
@@ -830,7 +830,7 @@
         errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$HOME/Documents/ChatGPT/Coxswain/work/coxswain-braindaley-latest/gradle/wrapper/gradle-wrapper.properties"
+            file="$HOME/StudioProjects/coxswain/gradle/wrapper/gradle-wrapper.properties"
             line="6"
             column="17"/>
     </issue>
@@ -842,7 +842,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="65"
+            line="68"
             column="27"/>
     </issue>
 
@@ -853,7 +853,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="67"
+            line="70"
             column="20"/>
     </issue>
 
@@ -864,7 +864,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="68"
+            line="71"
             column="20"/>
     </issue>
 
@@ -875,7 +875,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="70"
+            line="73"
             column="20"/>
     </issue>
 
@@ -886,7 +886,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="71"
+            line="74"
             column="20"/>
     </issue>
 
@@ -897,7 +897,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="74"
+            line="77"
             column="5"/>
     </issue>
 
@@ -908,7 +908,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="74"
+            line="77"
             column="31"/>
     </issue>
 
@@ -919,7 +919,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="79"
+            line="82"
             column="20"/>
     </issue>
 
@@ -930,7 +930,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="82"
+            line="85"
             column="20"/>
     </issue>
 
@@ -941,30 +941,8 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="83"
+            line="86"
             column="20"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of androidx.test.ext:junit than 1.2.1 is available: 1.3.0"
-        errorLine1="    androidTestImplementation &apos;androidx.test.ext:junit:1.2.1&apos;"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle"
-            line="93"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of androidx.test:runner than 1.6.2 is available: 1.7.0"
-        errorLine1="    androidTestImplementation &apos;androidx.test:runner:1.6.2&apos;"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle"
-            line="94"
-            column="31"/>
     </issue>
 
     <issue
@@ -974,7 +952,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="85"
+            line="88"
             column="20"/>
     </issue>
 
@@ -985,7 +963,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="86"
+            line="89"
             column="20"/>
     </issue>
 
@@ -996,7 +974,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="87"
+            line="90"
             column="20"/>
     </issue>
 
@@ -1007,7 +985,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="89"
+            line="92"
             column="24"/>
     </issue>
 
@@ -1018,7 +996,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="90"
+            line="93"
             column="24"/>
     </issue>
 
@@ -1031,6 +1009,28 @@
             file="src/test/java/svenmeier/coxswain/bluetooth/GattScannerTest.java"
             line="16"
             column="1"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier,"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/compose/ComposeUtils.kt"
+            line="47"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/compose/workout/LiveRowScreen.kt"
+            line="342"
+            column="5"/>
     </issue>
 
     <issue
@@ -1144,24 +1144,156 @@
     </issue>
 
     <issue
+        id="MissingQuantity"
+        message="For locale &quot;fr&quot; (French) the following quantity should also be defined: `many` (e.g. &quot;1000000 de jours&quot;)"
+        errorLine1="    &lt;plurals name=&quot;ui_health_syncing_history&quot;>"
+        errorLine2="    ^">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="79"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="MissingQuantity"
+        message="For locale &quot;fr&quot; (French) the following quantity should also be defined: `many` (e.g. &quot;1000000 de jours&quot;)"
+        errorLine1="    &lt;plurals name=&quot;ui_workouts_completed&quot;>"
+        errorLine2="    ^">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="100"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_choose_how_to_start&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_choose_how_to_start&quot;>Choose how you want to start.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_your_rowing_title&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_your_rowing_title&quot;>Your rowing&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="49"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_rowing_distance&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_rowing_distance&quot;>Rowing distance&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="55"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_last_week&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_last_week&quot;>last week&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_last_month&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_last_month&quot;>last month&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_last_year&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_last_year&quot;>last year&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_vs_prior_period&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_vs_prior_period&quot;>%1$s%% vs %2$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="59"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_home_rowing_ahead&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_home_rowing_ahead&quot;>%1$s. Keep your momentum going.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="60"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_home_rowing_encouragement&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_home_rowing_encouragement&quot;>Every row adds to your progress. Keep it going.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="61"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_rows&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;plurals name=&quot;ui_rows&quot;>"
+        errorLine2="             ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="69"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;ui_view_workout_details&quot; is not translated in &quot;de&quot; (German) or &quot;fr&quot; (French)"
+        errorLine1="    &lt;string name=&quot;ui_view_workout_details&quot;>View workout details&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="75"
+            column="13"/>
+    </issue>
+
+    <issue
         id="ExtraTranslation"
         message="&quot;googlefit_failed&quot; is translated here but not found in default locale"
         errorLine1="    &lt;string name=&quot;googlefit_failed&quot;>Google Fit ist nicht verfügbar&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="131"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ExtraTranslation"
-        message="&quot;googlefit_failed&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;googlefit_failed&quot;>Google Fit non disponible&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="131"
+            line="408"
             column="13"/>
     </issue>
 
@@ -1172,18 +1304,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="132"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ExtraTranslation"
-        message="&quot;googlefit_export&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;googlefit_export&quot;>Google Fit&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="132"
+            line="409"
             column="13"/>
     </issue>
 
@@ -1194,18 +1315,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="134"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ExtraTranslation"
-        message="&quot;googlefit_export_permissions_manual&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;googlefit_export_permissions_manual&quot;>Permission demandée, exporter SVP manuellement&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="134"
+            line="415"
             column="13"/>
     </issue>
 
@@ -1216,18 +1326,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="135"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ExtraTranslation"
-        message="&quot;googlefit_export_starting&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;googlefit_export_starting&quot;>Export vers Google Fit&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="135"
+            line="416"
             column="13"/>
     </issue>
 
@@ -1238,18 +1337,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="136"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ExtraTranslation"
-        message="&quot;googlefit_export_finished&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;googlefit_export_finished&quot;>Exporté vers Google Fit&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fr/strings.xml"
-            line="136"
+            line="417"
             column="13"/>
     </issue>
 
@@ -1260,7 +1348,62 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="137"
+            line="418"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;googlefit_failed&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;googlefit_failed&quot;>Google Fit non disponible&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="418"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;googlefit_export&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;googlefit_export&quot;>Google Fit&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="419"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;googlefit_export_permissions_manual&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;googlefit_export_permissions_manual&quot;>Permission demandée, exporter SVP manuellement&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="425"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;googlefit_export_starting&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;googlefit_export_starting&quot;>Export vers Google Fit&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="426"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;googlefit_export_finished&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;googlefit_export_finished&quot;>Exporté vers Google Fit&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fr/strings.xml"
+            line="427"
             column="13"/>
     </issue>
 
@@ -1271,7 +1414,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-fr/strings.xml"
-            line="137"
+            line="428"
             column="13"/>
     </issue>
 
@@ -1282,7 +1425,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="133"
+            line="410"
             column="13"/>
     </issue>
 
@@ -1293,8 +1436,19 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-fr/strings.xml"
-            line="133"
+            line="420"
             column="13"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;strokes&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;ui_chart_stroke_statistics&quot;>avg %1$s  •  min %2$s  •  max %3$s  •  %4$d strokes&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="205"
+            column="5"/>
     </issue>
 
     <issue
@@ -1304,7 +1458,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="42"
+            line="334"
             column="5"/>
     </issue>
 
@@ -1315,7 +1469,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="43"
+            line="335"
             column="5"/>
     </issue>
 
@@ -1326,7 +1480,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="46"
+            line="338"
             column="5"/>
     </issue>
 
@@ -1337,7 +1491,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="49"
+            line="341"
             column="5"/>
     </issue>
 
@@ -1348,7 +1502,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="55"
+            line="347"
             column="5"/>
     </issue>
 
@@ -1359,7 +1513,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="60"
+            line="352"
             column="5"/>
     </issue>
 
@@ -1370,7 +1524,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="69"
+            line="361"
             column="5"/>
     </issue>
 
@@ -1821,7 +1975,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/compose/CoxswainTheme.kt"
-            line="95"
+            line="124"
             column="25"/>
     </issue>
 
@@ -1850,11 +2004,22 @@
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 34"
+        errorLine1="            if (Build.VERSION.SDK_INT >= 33) {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/GymService.java"
+            line="109"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 34"
         errorLine1="            if (Build.VERSION.SDK_INT >= 34) {"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/GymService.java"
-            line="238"
+            line="244"
             column="17"/>
     </issue>
 
@@ -1865,8 +2030,19 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/GymService.java"
-            line="327"
+            line="333"
             column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 34"
+        errorLine1="            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/MainActivity.kt"
+            line="64"
+            column="30"/>
     </issue>
 
     <issue
@@ -1905,11 +2081,33 @@
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 34"
+        errorLine1="    if (Build.VERSION.SDK_INT >= 33) {"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/rower/wired/usb/UsbConnector.java"
+            line="67"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 34"
+        errorLine1="                    if (Build.VERSION.SDK_INT >= 33) {"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
+            line="98"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 34"
         errorLine1="        if (Build.VERSION.SDK_INT >= 33) {"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/rower/wired/UsbRower.java"
-            line="107"
+            line="112"
             column="13"/>
     </issue>
 
@@ -1920,7 +2118,7 @@
         errorLine2="            ~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/Gym.java"
-            line="60"
+            line="68"
             column="13"/>
     </issue>
 
@@ -2130,11 +2328,33 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.drawable.ic_nav_distance_24dp` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_nav_distance_24dp.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.drawable.ic_nav_performance_24dp` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
         <location
             file="src/main/res/drawable/ic_nav_performance_24dp.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_nav_workouts_24dp` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_nav_workouts_24dp.xml"
             line="1"
             column="1"/>
     </issue>
@@ -2258,23 +2478,331 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.string.action_mock` appears to be unused"
-        errorLine1="    &lt;string name=&quot;action_mock&quot;>Mock&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        message="The resource `R.string.ui_delete_workout` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_delete_workout&quot;>Delete workout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="4"
+            line="11"
             column="13"/>
     </issue>
 
     <issue
         id="UnusedResources"
-        message="The resource `R.string.action_help` appears to be unused"
-        errorLine1="    &lt;string name=&quot;action_help&quot;>Help&lt;/string>"
+        message="The resource `R.string.ui_choose_metric` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_choose_metric&quot;>Choose metric&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_metric_accessibility` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_metric_accessibility&quot;>%1$s metric, %2$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_goal_metric_accessibility` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_goal_metric_accessibility&quot;>%1$s goal variance %2$s, current %3$s, target %4$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="25"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_change_metric_accessibility` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_change_metric_accessibility&quot;>Change %1$s metric&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="26"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_edit_display` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_edit_display&quot;>Edit display&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_connected_status` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_connected_status&quot;>● %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="31"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_disconnected_status` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_disconnected_status&quot;>● Disconnected&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_target_value` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_target_value&quot;>Target %1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_ready` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_ready&quot;>Ready&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_welcome_back` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_welcome_back&quot;>Welcome back&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_free_row_subtitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_free_row_subtitle&quot;>Start rowing without a target&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="44"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_quick_start_heading` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_quick_start_heading&quot;>QUICK START&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="45"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_quick_start_subtitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_quick_start_subtitle&quot;>Choose duration, distance, or intervals&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="47"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_your_rowing` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_your_rowing&quot;>YOUR ROWING&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="48"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_activity` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_activity&quot;>Activity&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="5"
+            line="64"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_prior_period` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_prior_period&quot;>%1$s%% vs prior period&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_distance_time_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_distance_time_summary&quot;>%1$,d m  •  %2$d:%3$02d&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="77"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_workout_history` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_workout_history&quot;>WORKOUT HISTORY&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="210"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_interval_position` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_interval_position&quot;>Interval %1$d of %2$d&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="276"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_rest_accessibility` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_rest_accessibility&quot;>Rest, segment %1$d of %2$d, %3$s remaining, %4$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="277"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_segment_of` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_segment_of&quot;>SEGMENT %1$d OF %2$d&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="278"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_final_segment` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_final_segment&quot;>Final segment&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="279"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_next_row` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_next_row&quot;>Next: %1$s row&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="280"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.plurals.ui_workout_progress_accessibility` appears to be unused"
+        errorLine1="    &lt;plurals name=&quot;ui_workout_progress_accessibility&quot;>"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="281"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_race_ahead` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_race_ahead&quot;>+%1$d m ahead&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="285"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ui_race_behind` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ui_race_behind&quot;>%1$d m behind&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="286"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.plurals.ui_race_comparison_ahead` appears to be unused"
+        errorLine1="    &lt;plurals name=&quot;ui_race_comparison_ahead&quot;>"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="287"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.plurals.ui_race_comparison_behind` appears to be unused"
+        errorLine1="    &lt;plurals name=&quot;ui_race_comparison_behind&quot;>"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="291"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.action_mock` appears to be unused"
+        errorLine1="    &lt;string name=&quot;action_mock&quot;>Mock&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="296"
             column="13"/>
     </issue>
 
@@ -2285,7 +2813,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="6"
+            line="298"
             column="13"/>
     </issue>
 
@@ -2296,7 +2824,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="9"
+            line="301"
             column="13"/>
     </issue>
 
@@ -2307,7 +2835,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="32"
+            line="324"
             column="13"/>
     </issue>
 
@@ -2318,7 +2846,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="59"
+            line="351"
             column="13"/>
     </issue>
 
@@ -2329,7 +2857,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="93"
+            line="385"
             column="13"/>
     </issue>
 
@@ -2340,7 +2868,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="94"
+            line="386"
             column="13"/>
     </issue>
 
@@ -2351,7 +2879,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="108"
+            line="400"
             column="13"/>
     </issue>
 
@@ -2362,7 +2890,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="131"
+            line="408"
             column="13"/>
     </issue>
 
@@ -2373,7 +2901,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="132"
+            line="409"
             column="13"/>
     </issue>
 
@@ -2384,7 +2912,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="134"
+            line="415"
             column="13"/>
     </issue>
 
@@ -2395,7 +2923,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="135"
+            line="416"
             column="13"/>
     </issue>
 
@@ -2406,7 +2934,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="136"
+            line="417"
             column="13"/>
     </issue>
 
@@ -2417,7 +2945,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="137"
+            line="418"
             column="13"/>
     </issue>
 
@@ -2428,7 +2956,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="287"
+            line="579"
             column="13"/>
     </issue>
 
@@ -2439,7 +2967,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="364"
+            line="656"
             column="13"/>
     </issue>
 
@@ -2762,24 +3290,13 @@
     </issue>
 
     <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="                Row(Modifier.fillMaxWidth().clickable { activeMetrics[editingIndex] = metric; editingIndex = -1; context.getSharedPreferences(&quot;live_row&quot;, 0).edit().putString(&quot;metrics&quot;, activeMetrics.joinToString(&quot;,&quot;) { it.name }).apply() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {"
-        errorLine2="                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/svenmeier/coxswain/compose/workout/LiveRowScreen.kt"
-            line="63"
-            column="114"/>
-    </issue>
-
-    <issue
         id="KtxExtensionAvailable"
         message="Add suffix `-ktx` to enable the Kotlin extensions for this library"
         errorLine1="    implementation &quot;androidx.preference:preference:1.2.1&quot;"
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle"
-            line="69"
+            line="72"
             column="20"/>
     </issue>
 
@@ -2944,7 +3461,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/svenmeier/coxswain/view/MaterialTargetPickerDialog.java"
-            line="227"
+            line="236"
             column="31"/>
     </issue>
 

@@ -31,6 +31,7 @@
     <string name="ui_target_value">Cible %1$s</string>
     <string name="ui_row">RAME</string>
     <string name="ui_rest">REPOS</string>
+    <string name="ui_rest_remaining">Repos restant</string>
     <string name="ui_workout_progress">PROGRESSION</string>
     <string name="ui_ready">Prêt</string>
     <string name="ui_you">VOUS</string>
