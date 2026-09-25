@@ -127,7 +127,14 @@ class MainNavigationTest {
         compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
 
         compose.onNodeWithText("Create program").performClick()
-        compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Intervals").performClick()
+        compose.onNodeWithText("Add rest").performScrollTo().assertIsDisplayed().performClick()
+        compose.onNodeWithText("01:00").assertIsDisplayed()
+        compose.onNodeWithText("Save Program").performClick()
+        compose.waitUntil(5_000) {
+            runCatching { compose.onAllNodesWithText("MY PROGRAMS").fetchSemanticsNodes().any { it.layoutInfo.isPlaced } }.getOrDefault(false)
+        }
+        compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
     }
 
     @Test

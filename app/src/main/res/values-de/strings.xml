@@ -164,6 +164,7 @@
     <string name="ui_minutes">Minuten</string>
     <string name="ui_delete_segment">Abschnitt löschen</string>
     <string name="ui_add_segment">Abschnitt hinzufügen</string>
+    <string name="ui_add_rest">Pause hinzufügen</string>
     <string name="ui_quick_workout">Schnelles Training</string>
     <string name="ui_strokes">Schläge</string>
     <string name="ui_energy">Energie</string>

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
@@ -718,20 +719,39 @@ fun ProgramEditorScreen(
                         }
 
                         if (!readOnly) {
-                            OutlinedButton(
-                                onClick = {
-                                    val newSeg = Segment(Difficulty.EASY).apply { setDuration(300) }
-                                    draftProgram.addSegment(newSeg)
-                                    segments.add(newSeg)
-                                    isDirty = true
-                                },
-                                modifier = Modifier.fillMaxWidth().height(48.dp),
-                                shape = RoundedCornerShape(24.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.ui_add_segment), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = {
+                                        val newSeg = Segment(Difficulty.EASY).apply { setDuration(300) }
+                                        draftProgram.addSegment(newSeg)
+                                        segments.add(newSeg)
+                                        isDirty = true
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(24.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(stringResource(R.string.ui_add_segment), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        val rest = Segment(Difficulty.REST).apply { setDuration(60) }
+                                        draftProgram.addSegment(rest)
+                                        segments.add(rest)
+                                        isDirty = true
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(24.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(stringResource(R.string.ui_add_rest), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
                             }
                         }
                     }
