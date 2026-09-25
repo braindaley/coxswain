@@ -2,6 +2,7 @@ package svenmeier.coxswain.compose
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,9 +25,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -163,22 +164,11 @@ private fun HomeHeader(
 
 @Composable
 private fun CoxswainMark() {
-    Canvas(Modifier.size(width = 30.dp, height = 30.dp)) {
-        val line = Stroke(width = size.width * .065f, cap = StrokeCap.Round)
-        val white = Color.White
-        val hull = Path().apply {
-            moveTo(size.width * .08f, size.height * .72f)
-            quadraticTo(size.width * .50f, size.height * .91f, size.width * .92f, size.height * .72f)
-            quadraticTo(size.width * .50f, size.height * .80f, size.width * .08f, size.height * .72f)
-        }
-        drawPath(hull, white, style = line)
-        drawCircle(white, radius = size.width * .07f, center = Offset(size.width * .50f, size.height * .24f))
-        drawLine(white, Offset(size.width * .50f, size.height * .34f), Offset(size.width * .50f, size.height * .64f), line.width, cap = StrokeCap.Round)
-        drawLine(white, Offset(size.width * .50f, size.height * .43f), Offset(size.width * .28f, size.height * .36f), line.width, cap = StrokeCap.Round)
-        drawLine(white, Offset(size.width * .50f, size.height * .43f), Offset(size.width * .72f, size.height * .36f), line.width, cap = StrokeCap.Round)
-        drawLine(white, Offset(size.width * .28f, size.height * .36f), Offset(size.width * .08f, size.height * .14f), line.width, cap = StrokeCap.Round)
-        drawLine(white, Offset(size.width * .72f, size.height * .36f), Offset(size.width * .92f, size.height * .14f), line.width, cap = StrokeCap.Round)
-    }
+    Image(
+        painter = painterResource(R.mipmap.ic_launcher),
+        contentDescription = null,
+        modifier = Modifier.size(30.dp)
+    )
 }
 
 @Composable
