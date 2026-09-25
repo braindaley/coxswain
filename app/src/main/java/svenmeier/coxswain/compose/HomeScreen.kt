@@ -2,6 +2,7 @@ package svenmeier.coxswain.compose
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -93,15 +96,15 @@ private fun HomeHeader(
             .background(HomeHeroColor).padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 22.dp)
     ) {
         Row(
-            Modifier.fillMaxWidth().height(48.dp),
+            Modifier.fillMaxWidth().height(56.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                stringResource(R.string.app_name).uppercase(Locale.getDefault()),
-                color = Color.White,
-                fontSize = 18.sp,
-                letterSpacing = 4.sp
+            Image(
+                painter = painterResource(R.drawable.coxswain_logo_white),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier.width(128.dp).height(53.dp),
+                contentScale = ContentScale.Fit
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val connectDescription = stringResource(R.string.ui_connect_rower)
