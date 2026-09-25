@@ -22,6 +22,7 @@ public final class WorkoutDefinition {
             JSONArray segments = new JSONArray();
             for (Segment segment : program.getSegments()) {
                 JSONObject value = new JSONObject();
+                value.put("name", segment.name.get() == null ? "" : segment.name.get());
                 value.put("difficulty", segment.difficulty.get().name());
                 value.put("distance", segment.distance.get());
                 value.put("duration", segment.duration.get());
@@ -47,18 +48,20 @@ public final class WorkoutDefinition {
      */
     public static String compatibilityKey(Program program) {
         if (program == null) return null;
-        try {
-            JSONObject frozen = new JSONObject(freeze(program));
-            return frozen.getJSONArray("segments").toString();
-        } catch (JSONException impossible) {
-            throw new IllegalStateException(impossible);
-        }
+        return compatibilityKey(freeze(program));
     }
 
     public static String compatibilityKey(String definition) {
         if (definition == null || definition.isEmpty()) return null;
         try {
-            return new JSONObject(definition).getJSONArray("segments").toString();
+            JSONArray source = new JSONObject(definition).getJSONArray("segments");
+            JSONArray compatible = new JSONArray();
+            for (int index = 0; index < source.length(); index++) {
+                JSONObject segment = new JSONObject(source.getJSONObject(index).toString());
+                segment.remove("name");
+                compatible.put(segment);
+            }
+            return compatible.toString();
         } catch (JSONException invalidDefinition) {
             return null;
         }
@@ -77,6 +80,7 @@ public final class WorkoutDefinition {
             for (int index = 0; index < segments.length(); index++) {
                 JSONObject value = segments.getJSONObject(index);
                 Segment segment = new Segment();
+                segment.name.set(value.optString("name", ""));
                 segment.difficulty.set(Difficulty.valueOf(value.optString("difficulty", Difficulty.EASY.name())));
                 segment.distance.set(value.optInt("distance"));
                 segment.duration.set(value.optInt("duration"));

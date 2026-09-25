@@ -28,6 +28,7 @@ public class Program2JsonTest {
 		Program program = new Program("Test");
 
 		Segment segment1 = new Segment(Difficulty.HARD);
+		segment1.name.set("Sprint 1");
 		segment1.setDuration(60);
 		program.addSegment(segment1);
 
@@ -37,6 +38,6 @@ public class Program2JsonTest {
 
 		String actual = writer.toString().replaceAll("[\\s]", "");
 
-		assertEquals("{\"name\":\"Test\",\"segments\":[{\"difficulty\":\"EASY\",\"distance\":1000},{\"difficulty\":\"HARD\",\"duration\":60}]}", actual);
+		assertEquals("{\"name\":\"Test\",\"segments\":[{\"difficulty\":\"EASY\",\"distance\":1000},{\"difficulty\":\"HARD\",\"name\":\"Sprint1\",\"duration\":60}]}", actual);
 	}
 }

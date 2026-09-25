@@ -22,6 +22,8 @@ import propoid.core.Propoid;
  */
 public class Segment extends Propoid {
 
+    public final Property<String> name = property();
+
     public final Property<Difficulty> difficulty = property();
 
     public final Property<Integer> distance = property();
@@ -41,6 +43,7 @@ public class Segment extends Propoid {
     public final Property<Integer> power = property();
 
     public Segment() {
+        name.set("");
         difficulty.set(Difficulty.EASY);
 
         distance.set(1000);
@@ -180,6 +183,7 @@ public class Segment extends Propoid {
     public Segment duplicate() {
         Segment segment = new Segment();
 
+        segment.name.set(this.name.get());
         segment.difficulty.set(this.difficulty.get());
 
         segment.distance.set(this.distance.get());

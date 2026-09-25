@@ -294,7 +294,8 @@ private fun ProgramDetailsScreen(
                         segments.forEachIndexed { index, segment ->
                             Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    stringResource(if (segment.difficulty.get() == Difficulty.REST) R.string.ui_rest else R.string.ui_row),
+                                    segment.name.get()?.takeIf { it.isNotBlank() }
+                                        ?: stringResource(if (segment.difficulty.get() == Difficulty.REST) R.string.ui_rest else R.string.ui_row),
                                     modifier = Modifier.weight(1f),
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -688,6 +689,12 @@ fun ProgramEditorScreen(
                             SegmentCard(
                                 segment = segment,
                                 readOnly = readOnly,
+                                allowName = selectedType == "Intervals",
+                                onNameChange = { name ->
+                                    segment.name.set(name)
+                                    segments[index] = segment
+                                    isDirty = true
+                                },
                                 onTargetClick = {
                                     if (!readOnly) {
                                         isDirty = true
@@ -797,6 +804,8 @@ fun ProgramEditorScreen(
 fun SegmentCard(
     segment: Segment,
     readOnly: Boolean = false,
+    allowName: Boolean = false,
+    onNameChange: (String) -> Unit = {},
     onTargetClick: () -> Unit,
     onGoalClick: () -> Unit,
     onDelete: () -> Unit,
@@ -808,12 +817,25 @@ fun SegmentCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column {
+            if (allowName && (!readOnly || !segment.name.get().isNullOrBlank())) {
+                OutlinedTextField(
+                    value = segment.name.get().orEmpty(),
+                    onValueChange = onNameChange,
+                    enabled = !readOnly,
+                    placeholder = { if (!readOnly) Text(stringResource(R.string.ui_interval_name_hint), fontSize = 13.sp) },
+                    modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 6.dp).height(52.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             // 1. Intensity Accent Strip
             Box(
                 modifier = Modifier
@@ -912,6 +934,7 @@ fun SegmentCard(
             }
         }
     }
+}
 }
 
 fun speedToPaceSeconds(speedCmPerSec: Int): Int =

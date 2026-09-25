@@ -106,7 +106,7 @@ public class GymSchemaFixtureTest {
         repository.query(new Snapshot());
 
         assertColumns("Program", "_id", "_type", "name", "segments");
-        assertColumns("Segment", "_id", "_type", "difficulty", "distance", "duration",
+        assertColumns("Segment", "_id", "_type", "name", "difficulty", "distance", "duration",
                 "strokes", "energy", "speed", "strokeRate", "pulse", "power");
         assertColumns("Workout", "_id", "_type", "program", "location", "start", "duration",
                 "distance", "strokes", "energy", "evaluate", "sessionType", "programName",

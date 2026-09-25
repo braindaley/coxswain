@@ -51,6 +51,9 @@ public class Program2Json {
 		writer.beginObject();
 
 		writer.name("difficulty").value(segment.difficulty.get().name());
+		if (segment.name.get() != null && segment.name.get().trim().isEmpty() == false) {
+			writer.name("name").value(segment.name.get());
+		}
 
 		target("distance", segment.distance);
 		target("duration", segment.duration);

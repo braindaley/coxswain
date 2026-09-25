@@ -1008,6 +1008,11 @@ public class Gym {
         public String describe() {
             StringBuilder description = new StringBuilder();
 
+            String name = segment.name.get();
+            if (name != null && name.trim().isEmpty() == false) {
+                description.append(name.trim());
+                description.append(": ");
+            }
             description.append(describeTarget());
 
             String limit = describeLimit();

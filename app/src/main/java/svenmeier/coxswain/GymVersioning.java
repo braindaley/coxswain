@@ -20,11 +20,23 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
-	static final int DATABASE_VERSION = 2;
+	static final int DATABASE_VERSION = 3;
 
 	GymVersioning() {
 		add(new WrongIndices());
 		add(new WorkoutIdentity());
+		add(new SegmentNames());
+	}
+
+	private static class SegmentNames implements Upgrade {
+		@Override
+		public void apply(SQLiteDatabase database) {
+			if (!Column.exists("Segment", database)) return;
+			for (Column column : Column.get("Segment", database)) {
+				if (column.name.equals("name")) return;
+			}
+			database.execSQL("ALTER TABLE Segment ADD COLUMN name TEXT");
+		}
 	}
 
 	private static class WorkoutIdentity implements Upgrade {

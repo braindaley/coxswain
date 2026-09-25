@@ -25,7 +25,7 @@ public class Json2ProgramTest {
 	@Test
 	public void test() throws IOException {
 
-		Reader reader = new StringReader("{\"name\":\"Test\",\"segments\":[{\"difficulty\":\"EASY\",\"distance\":1000},{\"difficulty\":\"HARD\",\"duration\":60}]}");
+		Reader reader = new StringReader("{\"name\":\"Test\",\"segments\":[{\"difficulty\":\"EASY\",\"distance\":1000},{\"difficulty\":\"HARD\",\"name\":\"Sprint 1\",\"duration\":60}]}");
 
 		Program program = new Json2Program(reader).program();
 
@@ -38,6 +38,7 @@ public class Json2ProgramTest {
 
 		Segment segment1 = program.segments.get().get(1);
 		assertEquals(Difficulty.HARD, segment1.difficulty.get());
+		assertEquals("Sprint 1", segment1.name.get());
 		assertEquals(Integer.valueOf(60), segment1.duration.get());
 	}
 }

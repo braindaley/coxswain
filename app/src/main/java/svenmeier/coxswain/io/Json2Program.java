@@ -60,6 +60,9 @@ public class Json2Program {
 
 		while (reader.hasNext()) {
 			switch (reader.nextName()) {
+				case "name":
+					segment.name.set(reader.nextString());
+					break;
 				case "distance":
 					segment.setDistance(reader.nextInt());
 					break;

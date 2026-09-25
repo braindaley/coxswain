@@ -450,7 +450,8 @@ fun TargetProgressBar(gym: Gym, rest: RestDisplay? = null) {
 
     val currentIndex = segments.indexOfFirst { it === segment }.coerceAtLeast(0)
     val currentOrdinal = segments.take(currentIndex + 1).count { it.difficulty.get() != Difficulty.REST }.coerceAtLeast(1)
-    val currentTitle = if (isRest) "Rest $currentOrdinal" else "Row $currentOrdinal"
+    val currentTitle = segment.name.get()?.takeIf { it.isNotBlank() }
+        ?: if (isRest) "Rest $currentOrdinal" else "Row $currentOrdinal"
     val intervalPrimary = "$currentTitle · $primaryText"
     val intervalPercent = when {
         segment.duration.get() > 0 -> "${formatClock(m.duration - startM.duration)} / ${formatClock(segment.duration.get())}"
@@ -554,7 +555,6 @@ private fun IntervalSequence(segments: List<Segment>, active: Segment, completio
 
 @Composable
 private fun RestCountdownCard(rest: RestDisplay, modifier: Modifier = Modifier) {
-    val nextTarget = rest.next.removePrefix("Next: ").removeSuffix(" row")
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
@@ -565,6 +565,12 @@ private fun RestCountdownCard(rest: RestDisplay, modifier: Modifier = Modifier) 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Text(
+                text = rest.title,
+                color = Color(0xFFCAD4E1), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = rest.remaining,
                 fontSize = 92.sp,
@@ -580,7 +586,7 @@ private fun RestCountdownCard(rest: RestDisplay, modifier: Modifier = Modifier) 
             )
             Spacer(Modifier.height(24.dp))
             Text(
-                text = if (rest.next.startsWith("Next:")) "Next · Row $nextTarget" else rest.next,
+                text = rest.next.replaceFirst("Next:", "Next ·"),
                 color = Color(0xFF83D7FF), fontSize = 14.sp
             )
         }
@@ -779,7 +785,7 @@ internal fun formatMetricValue(binding: ValueBinding, value: Int, context: Conte
     else -> binding.format(context, value, false)
 }
 
-data class RestDisplay(val position: Int, val total: Int, val remaining: String, val next: String)
+data class RestDisplay(val position: Int, val total: Int, val remaining: String, val next: String, val title: String)
 
 internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: Float): RestDisplay {
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
@@ -788,7 +794,14 @@ internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: 
         "%d:%02d".format(seconds / 60, seconds % 60)
     } else "${((active?.getTarget() ?: 0) * (1f - completion)).toInt().coerceAtLeast(0)} m"
     val next = segments.getOrNull(index + 1)
-    return RestDisplay(index + 1, segments.size, remaining, if (next == null) "Final segment" else "Next: ${segmentTarget(next)} row")
+    val ordinal = segments.take(index + 1).count { it.difficulty.get() != Difficulty.REST }.coerceAtLeast(1)
+    val activeTitle = active?.name?.get()?.takeIf { it.isNotBlank() } ?: "Rest $ordinal"
+    val nextOrdinal = segments.take(index + 2).count { it.difficulty.get() != Difficulty.REST }.coerceAtLeast(1)
+    val nextTitle = next?.name?.get()?.takeIf { it.isNotBlank() } ?: "Row $nextOrdinal"
+    val nextDescription = if (next == null) "Final segment" else if (next.name.get().isNullOrBlank()) {
+        "Next: ${segmentTarget(next)} row"
+    } else "Next: $nextTitle · ${segmentTarget(next)}"
+    return RestDisplay(index + 1, segments.size, remaining, nextDescription, activeTitle)
 }
 
 data class GoalDisplay(val variance: String, val target: String, val state: Int)

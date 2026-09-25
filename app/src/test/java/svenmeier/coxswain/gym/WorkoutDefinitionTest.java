@@ -16,7 +16,9 @@ public class WorkoutDefinitionTest {
         Program original = new Program("Intervals");
         original.getSegments().clear();
         original.addSegment(new Segment(Difficulty.HARD).setDuration(300).setPower(190));
+        original.getSegment(0).name.set("Sprint 1");
         original.addSegment(new Segment(Difficulty.REST).setDuration(60));
+        original.getSegment(1).name.set("Recovery");
 
         Workout workout = original.newWorkout();
         original.name.set("Changed");
@@ -27,6 +29,8 @@ public class WorkoutDefinitionTest {
         assertEquals("Intervals", frozen.name.get());
         assertEquals(300, frozen.getSegment(0).duration.get().intValue());
         assertEquals(190, frozen.getSegment(0).power.get().intValue());
+        assertEquals("Sprint 1", frozen.getSegment(0).name.get());
+        assertEquals("Recovery", frozen.getSegment(1).name.get());
         assertEquals(SessionType.INTERVAL, workout.sessionType.get());
         assertEquals(PerformanceGoal.POWER, workout.goalType.get());
         assertEquals(190, workout.goalTarget.get().intValue());
@@ -38,6 +42,7 @@ public class WorkoutDefinitionTest {
         original.getSegment(0).setStrokeRate(24);
         Program renamed = Program.meters("Renamed copy", 2000, Difficulty.MEDIUM);
         renamed.getSegment(0).setStrokeRate(24);
+        renamed.getSegment(0).name.set("Race test");
         Program changedGoal = Program.meters("Original", 2000, Difficulty.MEDIUM);
         changedGoal.getSegment(0).setStrokeRate(26);
 
