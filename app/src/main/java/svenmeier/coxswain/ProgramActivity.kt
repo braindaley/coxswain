@@ -402,8 +402,6 @@ fun ProgramEditorScreen(
     onShowTargetDialog: (Segment) -> Unit,
     onShowLimitDialog: (Segment) -> Unit
 ) {
-    @Suppress("UNUSED_VARIABLE") val trigger = refreshTrigger
-
     val typeOptions = listOf(
         "Duration" to stringResource(R.string.ui_duration),
         "Distance" to stringResource(R.string.ui_distance),
@@ -693,6 +691,7 @@ fun ProgramEditorScreen(
                                 segment = segment,
                                 readOnly = readOnly,
                                 allowName = selectedType == "Intervals",
+                                refreshKey = refreshTrigger,
                                 nameValue = segmentNames[segment] ?: segment.name.get().orEmpty(),
                                 onNameChange = { name ->
                                     segment.name.set(name)
@@ -809,6 +808,7 @@ fun SegmentCard(
     segment: Segment,
     readOnly: Boolean = false,
     allowName: Boolean = false,
+    refreshKey: Int = 0,
     nameValue: String = segment.name.get().orEmpty(),
     onNameChange: (String) -> Unit = {},
     onTargetClick: () -> Unit,
@@ -816,6 +816,7 @@ fun SegmentCard(
     onDelete: () -> Unit,
     onCycleDifficulty: () -> Unit
 ) {
+    @Suppress("UNUSED_VARIABLE") val targetRefreshKey = refreshKey
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
