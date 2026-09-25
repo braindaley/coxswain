@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -97,7 +98,10 @@ private fun HomeHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.app_name).uppercase(Locale.getDefault()), color = Color.White, fontSize = 18.sp, letterSpacing = 4.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                CoxswainMark()
+                Text(stringResource(R.string.app_name).uppercase(Locale.getDefault()), color = Color.White, fontSize = 18.sp, letterSpacing = 4.sp)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val connectDescription = stringResource(R.string.ui_connect_rower)
                 val connectedDescription = stringResource(R.string.ui_connected)
@@ -154,6 +158,26 @@ private fun HomeHeader(
                 Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(15.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun CoxswainMark() {
+    Canvas(Modifier.size(width = 30.dp, height = 30.dp)) {
+        val line = Stroke(width = size.width * .065f, cap = StrokeCap.Round)
+        val white = Color.White
+        val hull = Path().apply {
+            moveTo(size.width * .08f, size.height * .72f)
+            quadraticTo(size.width * .50f, size.height * .91f, size.width * .92f, size.height * .72f)
+            quadraticTo(size.width * .50f, size.height * .80f, size.width * .08f, size.height * .72f)
+        }
+        drawPath(hull, white, style = line)
+        drawCircle(white, radius = size.width * .07f, center = Offset(size.width * .50f, size.height * .24f))
+        drawLine(white, Offset(size.width * .50f, size.height * .34f), Offset(size.width * .50f, size.height * .64f), line.width, cap = StrokeCap.Round)
+        drawLine(white, Offset(size.width * .50f, size.height * .43f), Offset(size.width * .28f, size.height * .36f), line.width, cap = StrokeCap.Round)
+        drawLine(white, Offset(size.width * .50f, size.height * .43f), Offset(size.width * .72f, size.height * .36f), line.width, cap = StrokeCap.Round)
+        drawLine(white, Offset(size.width * .28f, size.height * .36f), Offset(size.width * .08f, size.height * .14f), line.width, cap = StrokeCap.Round)
+        drawLine(white, Offset(size.width * .72f, size.height * .36f), Offset(size.width * .92f, size.height * .14f), line.width, cap = StrokeCap.Round)
     }
 }
 
