@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -147,30 +148,23 @@ fun LiveRowScreen(
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         val (statusText, statusColor) = when {
-                            gym.connected -> "● Connected" to Color(0xFF6DE0A8)
-                            gym.connecting -> "● Connecting" to Color(0xFFFFD166)
-                            else -> "● Disconnected" to Color(0xFFFF8A80)
+                            gym.connected -> "Connected" to Color(0xFF6DE0A8)
+                            gym.connecting -> "Connecting" to Color(0xFFFFD166)
+                            else -> "Disconnected" to Color(0xFFFF8A80)
                         }
-                        Surface(
-                            color = statusColor.copy(alpha = 0.18f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = statusText,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
-                                fontSize = 10.sp,
-                                color = statusColor,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
-                            )
-                        }
+                        Box(
+                            Modifier.size(9.dp).background(statusColor, CircleShape)
+                                .semantics { contentDescription = statusText }
+                        )
 
                         if (rest == null) {
                             OutlinedButton(
                                 onClick = { isEditingDisplay = !isEditingDisplay; selectedSlotIndex = -1 },
                                 shape = RoundedCornerShape(20.dp),
                                 border = BorderStroke(1.dp, Color(0xFF60758A)),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDCEBFF)),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color(0xFF123F51), contentColor = Color(0xFFDCEBFF)
+                                ),
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
                             ) {
                                 Icon(
@@ -180,8 +174,8 @@ fun LiveRowScreen(
                                 )
                                 Spacer(Modifier.width(5.dp))
                                 Text(
-                                    text = if (isEditingDisplay) "Done" else "Edit display",
-                                    fontSize = 12.sp,
+                                    text = if (isEditingDisplay) "Done" else "Edit",
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1
                                 )
