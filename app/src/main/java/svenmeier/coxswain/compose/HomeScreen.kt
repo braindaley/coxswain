@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -294,27 +293,30 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
                 Text(compareLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
             Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth().height(190.dp)) {
+            val axisHeight = if (period == "This month") 38.dp else 22.dp
+            Row(Modifier.fillMaxWidth().height(190.dp + axisHeight - 22.dp)) {
                 Column(
-                    Modifier.width(45.dp).fillMaxHeight().padding(top = 4.dp, bottom = 22.dp),
+                    Modifier.width(45.dp).fillMaxHeight().padding(top = 4.dp, bottom = axisHeight),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(formatAxisDistance(chartMax), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text(formatAxisDistance(chartMax / 2), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text("0", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
-                BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
-                    val chartWidth = if (period == "This month") maxOf(maxWidth, (bucketCount * 24).dp) else maxWidth
-                    Column(Modifier.horizontalScroll(rememberScrollState()).width(chartWidth)) {
+                Column(Modifier.weight(1f).fillMaxHeight()) {
                         DistanceChart(bucketMeters, chartMax, Modifier.fillMaxWidth().weight(1f))
-                        Row(Modifier.fillMaxWidth().height(22.dp)) {
-                            labels.forEach { label ->
-                                Text(label, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = if (period == "This year") 9.sp else 10.sp,
-                                    maxLines = 1, softWrap = false)
+                        Row(Modifier.fillMaxWidth().height(axisHeight)) {
+                            labels.forEachIndexed { index, label ->
+                                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment =
+                                    if (period == "This month" && index % 2 == 1) Alignment.BottomCenter else Alignment.TopCenter) {
+                                    Text(label, modifier = Modifier.requiredWidth(if (period == "This month") 20.dp else 24.dp),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = if (period == "This year") 9.sp else 10.sp,
+                                        maxLines = 1, softWrap = false)
+                                }
                             }
                         }
-                    }
                 }
             }
 
