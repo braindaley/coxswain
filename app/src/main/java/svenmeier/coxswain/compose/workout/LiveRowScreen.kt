@@ -490,6 +490,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         rest != null -> rest.next.substringBefore(" · ")
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
         active == null -> "Find your rhythm"
+        active.duration.get() > 0 && segments.size == 1 -> "${((gym.progress?.completion() ?: 0f) * 100).toInt().coerceIn(0, 100)}% complete"
         active.duration.get() > 0 -> "${formatClock(getValueForBinding(ValueBinding.DURATION, gym))} remaining"
         active.distance.get() > 0 && segments.size == 1 -> "${((gym.progress?.completion() ?: 0f) * 100).toInt().coerceIn(0, 100)}% complete"
         active.distance.get() > 0 -> "${formatMetricValue(ValueBinding.DISTANCE, getValueForBinding(ValueBinding.DISTANCE, gym), LocalContext.current)} m remaining"
