@@ -235,6 +235,7 @@ fun LiveRowScreen(
                 MetricGrid(
                     metrics = activeMetrics,
                     gym = gym,
+                    refreshTick = refreshTick,
                     goalBinding = goalBinding,
                     goal = goal,
                     isEditing = isEditingDisplay,
@@ -247,7 +248,7 @@ fun LiveRowScreen(
             if (gym.pace != null) {
                 RaceProgressBar(gym)
             } else if (gym.program != null && progress != null) {
-                TargetProgressBar(gym, visibleRest)
+                TargetProgressBar(gym, visibleRest, refreshTick)
             }
         }
     }
@@ -269,6 +270,7 @@ fun LiveRowScreen(
 private fun MetricGrid(
     metrics: List<ValueBinding>,
     gym: Gym,
+    refreshTick: Int,
     goalBinding: ValueBinding?,
     goal: GoalDisplay?,
     isEditing: Boolean,
@@ -276,6 +278,7 @@ private fun MetricGrid(
     onMetricSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val context = LocalContext.current
     BoxWithConstraints(modifier.background(Color(0xFF31505D))) {
         val rows = (metrics.size + 1) / 2
@@ -407,7 +410,8 @@ fun MetricCell(
 }
 
 @Composable
-fun TargetProgressBar(gym: Gym, rest: RestDisplay? = null) {
+fun TargetProgressBar(gym: Gym, rest: RestDisplay? = null, refreshTick: Int = 0) {
+    @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val progress = gym.progress ?: return
     val program = gym.program
     val m = gym.getMeasurement()
