@@ -217,8 +217,10 @@ private fun ProgramDetailsScreen(
     }
     val timed = type == svenmeier.coxswain.gym.SessionType.DURATION
     val raceToggleDescription = stringResource(R.string.ui_race_your_best)
-    val best = if (timed) history.maxByOrNull { it.distance.get() } else history.minByOrNull { it.duration.get() }
-    val averageResult = if (history.isEmpty()) null else if (timed) history.map { it.distance.get() }.average().toInt() else history.map { it.duration.get() }.average().toInt()
+    // Use the same completed, compatible sessions as Race Your Best.
+    val completedHistory = raceCandidates.sortedByDescending { it.start.get() }
+    val best = raceCandidates.firstOrNull()
+    val averageResult = if (completedHistory.isEmpty()) null else if (timed) completedHistory.map { it.distance.get() }.average().toInt() else completedHistory.map { it.duration.get() }.average().toInt()
 
     Scaffold(
         topBar = {
@@ -323,13 +325,13 @@ private fun ProgramDetailsScreen(
             SectionLabel(stringResource(R.string.ui_program_history))
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(pluralStringResource(R.plurals.ui_workouts_completed, history.size, history.size), fontWeight = FontWeight.Bold)
+                    Text(pluralStringResource(R.plurals.ui_workouts_completed, completedHistory.size, completedHistory.size), fontWeight = FontWeight.Bold)
                     if (best != null) {
                         DetailValueRow(stringResource(R.string.ui_best), if (timed) "%,d m".format(Locale.getDefault(), best.distance.get()) else formatProgramTime(best.duration.get()))
                         averageResult?.let { average ->
                             DetailValueRow(stringResource(R.string.ui_average), if (timed) "%,d m".format(Locale.getDefault(), average) else formatProgramTime(average))
                         }
-                        val latest = history.first()
+                        val latest = completedHistory.first()
                         Text(
                             stringResource(R.string.ui_program_last_completed, SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(latest.start.get()))),
                             style = MaterialTheme.typography.bodySmall,
