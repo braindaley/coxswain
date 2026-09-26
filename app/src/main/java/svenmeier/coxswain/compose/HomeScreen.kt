@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,8 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -237,7 +236,7 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
     val allWorkouts = ArrayList(gym.getAllWorkouts().list())
     val meters = workouts.sumOf { it.distance.get() }
     val seconds = workouts.sumOf { it.duration.get() }
-    val bucketCount = when (period) { "This month" -> 5; "This year" -> 12; else -> 7 }
+    val bucketCount = when (period) { "This month" -> Calendar.getInstance().apply { timeInMillis = range.first }.getActualMaximum(Calendar.DAY_OF_MONTH); "This year" -> 12; else -> 7 }
     val bucketMeters = MutableList(bucketCount) { 0 }
     workouts.forEach { workout ->
         val bucket = homeBucketIndex(period, range.first, workout.start.get())
@@ -304,15 +303,21 @@ private fun HomeProgress(gym: Gym, onQuickStart: () -> Unit) {
                     Text(formatAxisDistance(chartMax / 2), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text("0", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
-                Column(Modifier.weight(1f)) {
-                    DistanceChart(bucketMeters, chartMax, Modifier.fillMaxWidth().weight(1f))
-                    Row(Modifier.fillMaxWidth().height(22.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        listOf(labels.first(), labels[bucketCount / 2], labels.last()).forEach { label ->
-                            Text(label.uppercase(Locale.getDefault()), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
+                    val chartWidth = if (period == "This month") maxOf(maxWidth, (bucketCount * 24).dp) else maxWidth
+                    Column(Modifier.horizontalScroll(rememberScrollState()).width(chartWidth)) {
+                        DistanceChart(bucketMeters, chartMax, Modifier.fillMaxWidth().weight(1f))
+                        Row(Modifier.fillMaxWidth().height(22.dp)) {
+                            labels.forEach { label ->
+                                Text(label, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = if (period == "This year") 9.sp else 10.sp,
+                                    maxLines = 1, softWrap = false)
+                            }
                         }
                     }
                 }
             }
+
             HorizontalDivider(modifier = Modifier.padding(top = 17.dp, bottom = 15.dp), color = MaterialTheme.colorScheme.outlineVariant)
             Text(encouragement, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 17.sp)
             if (workouts.isEmpty()) OutlinedButton(
@@ -338,7 +343,6 @@ private fun SummaryMetric(value: String, label: String, modifier: Modifier = Mod
 @Composable
 private fun DistanceChart(values: List<Int>, maximum: Int, modifier: Modifier = Modifier) {
     val lineColor = MaterialTheme.colorScheme.primary
-    val areaColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val axisColor = MaterialTheme.colorScheme.outline
     val description = stringResource(R.string.ui_rowing_distance)
@@ -353,24 +357,13 @@ private fun DistanceChart(values: List<Int>, maximum: Int, modifier: Modifier = 
         drawLine(axisColor, Offset(0f, plotTop), Offset(0f, plotBottom), 1.dp.toPx())
         drawLine(axisColor, Offset(0f, plotBottom), Offset(size.width, plotBottom), 1.dp.toPx())
         if (values.isEmpty() || values.all { it == 0 }) return@Canvas
-        val points = values.mapIndexed { index, value ->
-            Offset(
-                x = if (values.size == 1) size.width / 2 else size.width * index / (values.size - 1),
-                y = plotBottom - value.toFloat() / maximum * plotHeight
-            )
+        val slotWidth = size.width / values.size
+        values.forEachIndexed { index, value ->
+            val height = value.toFloat() / maximum * plotHeight
+            if (height > 0f) drawRect(lineColor,
+                topLeft = Offset(slotWidth * index + slotWidth * .18f, plotBottom - height),
+                size = androidx.compose.ui.geometry.Size(slotWidth * .64f, height))
         }
-        val area = Path().apply {
-            moveTo(points.first().x, plotBottom)
-            points.forEach { lineTo(it.x, it.y) }
-            lineTo(points.last().x, plotBottom)
-            close()
-        }
-        val line = Path().apply {
-            moveTo(points.first().x, points.first().y)
-            points.drop(1).forEach { lineTo(it.x, it.y) }
-        }
-        drawPath(area, areaColor)
-        drawPath(line, lineColor, style = Stroke(width = 3.dp.toPx()))
     }
 }
 
@@ -409,7 +402,7 @@ internal fun calendarRange(period: String, now: Long): Pair<Long, Long> {
     when (period) {
         "This month" -> start.set(Calendar.DAY_OF_MONTH, 1)
         "This year" -> { start.set(Calendar.MONTH, Calendar.JANUARY); start.set(Calendar.DAY_OF_MONTH, 1) }
-        else -> { start.firstDayOfWeek = Calendar.MONDAY; start.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY) }
+        else -> { start.firstDayOfWeek = Calendar.SUNDAY; start.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY) }
     }
     val end = Calendar.getInstance().apply { timeInMillis = start.timeInMillis }
     when (period) {
@@ -438,7 +431,7 @@ private fun bucketLabels(period: String, start: Long, count: Int): List<String> 
     )
     return List(count) {
         val label = format.format(calendar.time)
-        calendar.add(if (period == "This year") Calendar.MONTH else Calendar.DAY_OF_MONTH, if (period == "This month") 7 else 1)
+        calendar.add(if (period == "This year") Calendar.MONTH else Calendar.DAY_OF_MONTH, 1)
         label
     }
 }
@@ -455,7 +448,7 @@ internal fun homeBucketIndex(period: String, rangeStart: Long, workoutStart: Lon
     val dayFromStart = ((startOfDay(workoutStart) - rangeStart) / 86400000L).toInt()
     return when (period) {
         "This year" -> Calendar.getInstance().apply { timeInMillis = workoutStart }.get(Calendar.MONTH)
-        "This month" -> (dayFromStart / 7).coerceIn(0, 4)
+        "This month" -> Calendar.getInstance().apply { timeInMillis = workoutStart }.get(Calendar.DAY_OF_MONTH) - 1
         else -> dayFromStart.coerceIn(0, 6)
     }
 }

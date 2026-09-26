@@ -15,7 +15,7 @@ class HomeAnalyticsTest {
         val week = calendarRange("This week", now)
         val month = calendarRange("This month", now)
         val year = calendarRange("This year", now)
-        assertEquals(Calendar.MONDAY, Calendar.getInstance().apply { timeInMillis = week.first }.get(Calendar.DAY_OF_WEEK))
+        assertEquals(Calendar.SUNDAY, Calendar.getInstance().apply { timeInMillis = week.first }.get(Calendar.DAY_OF_WEEK))
         assertEquals(1, Calendar.getInstance().apply { timeInMillis = month.first }.get(Calendar.DAY_OF_MONTH))
         assertEquals(Calendar.JANUARY, Calendar.getInstance().apply { timeInMillis = year.first }.get(Calendar.MONTH))
         assertEquals(7L, (week.second - week.first) / 86_400_000L)
@@ -25,6 +25,13 @@ class HomeAnalyticsTest {
         val range = calendarRange("This year", instant(2026, Calendar.JUNE, 1))
         assertEquals(0, homeBucketIndex("This year", range.first, instant(2026, Calendar.JANUARY, 1)))
         assertEquals(11, homeBucketIndex("This year", range.first, instant(2026, Calendar.DECEMBER, 31)))
+    }
+
+    @Test fun monthUsesOneBucketPerDayIncludingLastDay() {
+        val range = calendarRange("This month", instant(2026, Calendar.JANUARY, 15))
+        assertEquals(0, homeBucketIndex("This month", range.first, instant(2026, Calendar.JANUARY, 1)))
+        assertEquals(14, homeBucketIndex("This month", range.first, instant(2026, Calendar.JANUARY, 15)))
+        assertEquals(30, homeBucketIndex("This month", range.first, instant(2026, Calendar.JANUARY, 31)))
     }
 
     @Test fun streakMayStartTodayOrYesterday() {
