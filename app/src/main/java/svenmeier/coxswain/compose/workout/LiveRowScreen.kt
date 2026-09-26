@@ -45,6 +45,17 @@ import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
 
+private const val LIVE_ROW_DISPLAY_PREFERENCES = "live_row_display"
+private const val LIVE_ROW_METRICS_KEY = "metric_bindings"
+private val defaultLiveRowMetrics = listOf(
+    ValueBinding.DURATION,
+    ValueBinding.DISTANCE,
+    ValueBinding.SPLIT,
+    ValueBinding.STROKE_RATE,
+    ValueBinding.POWER,
+    ValueBinding.PULSE
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveRowScreen(
@@ -55,16 +66,12 @@ fun LiveRowScreen(
     onEnd: () -> Unit
 ) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
+    val context = LocalContext.current
 
-    val activeMetrics = remember {
-        mutableStateListOf(
-            ValueBinding.DURATION,
-            ValueBinding.DISTANCE,
-            ValueBinding.SPLIT,
-            ValueBinding.STROKE_RATE,
-            ValueBinding.POWER,
-            ValueBinding.PULSE
-        )
+    val activeMetrics = remember(context) {
+        mutableStateListOf<ValueBinding>().apply {
+            addAll(loadLiveRowMetrics(context))
+        }
     }
 
     var isEditingDisplay by remember { mutableStateOf(false) }
@@ -263,10 +270,27 @@ fun LiveRowScreen(
             onDismiss = { selectedSlotIndex = -1 },
             onSelect = { newBinding ->
                 activeMetrics[selectedSlotIndex] = newBinding
+                saveLiveRowMetrics(context, activeMetrics)
                 selectedSlotIndex = -1
             }
         )
     }
+}
+
+internal fun loadLiveRowMetrics(context: Context): List<ValueBinding> {
+    val stored = context.getSharedPreferences(LIVE_ROW_DISPLAY_PREFERENCES, Context.MODE_PRIVATE)
+        .getString(LIVE_ROW_METRICS_KEY, null)
+        ?.split(',')
+        ?.mapNotNull { name -> runCatching { ValueBinding.valueOf(name) }.getOrNull() }
+    return stored?.takeIf { it.size == defaultLiveRowMetrics.size } ?: defaultLiveRowMetrics
+}
+
+internal fun saveLiveRowMetrics(context: Context, metrics: List<ValueBinding>) {
+    if (metrics.size != defaultLiveRowMetrics.size) return
+    context.getSharedPreferences(LIVE_ROW_DISPLAY_PREFERENCES, Context.MODE_PRIVATE)
+        .edit()
+        .putString(LIVE_ROW_METRICS_KEY, metrics.joinToString(",") { it.name })
+        .apply()
 }
 
 @Composable

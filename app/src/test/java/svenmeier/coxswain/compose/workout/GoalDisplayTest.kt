@@ -20,6 +20,32 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class GoalDisplayTest {
+    @Test fun liveRowMetricLayoutPersistsBetweenSessions() {
+        val context = RuntimeEnvironment.getApplication()
+        context.getSharedPreferences("live_row_display", Context.MODE_PRIVATE).edit().clear().commit()
+
+        val defaults = listOf(
+            ValueBinding.DURATION,
+            ValueBinding.DISTANCE,
+            ValueBinding.SPLIT,
+            ValueBinding.STROKE_RATE,
+            ValueBinding.POWER,
+            ValueBinding.PULSE
+        )
+        assertEquals(defaults, loadLiveRowMetrics(context))
+
+        val custom = listOf(
+            ValueBinding.DISTANCE,
+            ValueBinding.DURATION,
+            ValueBinding.POWER,
+            ValueBinding.SPLIT,
+            ValueBinding.STROKE_RATE,
+            ValueBinding.ENERGY
+        )
+        saveLiveRowMetrics(context, custom)
+        assertEquals(custom, loadLiveRowMetrics(context))
+    }
+
     @Test fun strokeRateShowsTargetWhenMatchedAndSignedDifferenceOtherwise() {
         val segment = Segment().setStrokeRate(24)
         val onTarget = goalDisplay(ValueBinding.STROKE_RATE, segment, Measurement().apply { strokeRate = 24 })!!
