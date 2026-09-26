@@ -508,21 +508,21 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         if (segments.size > 1 && rest == null) {
             val ordinal = segments.take(index + 1).count { it.difficulty.get() != Difficulty.REST }
             Text(active?.name?.get()?.takeIf { it.isNotBlank() } ?: "Row $ordinal",
-                color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(6.dp))
         }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val measurer = rememberTextMeasurer()
+            val density = LocalDensity.current
+            val measured = measurer.measure(AnnotatedString(primary),
+                style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Bold)).size.width.coerceAtLeast(1)
+            val width = with(density) { maxWidth.toPx() }
+            val font = (56f * (width / measured).coerceAtMost(1f)).sp
+            Text(primary, color = if (race == null) Color.White else if (race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
+                fontSize = font, lineHeight = font * 1.1f, fontWeight = FontWeight.Bold,
+                maxLines = 1, softWrap = false)
+        }
         if (race != null) {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val measurer = rememberTextMeasurer()
-                val density = LocalDensity.current
-                val measured = measurer.measure(AnnotatedString(primary),
-                    style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Bold)).size.width.coerceAtLeast(1)
-                val width = with(density) { maxWidth.toPx() }
-                val font = (56f * (width / measured).coerceAtMost(1f)).sp
-                Text(primary, color = if (race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
-                    fontSize = font, lineHeight = font * 1.1f, fontWeight = FontWeight.Bold,
-                    maxLines = 1, softWrap = false)
-            }
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
                 Text("━ Saved best · ${formatClock(gym.pace!!.duration.get())}",
@@ -530,7 +530,6 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         } else {
-            Text(primary, color = Color.White, fontSize = 31.sp, lineHeight = 35.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             Text(detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
         }
