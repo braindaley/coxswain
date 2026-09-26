@@ -68,10 +68,10 @@ fun HomeScreen(
         }
     }
     @Suppress("UNUSED_VARIABLE") val refresh = refreshKey + connectionUpdate
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
         HomeHeader(gym?.connected == true, onFreeRow, { onQuickStart("Duration") }, onConnectRower, onSettings)
         Column(
-            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
+            Modifier.fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -96,14 +96,14 @@ private fun HomeHeader(
             .background(HomeHeroColor).padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 22.dp)
     ) {
         Row(
-            Modifier.fillMaxWidth().height(56.dp),
+            Modifier.fillMaxWidth().height(88.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(R.drawable.coxswain_logo_white),
                 contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier.width(128.dp).height(53.dp),
+                modifier = Modifier.weight(1f).height(83.dp).padding(end = 16.dp),
                 contentScale = ContentScale.Fit
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
