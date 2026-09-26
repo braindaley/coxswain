@@ -79,6 +79,8 @@ class ProgramActivity : FragmentActivity() {
                         program = program,
                         history = history,
                         raceCandidates = raceCandidates,
+                        racePreferred = gym.isRacePreferred(program),
+                        onRacePreferenceChange = { gym.setRacePreferred(program, it) },
                         onBack = { finish() },
                         onStart = { raceAgainstBest ->
                             if (raceAgainstBest) gym.race(program, raceCandidates.first()) else gym.select(program)
@@ -184,6 +186,8 @@ private fun ProgramDetailsScreen(
     program: Program,
     history: List<svenmeier.coxswain.gym.Workout>,
     raceCandidates: List<svenmeier.coxswain.gym.Workout>,
+    racePreferred: Boolean,
+    onRacePreferenceChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     onStart: (raceAgainstBest: Boolean) -> Unit,
     onEdit: () -> Unit,
@@ -192,7 +196,7 @@ private fun ProgramDetailsScreen(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    var raceAgainstBest by remember(program) { mutableStateOf(raceCandidates.isNotEmpty()) }
+    var raceAgainstBest by remember(program) { mutableStateOf(racePreferred && raceCandidates.isNotEmpty()) }
     val hasHistory = history.isNotEmpty()
     val type = WorkoutDefinition.typeOf(program)
     val segments = program.segments.get()
@@ -348,7 +352,7 @@ private fun ProgramDetailsScreen(
                         )
                         Switch(
                             checked = raceAgainstBest,
-                            onCheckedChange = { raceAgainstBest = it },
+                            onCheckedChange = { raceAgainstBest = it; onRacePreferenceChange(it) },
                             enabled = raceCandidates.isNotEmpty(),
                             modifier = Modifier.semantics { contentDescription = raceToggleDescription }
                         )

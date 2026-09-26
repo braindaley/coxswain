@@ -281,6 +281,27 @@ public class GymProgressTest {
         assertEquals(completed.start.get(), candidates.get(0).start.get());
     }
 
+    @Test
+    public void preferredRaceStartHonorsSavedToggleAndRequiresCompletedBenchmark() {
+        Program program = Program.meters("Saved race", 100, Difficulty.HARD);
+        gym.mergeProgram(program);
+        gym.setRacePreferred(program, true);
+        gym.startPreferredProgram(program);
+        assertTrue(gym.pace == null);
+        gym.onMeasured(measurement(20, 50, 24));
+        gym.endEarly();
+        gym.startPreferredProgram(program);
+        assertTrue(gym.pace == null);
+        Workout best = finish(program, measurement(30, 100, 24));
+        gym.startPreferredProgram(program);
+        assertNotNull(gym.pace);
+        assertEquals(best.start.get(), gym.pace.start.get());
+        gym.setRacePreferred(program, false);
+        gym.startPreferredProgram(program);
+        assertTrue(gym.pace == null);
+        assertFalse(gym.isRacePreferred(program));
+    }
+
     private Workout finish(Program program, Measurement measurement) {
         gym.select(program);
         gym.onMeasured(measurement);

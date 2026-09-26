@@ -192,9 +192,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         if (definition == null) {
                             gym.startFreeRow()
                         } else {
-                            val raceCandidates = gym.getRaceCandidates(definition)
-                            if (raceCandidates.isNotEmpty()) gym.race(definition, raceCandidates.first())
-                            else gym.select(definition)
+                            gym.startPreferredProgram(definition)
                         }
                         WorkoutActivity.start(activity)
                     }
@@ -209,7 +207,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                         activity.startActivity(ProgramActivity.createReadOnlyIntent(activity, program))
                     },
                     onStartProgram = { program ->
-                        gym.select(program)
+                        gym.startPreferredProgram(program)
                         WorkoutActivity.start(activity)
                     },
                     onDuplicateProgram = { program ->

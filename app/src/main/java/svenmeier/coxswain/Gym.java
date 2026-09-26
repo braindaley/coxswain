@@ -401,6 +401,22 @@ public class Gym {
         }
     }
 
+    public boolean isRacePreferred(Program program) {
+        return context.getSharedPreferences("program_race", Context.MODE_PRIVATE)
+                .getBoolean(WorkoutDefinition.compatibilityKey(program), !getRaceCandidates(program).isEmpty());
+    }
+
+    public void setRacePreferred(Program program, boolean enabled) {
+        context.getSharedPreferences("program_race", Context.MODE_PRIVATE).edit()
+                .putBoolean(WorkoutDefinition.compatibilityKey(program), enabled).apply();
+    }
+
+    public void startPreferredProgram(Program program) {
+        List<Workout> candidates = getRaceCandidates(program);
+        if (isRacePreferred(program) && !candidates.isEmpty()) race(program, candidates.get(0));
+        else select(program);
+    }
+
     public void select(Program program) {
         start(program, WorkoutDefinition.typeOf(program));
     }
