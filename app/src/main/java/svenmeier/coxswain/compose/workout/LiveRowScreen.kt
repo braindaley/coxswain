@@ -121,58 +121,61 @@ fun LiveRowScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = sessionTitle,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFC8E3E9),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.width(10.dp))
-
+                    Text(
+                        text = sessionTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFC8E3E9),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                actions = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
                         val (statusText, statusColor) = when {
                             gym.connected -> "● Connected" to Color(0xFF6DE0A8)
-                            gym.connecting -> "● Connecting..." to Color(0xFFFFD166)
+                            gym.connecting -> "● Connecting" to Color(0xFFFFD166)
                             else -> "● Disconnected" to Color(0xFFFF8A80)
                         }
-
                         Surface(
                             color = statusColor.copy(alpha = 0.18f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
                                 text = statusText,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                fontSize = 11.sp,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                fontSize = 10.sp,
                                 color = statusColor,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
                             )
                         }
-                    }
-                },
-                actions = {
-                    if (rest == null) {
-                        OutlinedButton(
-                            onClick = { isEditingDisplay = !isEditingDisplay; selectedSlotIndex = -1 },
-                            shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, Color(0xFF60758A)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDCEBFF)),
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isEditingDisplay) Icons.Default.Check else Icons.Default.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = if (isEditingDisplay) "Done" else "Edit display",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+
+                        if (rest == null) {
+                            OutlinedButton(
+                                onClick = { isEditingDisplay = !isEditingDisplay; selectedSlotIndex = -1 },
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(1.dp, Color(0xFF60758A)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDCEBFF)),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isEditingDisplay) Icons.Default.Check else Icons.Default.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text(
+                                    text = if (isEditingDisplay) "Done" else "Edit display",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 },
