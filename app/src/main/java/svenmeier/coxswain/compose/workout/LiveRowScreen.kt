@@ -1,6 +1,9 @@
 package svenmeier.coxswain.compose.workout
 
 import android.content.Context
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -238,27 +241,24 @@ fun LiveRowScreen(
             }
         }
     ) { innerPadding ->
-        Column(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D))) {
-            if (visibleRest != null) {
-                RestCountdownCard(visibleRest, Modifier.weight(1f).fillMaxWidth().padding(12.dp))
-            } else {
-                MetricGrid(
-                    metrics = activeMetrics,
-                    gym = gym,
-                    refreshTick = refreshTick,
-                    goalBinding = goalBinding,
-                    goal = goal,
-                    isEditing = isEditingDisplay,
-                    selectedSlotIndex = selectedSlotIndex,
-                    onMetricSelected = { selectedSlotIndex = it },
-                    modifier = Modifier.weight(1f).fillMaxWidth()
-                )
+        Row(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D)).padding(horizontal = 10.dp)) {
+            if (gym.program != null || gym.pace != null) {
+                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null) 30.dp else 24.dp))
+                Spacer(Modifier.width(10.dp))
             }
-
-            if (gym.pace != null) {
-                RaceProgressBar(gym)
-            } else if (gym.program != null && progress != null) {
-                TargetProgressBar(gym, visibleRest, refreshTick)
+            Column(Modifier.weight(1f).fillMaxHeight()) {
+                if (visibleRest != null) {
+                    RestCountdownCard(visibleRest, Modifier.weight(1f).fillMaxWidth())
+                } else {
+                    MetricGrid(
+                        metrics = activeMetrics, gym = gym, refreshTick = refreshTick,
+                        goalBinding = goalBinding, goal = goal, isEditing = isEditingDisplay,
+                        selectedSlotIndex = selectedSlotIndex,
+                        onMetricSelected = { selectedSlotIndex = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                }
+                LiveRowStatus(gym, visibleRest, refreshTick)
             }
         }
     }
@@ -437,277 +437,108 @@ fun MetricCell(
 }
 
 @Composable
-fun TargetProgressBar(gym: Gym, rest: RestDisplay? = null, refreshTick: Int = 0) {
+private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
-    val progress = gym.progress ?: return
-    val program = gym.program
-    val m = gym.getMeasurement()
-    val segment = progress.segment
-    val startM = progress.startMeasurement
-    val segments = program?.getSegments().orEmpty()
-    val isIntervals = segments.size > 1
-    val isRest = rest != null
-
-    val completion = progress.completion()
-    val percentInt = (completion * 100).toInt().coerceIn(0, 100)
-
-    val primaryText = when {
-        segment.duration.get() > 0 -> {
-            val remSec = maxOf(0, segment.duration.get() - (m.duration - startM.duration))
-            String.format(Locale.getDefault(), "%d:%02d remaining", remSec / 60, remSec % 60)
+    val segments = gym.program?.getSegments().orEmpty()
+    val activeIndex = segments.indexOfFirst { it === gym.progress?.segment }.coerceAtLeast(0)
+    val weights = segments.map { it.asDuration().coerceAtLeast(1).toFloat() }
+    val total = weights.sum().coerceAtLeast(1f)
+    val completion = gym.progress?.completion()?.coerceIn(0f, 1f) ?: 0f
+    val position = if (weights.isNotEmpty())
+        (weights.take(activeIndex).sum() + weights[activeIndex] * completion) / total else completion
+    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program) }
+    Canvas(modifier.padding(vertical = 4.dp).semantics {
+        contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, saved best ${(race.bestProgress * 100).toInt()} percent"
+        else "Workout ${(position * 100).toInt()} percent complete"
+    }) {
+        val laneWidth = 9.dp.toPx()
+        fun lane(x: Float, fraction: Float, color: Color) {
+            drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
+            val height = size.height * fraction.coerceIn(0f, 1f)
+            if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
+            val y = (size.height - height).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
+            drawLine(if (race != null && x > 0f) color else Color.White,
+                Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
         }
-        segment.distance.get() > 0 -> {
-            val remDist = maxOf(0, segment.distance.get() - (m.distance - startM.distance))
-            String.format(Locale.getDefault(), "%,d m remaining", remDist)
-        }
-        segment.strokes.get() > 0 -> {
-            val remStrokes = maxOf(0, segment.strokes.get() - (m.strokes - startM.strokes))
-            String.format(Locale.getDefault(), "%,d strokes remaining", remStrokes)
-        }
-        else -> progress.describe()
-    }
-
-    val (leftMeta, rightMeta) = when {
-        segment.distance.get() > 0 -> {
-            val done = m.distance - startM.distance
-            String.format(Locale.getDefault(), "%,d m complete", done) to String.format(Locale.getDefault(), "%,d m target", segment.distance.get())
-        }
-        segment.duration.get() > 0 -> {
-            val done = m.duration - startM.duration
-            String.format(Locale.getDefault(), "%d:%02d elapsed", done / 60, done % 60) to String.format(Locale.getDefault(), "%d:%02d target", segment.duration.get() / 60, segment.duration.get() % 60)
-        }
-        else -> "" to ""
-    }
-
-    val currentIndex = segments.indexOfFirst { it === segment }.coerceAtLeast(0)
-    val currentOrdinal = segments.take(currentIndex + 1).count { it.difficulty.get() != Difficulty.REST }.coerceAtLeast(1)
-    val currentTitle = segment.name.get()?.takeIf { it.isNotBlank() }
-        ?: if (isRest) "Rest $currentOrdinal" else "Row $currentOrdinal"
-    val intervalPrimary = "$currentTitle · $primaryText"
-    val intervalPercent = when {
-        segment.duration.get() > 0 -> "${formatClock(m.duration - startM.duration)} / ${formatClock(segment.duration.get())}"
-        segment.distance.get() > 0 -> String.format(Locale.getDefault(), "%,d / %,d m", m.distance - startM.distance, segment.distance.get())
-        else -> "$percentInt%"
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF123F51))
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.ui_workout_progress),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFCAD4E1),
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = if (isIntervals) intervalPercent else "$percentInt%",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF83D7FF)
-                )
+        if (race != null) {
+            lane(2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF))
+            lane(18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72))
+        } else if (segments.size > 1) {
+            val x = (size.width - laneWidth) / 2
+            var bottom = size.height
+            segments.forEachIndexed { index, segment ->
+                val height = size.height * weights[index] / total
+                drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
+                    Offset(x, bottom - height), Size(laneWidth, height))
+                bottom -= height
             }
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                text = if (isIntervals) intervalPrimary else primaryText,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-
-            if (isIntervals) {
-                IntervalSequence(segments, segment, completion)
-            } else {
-                Spacer(Modifier.height(10.dp))
-                LinearProgressIndicator(
-                    progress = { completion.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().height(6.dp),
-                    color = Color(0xFF0B8FFF),
-                    trackColor = Color(0xFF60758A),
-                    strokeCap = StrokeCap.Round
-                )
-                if (leftMeta.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(leftMeta, fontSize = 11.sp, color = Color(0xFFCAD4E1))
-                        Text(rightMeta, fontSize = 11.sp, color = Color(0xFFCAD4E1))
-                    }
-                }
-            }
-        }
+            drawRect(Color(0xFF042C3D).copy(alpha = 0.58f), Offset(x, 0f), Size(laneWidth, size.height * (1f - position)))
+            val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
+            drawLine(Color.White, Offset(x - 3.dp.toPx(), y), Offset(x + laneWidth + 3.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
+        } else lane((size.width - laneWidth) / 2, position, Color(0xFF0B8FFF))
     }
 }
 
 @Composable
-private fun IntervalSequence(segments: List<Segment>, active: Segment, completion: Float) {
-    val weights = segments.map { it.asDuration().coerceAtLeast(1).toFloat() }
-    val total = weights.sum().coerceAtLeast(1f)
-    val activeIndex = segments.indexOfFirst { it === active }.coerceAtLeast(0)
-    val position = (weights.take(activeIndex).sum() + weights[activeIndex] * completion.coerceIn(0f, 1f)) / total
-
-    BoxWithConstraints(Modifier.fillMaxWidth().height(18.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(10.dp).align(Alignment.Center),
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            segments.forEachIndexed { index, segment ->
-                val isRest = segment.difficulty.get() == Difficulty.REST
-                Box(
-                    Modifier.weight(weights[index]).fillMaxHeight()
-                        .background(
-                            color = if (isRest) Color(0xFF83D7FF) else Color(0xFF0B63F6),
-                            shape = RoundedCornerShape(5.dp)
-                        )
-                )
+private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
+    @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
+    val segments = gym.program?.getSegments().orEmpty()
+    val active = gym.progress?.segment ?: segments.firstOrNull()
+    val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
+    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program) }
+    val primary = when {
+        rest != null -> rest.next.substringBefore(" · ")
+        race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
+        active == null -> "Find your rhythm"
+        active.duration.get() > 0 -> "${formatClock(getValueForBinding(ValueBinding.DURATION, gym))} remaining"
+        active.distance.get() > 0 && segments.size == 1 -> "${((gym.progress?.completion() ?: 0f) * 100).toInt().coerceIn(0, 100)}% complete"
+        active.distance.get() > 0 -> "${formatMetricValue(ValueBinding.DISTANCE, getValueForBinding(ValueBinding.DISTANCE, gym), LocalContext.current)} m remaining"
+        active.strokes.get() > 0 -> "${getValueForBinding(ValueBinding.STROKES, gym)} strokes remaining"
+        else -> "${getValueForBinding(ValueBinding.ENERGY, gym)} kcal remaining"
+    }
+    val detail = when {
+        rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
+        race != null -> "Your best · ${formatClock(gym.pace!!.duration.get())}"
+        segments.size > 1 -> "Interval ${index + 1} of ${segments.size}"
+        active != null && active.distance.get() > 0 -> {
+            val remaining = getValueForBinding(ValueBinding.DISTANCE, gym)
+            "${formatMetricValue(ValueBinding.DISTANCE, active.distance.get() - remaining, LocalContext.current)} of ${segmentTarget(active)}"
+        }
+        active != null && active.duration.get() > 0 ->
+            "${formatClock(active.duration.get() - getValueForBinding(ValueBinding.DURATION, gym))} of ${segmentTarget(active)}"
+        active != null -> "Target · ${segmentTarget(active)}"
+        else -> "Free row · No target"
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 16.dp, start = 4.dp, end = 4.dp)) {
+        if (segments.size > 1 && rest == null) {
+            val ordinal = segments.take(index + 1).count { it.difficulty.get() != Difficulty.REST }
+            Text(active?.name?.get()?.takeIf { it.isNotBlank() } ?: "Row $ordinal",
+                color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(6.dp))
+        }
+        Text(primary, color = if (race == null) Color.White else if (race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
+            fontSize = 31.sp, lineHeight = 35.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text(detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
+        if (race != null) {
+            Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp)
+                Text("━ Saved best", color = Color(0xFFFFCD72), fontSize = 15.sp)
             }
         }
-        Box(
-            Modifier.align(Alignment.CenterStart).offset(x = maxWidth * position - 1.dp)
-                .width(3.dp).height(18.dp)
-                .background(Color.White, RoundedCornerShape(2.dp))
-        )
     }
 }
 
 @Composable
 private fun RestCountdownCard(rest: RestDisplay, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0B3B4E))
-    ) {
-        Column(
-            Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = rest.title,
-                color = Color(0xFFCAD4E1), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = rest.remaining,
-                fontSize = 92.sp,
-                lineHeight = 96.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.ui_rest_remaining).uppercase(Locale.getDefault()),
-                color = Color(0xFFCAD4E1), fontSize = 15.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.2.sp
-            )
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = rest.next.replaceFirst("Next:", "Next ·"),
-                color = Color(0xFF83D7FF), fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun RaceProgressBar(gym: Gym) {
-    val pace = gym.pace ?: return
-    val current = gym.getMeasurement()
-    val race = raceDisplay(current, pace, gym.program)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF123F51))
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "RACE PROGRESS",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFCAD4E1),
-                    letterSpacing = 0.5.sp
-                )
-                val deltaStr = if (race.leadMeters >= 0) "You are ${race.leadMeters} m ahead" else "You are ${-race.leadMeters} m behind"
-                Text(
-                    text = deltaStr,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (race.leadMeters >= 0) Color(0xFF83D7FF) else Color(0xFFFF8A80)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-            RaceLane(
-                label = stringResource(R.string.ui_you),
-                progress = race.currentProgress,
-                value = "%,d m".format(Locale.getDefault(), current.distance),
-                color = Color(0xFF0B8FFF)
-            )
-            Spacer(Modifier.height(5.dp))
-            RaceLane(
-                label = stringResource(R.string.ui_best),
-                progress = race.bestProgress,
-                value = "%,d m".format(Locale.getDefault(), race.bestMeters),
-                color = Color(0xFF83D7FF)
-            )
-        }
-    }
-}
-
-@Composable
-private fun RaceLane(label: String, progress: Float, value: String, color: Color) {
-    val markerProgress = progress.coerceIn(0.05f, 0.95f)
-    Row(
-        modifier = Modifier.fillMaxWidth().height(28.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.width(42.dp),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (label.equals("Best", ignoreCase = true)) Color(0xFFBFEAFF) else Color.White
-        )
-        BoxWithConstraints(Modifier.weight(1f).height(12.dp), contentAlignment = Alignment.CenterStart) {
-            Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0xFF60758A), RoundedCornerShape(3.dp)))
-            Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(4.dp).background(color, RoundedCornerShape(3.dp)))
-            Box(
-                Modifier.offset(x = (maxWidth * markerProgress) - 6.dp)
-                    .size(12.dp).border(2.dp, Color.White, RoundedCornerShape(50)).background(color, RoundedCornerShape(50))
-            )
-        }
-        Text(
-            text = value,
-            modifier = Modifier.widthIn(min = 58.dp),
-            fontSize = 11.sp,
-            color = Color(0xFFCAD4E1),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum")
-        )
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text(rest.title, color = Color(0xFFC5D7E2), fontSize = 23.sp, fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(18.dp))
+        Text(rest.remaining, fontSize = 100.sp, lineHeight = 106.sp, fontWeight = FontWeight.Medium,
+            color = Color.White, textAlign = TextAlign.Center, maxLines = 1)
+        Spacer(Modifier.height(18.dp))
+        Text("Catch your breath", color = Color(0xFFC5D7E2), fontSize = 23.sp)
     }
 }
 
@@ -867,7 +698,7 @@ private fun stateFor(value: Int): Int = when { value > 0 -> 1; value < 0 -> -1; 
 
 private fun segmentTarget(segment: Segment): String = when {
     segment.duration.get() > 0 -> "%d:%02d".format(segment.duration.get() / 60, segment.duration.get() % 60)
-    segment.distance.get() > 0 -> "${segment.distance.get()} m"
+    segment.distance.get() > 0 -> "%,d m".format(Locale.getDefault(), segment.distance.get())
     segment.strokes.get() > 0 -> "${segment.strokes.get()} strokes"
     else -> "${segment.energy.get()} kcal"
 }

@@ -97,7 +97,7 @@ class GoalDisplayTest {
         assertEquals(2, display.position)
         assertEquals(3, display.total)
         assertEquals("0:45", display.remaining)
-        assertEquals("Next: 1000 m row", display.next)
+        assertEquals("Next: 1,000 m row", display.next)
     }
 
     @Test fun raceDisplayComparesBothBoatsAtCurrentElapsedTime() {

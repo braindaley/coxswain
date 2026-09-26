@@ -1,5 +1,11 @@
 package svenmeier.coxswain
 
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithText
+import svenmeier.coxswain.compose.workout.LiveRowScreen
+import svenmeier.coxswain.gym.Program
+import svenmeier.coxswain.gym.Segment
+import svenmeier.coxswain.gym.Difficulty
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -21,6 +27,28 @@ class LiveRowAccessibilityTest {
 
     @get:Rule
     val compose = createComposeRule()
+
+    @Test
+    fun namedIntervalAndCountdownAreVisibleWithSideProgress() {
+        val gym = Gym.instance(ApplicationProvider.getApplicationContext())
+        compose.runOnUiThread {
+            val program = Program("Intervals")
+            program.getSegment(0).setDuration(300)
+            program.getSegment(0).name.set("Steady row")
+            program.addSegment(Segment(Difficulty.REST).setDuration(60))
+            gym.select(program)
+        }
+        compose.setContent {
+            CoxswainTheme {
+                LiveRowScreen(gym, onPause = {}, onResume = {}, onEnd = {})
+            }
+        }
+        compose.onNodeWithText("Steady row").assertIsDisplayed()
+        compose.onNodeWithText("5:00 remaining").assertIsDisplayed()
+        compose.onNodeWithText("Interval 1 of 2").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Workout 0 percent complete").assertIsDisplayed()
+        compose.onNodeWithText("End session").assertIsDisplayed()
+    }
 
     @Test
     fun metricIsReadOnlyUntilDisplayEditingIsEnabled() {
