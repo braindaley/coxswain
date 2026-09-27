@@ -1,5 +1,9 @@
 package svenmeier.coxswain
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,7 +30,8 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     val maxPower = snapshots.maxOfOrNull { it.power.get() } ?: 0
     val maxRate = snapshots.maxOfOrNull { it.strokeRate.get() } ?: 0
     val rates = snapshots.map { it.strokeRate.get() }.filter { it > 0 }
-    val splits = snapshots.map { it.speed.get() }.filter { it > 0 }.map { 50000 / it }
+    val splitSeries = snapshots.map { if (it.speed.get() > 0) 50000 / it.speed.get() else 0 }
+    val splits = splitSeries.filter { it > 0 }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         ResultMetricRow(stringResource(R.string.ui_distance), "%,d m".format(workout.distance.get()))
         ResultMetricRow(stringResource(R.string.ui_time_rowed), "%d:%02d".format(workout.duration.get() / 60, workout.duration.get() % 60))
@@ -37,7 +42,7 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_best_split), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(workout.strokes.get()))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
-        ResultChart(stringResource(R.string.ui_split_time), splits, workout.duration.get(), "s /500 m", stringResource(R.string.ui_chart_average_best, if (splits.isEmpty()) "—" else formatSplit(splits.average().toInt()), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)))
+        ResultChart(stringResource(R.string.ui_split_time), splitSeries, workout.duration.get(), "s /500 m", stringResource(R.string.ui_chart_average_best, if (splits.isEmpty()) "—" else formatSplit(splits.average().toInt()), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)))
         ResultChart(stringResource(R.string.ui_power), snapshots.map { it.power.get() }, workout.duration.get(), "W", stringResource(R.string.ui_chart_average_max, if (avgPower == 0) "—" else "$avgPower W", if (maxPower == 0) "—" else "$maxPower W"))
         ResultChart(stringResource(R.string.ui_stroke_rate), snapshots.map { it.strokeRate.get() }, workout.duration.get(), "SPM", stringResource(R.string.ui_chart_stroke_statistics, if (avgRate == 0) "—" else "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", workout.strokes.get()))
     }
@@ -78,18 +83,39 @@ fun workoutPrimaryValue(workout: Workout): String = when (workoutDefinitionType(
 }
 
 @Composable private fun ResultChart(title: String, values: List<Int>, durationSeconds: Int, unit: String, statistics: String) {
-    val visible = values.filter { it > 0 }.takeLast(24)
+    val visible = values
+    val hasSamples = visible.any { it > 0 }
+    val chartColor = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(title, fontWeight = FontWeight.Bold)
-        Text(if (visible.isEmpty()) stringResource(R.string.ui_no_samples) else statistics, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(if (!hasSamples) stringResource(R.string.ui_no_samples) else statistics, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth().height(190.dp).background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp)).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val max = (visible.maxOrNull() ?: 1).coerceAtLeast(1)
             Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End) {
                 Text("$max", fontSize = 10.sp); Text("${max / 2}", fontSize = 10.sp); Text("0 $unit", fontSize = 10.sp)
             }
-            Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                if (visible.isEmpty()) Text(stringResource(R.string.ui_no_recorded_samples), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterVertically))
-                visible.forEach { value -> Box(Modifier.weight(1f).height((10 + (value * 145 / max)).dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(3.dp))) }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.Center))
+                else Canvas(Modifier.fillMaxSize()) {
+                    val plotHeight = size.height - 4.dp.toPx()
+                    listOf(0f, .5f, 1f).forEach { fraction ->
+                        drawLine(gridColor, Offset(0f, plotHeight * fraction), Offset(size.width, plotHeight * fraction), 1.dp.toPx())
+                    }
+                    val path = Path()
+                    var connected = false
+                    visible.forEachIndexed { index, value ->
+                        val x = if (visible.size == 1) size.width / 2 else size.width * index / (visible.size - 1)
+                        val y = plotHeight * (1f - value.toFloat() / max)
+                        if (unit == "s /500 m" && value <= 0) connected = false
+                        else {
+                            if (!connected) path.moveTo(x, y) else path.lineTo(x, y)
+                            connected = true
+                        }
+                    }
+                    drawPath(path, chartColor, style = Stroke(2.dp.toPx()))
+                    if (visible.size == 1) drawCircle(chartColor, 3.dp.toPx(), Offset(size.width / 2, plotHeight * (1f - visible[0].toFloat() / max)))
+                }
             }
         }
         Row(Modifier.fillMaxWidth().padding(start = 46.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text("0:00", fontSize = 10.sp); Text(formatAxisTime(durationSeconds / 2), fontSize = 10.sp); Text(formatAxisTime(durationSeconds), fontSize = 10.sp) }

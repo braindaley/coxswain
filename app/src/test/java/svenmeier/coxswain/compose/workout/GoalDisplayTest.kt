@@ -20,6 +20,13 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class GoalDisplayTest {
+    @Test fun splitTimesDoNotPadMinutesWithZero() {
+        val context = RuntimeEnvironment.getApplication()
+        assertEquals("2:05", formatMetricValue(ValueBinding.SPLIT, 125, context))
+        assertEquals("2:05", formatMetricValue(ValueBinding.AVERAGE_SPLIT, 125, context))
+        assertEquals("12:05", formatMetricValue(ValueBinding.SPLIT, 725, context))
+    }
+
     @Test fun liveRowMetricLayoutPersistsBetweenSessions() {
         val context = RuntimeEnvironment.getApplication()
         context.getSharedPreferences("live_row_display", Context.MODE_PRIVATE).edit().clear().commit()

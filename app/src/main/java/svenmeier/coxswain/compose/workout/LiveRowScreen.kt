@@ -448,8 +448,17 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
         val laneWidth = 9.dp.toPx()
         fun lane(x: Float, fraction: Float, color: Color) {
             drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
+            if (segments.size > 1) {
+                var bottom = size.height
+                segments.forEachIndexed { index, segment ->
+                    val bandHeight = size.height * weights[index] / total
+                    drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
+                        Offset(x, bottom - bandHeight), Size(laneWidth, bandHeight))
+                    bottom -= bandHeight
+                }
+            }
             val height = size.height * fraction.coerceIn(0f, 1f)
-            if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
+            if (height > 0f && segments.size <= 1) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
             val y = (size.height - height).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
             drawLine(if (race != null && x > 0f) color else Color.White,
                 Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
@@ -466,7 +475,7 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
                     Offset(x, bottom - height), Size(laneWidth, height))
                 bottom -= height
             }
-            drawRect(Color(0xFF042C3D).copy(alpha = 0.58f), Offset(x, 0f), Size(laneWidth, size.height * (1f - position)))
+            drawRect(Color(0xFF042C3D).copy(alpha = 0.18f), Offset(x, 0f), Size(laneWidth, size.height * (1f - position)))
             val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
             drawLine(Color.White, Offset(x - 3.dp.toPx(), y), Offset(x + laneWidth + 3.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
         } else lane((size.width - laneWidth) / 2, position, Color(0xFF0B8FFF))
@@ -566,7 +575,7 @@ fun MetricPickerDialog(
         ValueBinding.ENERGY to "Calories (kcal)",
         ValueBinding.STROKES to "Stroke Count",
         ValueBinding.SPEED to "Speed (m/s)",
-        ValueBinding.STROKE_RATIO to "Stroke ratio",
+        ValueBinding.STROKE_RATIO to "Rhythm (recovery / drive)",
         ValueBinding.TIME to "Time of day",
         ValueBinding.AVERAGE_SPLIT to "Average Split (/500m)",
         ValueBinding.DELTA_DISTANCE to "Distance delta",
@@ -578,6 +587,7 @@ fun MetricPickerDialog(
         title = { Text("Change metric ${positionIndex + 1}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Rhythm: recovery time ÷ drive time. Aim around 2.0× for a basic steady rowing rhythm.", fontSize = 13.sp)
                 options.forEach { (binding, label) ->
                     Row(
                         modifier = Modifier
@@ -617,7 +627,7 @@ private fun getMetricTitleAndUnit(binding: ValueBinding, context: Context): Pair
         ValueBinding.STROKES -> "STROKES" to "COUNT"
         ValueBinding.SPEED -> "SPEED" to "M/S"
         ValueBinding.AVERAGE_SPLIT -> "AVG SPLIT" to "/500 M"
-        ValueBinding.STROKE_RATIO -> "STROKE RATIO" to "DRIVE : RECOVERY"
+        ValueBinding.STROKE_RATIO -> "RHYTHM" to "RECOVERY / DRIVE"
         ValueBinding.TIME -> "TIME" to "CLOCK"
         ValueBinding.DELTA_DISTANCE -> "DISTANCE DELTA" to "M"
         ValueBinding.DELTA_DURATION -> "TIME DELTA" to "S"
@@ -641,7 +651,8 @@ private fun formatClock(seconds: Int): String {
 internal fun formatMetricValue(binding: ValueBinding, value: Int, context: Context): String = when (binding) {
     ValueBinding.DISTANCE, ValueBinding.STROKES, ValueBinding.ENERGY ->
         java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(value)
-    ValueBinding.DURATION -> formatClock(value)
+    ValueBinding.STROKE_RATIO -> if (value > 0) String.format(Locale.getDefault(), "%.1f×", value / 10f) else "—"
+    ValueBinding.DURATION, ValueBinding.SPLIT, ValueBinding.AVERAGE_SPLIT -> formatClock(value)
     ValueBinding.DELTA_DISTANCE -> {
         val sign = when { value > 0 -> "+"; value < 0 -> "-"; else -> "" }
         sign + java.text.NumberFormat.getIntegerInstance(Locale.getDefault()).format(kotlin.math.abs(value.toLong()))
