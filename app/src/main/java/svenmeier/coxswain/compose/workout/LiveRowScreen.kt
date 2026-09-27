@@ -237,7 +237,7 @@ fun LiveRowScreen(
     ) { innerPadding ->
         Row(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D)).padding(horizontal = 10.dp)) {
             if (gym.program != null || gym.pace != null) {
-                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null) 30.dp else 24.dp))
+                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null && segments.size > 1) 46.dp else if (gym.pace != null) 30.dp else 24.dp))
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f).fillMaxHeight()) {
@@ -448,24 +448,27 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
         val laneWidth = 9.dp.toPx()
         fun lane(x: Float, fraction: Float, color: Color) {
             drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
-            if (segments.size > 1) {
-                var bottom = size.height
-                segments.forEachIndexed { index, segment ->
-                    val bandHeight = size.height * weights[index] / total
-                    drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
-                        Offset(x, bottom - bandHeight), Size(laneWidth, bandHeight))
-                    bottom -= bandHeight
-                }
-            }
             val height = size.height * fraction.coerceIn(0f, 1f)
-            if (height > 0f && segments.size <= 1) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
+            if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
             val y = (size.height - height).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
-            drawLine(if (race != null && x > 0f) color else Color.White,
+            drawLine(color,
                 Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
         }
         if (race != null) {
-            lane(2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF))
-            lane(18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72))
+            val raceOffset = if (segments.size > 1) 16.dp.toPx() else 0f
+            if (segments.size > 1) {
+                var bottom = size.height
+                segments.forEachIndexed { index, segment ->
+                    val height = size.height * weights[index] / total
+                    drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
+                        Offset(2.dp.toPx(), bottom - height), Size(laneWidth, height))
+                    bottom -= height
+                }
+                val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
+                drawLine(Color.White, Offset(0f, y), Offset(13.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
+            }
+            lane(raceOffset + 2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF))
+            lane(raceOffset + 18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72))
         } else if (segments.size > 1) {
             val x = (size.width - laneWidth) / 2
             var bottom = size.height
