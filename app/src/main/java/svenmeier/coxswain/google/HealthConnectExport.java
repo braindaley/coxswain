@@ -77,7 +77,7 @@ public class HealthConnectExport extends Export<Workout> {
             public void onSuccess(Set<String> granted) {
                 // We require at least Exercise permission to do anything useful
                 if (granted.contains("android.permission.health.WRITE_EXERCISE")) {
-                    export(workout);
+                    export(workout, granted);
                 } else {
                     requestPermissions();
                 }
@@ -116,11 +116,18 @@ public class HealthConnectExport extends Export<Workout> {
         }
     }
 
-    private void export(Workout workout) {
+    private void export(Workout workout, Set<String> granted) {
         toast(context.getString(R.string.healthconnect_export_starting));
 
-        List<Snapshot> snapshots = gym.getSnapshots(workout).list();
-        List<Record> records = new Workout2HealthConnect().map(workout, snapshots);
+        List<Record> records;
+        try {
+            List<Snapshot> snapshots = new java.util.ArrayList<>(gym.getSnapshots(workout).list());
+            records = new Workout2HealthConnect().map(workout, snapshots, granted);
+        } catch (Exception error) {
+            DiagnosticsLog.record(context, "Health Connect record preparation failed: " + error.getMessage());
+            toast(context.getString(R.string.healthconnect_export_failed) + ": " + error.getMessage());
+            return;
+        }
 
         if (records.isEmpty()) {
             toast(context.getString(R.string.ui_health_no_data));
@@ -132,6 +139,7 @@ public class HealthConnectExport extends Export<Workout> {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
                 markExported(workout);
+                DiagnosticsLog.record(context, "Health Connect successfully saved " + result.getRecordIdsList().size() + " records");
                 Log.d(Coxswain.TAG, "Inserted " + result.getRecordIdsList().size() + " records into Health Connect: " + result.getRecordIdsList());
                 toast(context.getString(R.string.healthconnect_export_finished));
             }

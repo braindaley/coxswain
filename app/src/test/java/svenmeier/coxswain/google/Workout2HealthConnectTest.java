@@ -59,6 +59,23 @@ public class Workout2HealthConnectTest {
         assertEquals("coxswain_workout_1700000000000_heart", heartRate.getMetadata().getClientRecordId());
     }
 
+    @Test
+    public void exerciseOnlyPermissionExportsSessionWithoutOptionalRecords() {
+        Workout workout = new Workout();
+        workout.start.set(1_700_000_000_000L);
+        workout.duration.set(60);
+        workout.distance.set(250);
+        List<Record> records = new Workout2HealthConnect().map(workout, new ArrayList<>(),
+                java.util.Collections.singleton("android.permission.health.WRITE_EXERCISE"));
+        assertEquals(1, records.size());
+        assertTrue(records.get(0) instanceof ExerciseSessionRecord);
+    }
+
+    @Test
+    public void emptyWorkoutDoesNotProduceInvalidHealthRecords() {
+        assertTrue(new Workout2HealthConnect().map(new Workout(), new ArrayList<>()).isEmpty());
+    }
+
     private boolean hasRecord(List<Record> records, Class<? extends Record> type) {
         return findRecord(records, type) != null;
     }

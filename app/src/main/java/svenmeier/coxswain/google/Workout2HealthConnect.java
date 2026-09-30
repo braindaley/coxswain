@@ -20,6 +20,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import svenmeier.coxswain.gym.Snapshot;
 import svenmeier.coxswain.gym.Workout;
@@ -28,8 +29,15 @@ public class Workout2HealthConnect {
 
     public static final int MAX_SAMPLES = 1000;
 
+    public List<Record> map(Workout workout, List<Snapshot> snapshots, Set<String> granted) {
+        List<Record> records = map(workout, snapshots);
+        records.removeIf(record -> !granted.contains(HealthConnectBridge.getWritePermission(record.getClass())));
+        return records;
+    }
+
     public List<Record> map(Workout workout, List<Snapshot> snapshots) {
         List<Record> records = new ArrayList<>();
+        if (workout.duration.get() <= 0) return records;
 
         Instant start = Instant.ofEpochMilli(workout.start.get());
         Instant end = start.plusMillis(workout.duration.get() * 1000L);
@@ -62,7 +70,7 @@ public class Workout2HealthConnect {
         int size = snapshots.size();
         int step = Math.max(1, (size + MAX_SAMPLES - 1) / MAX_SAMPLES);
 
-        for (int i = 0; i < size; i += step) {
+        for (int i = 0; i < size && i < workout.duration.get(); i += step) {
             Snapshot snapshot = snapshots.get(i);
             Instant time = start.plusMillis(i * 1000L);
             
