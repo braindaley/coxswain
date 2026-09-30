@@ -237,7 +237,7 @@ fun LiveRowScreen(
     ) { innerPadding ->
         Row(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D)).padding(horizontal = 10.dp)) {
             if (gym.program != null || gym.pace != null) {
-                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null && segments.size > 1) 46.dp else if (gym.pace != null) 30.dp else 24.dp))
+                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null) 30.dp else 24.dp))
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f).fillMaxHeight()) {
@@ -446,29 +446,28 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
         else "Workout ${(position * 100).toInt()} percent complete"
     }) {
         val laneWidth = 9.dp.toPx()
-        fun lane(x: Float, fraction: Float, color: Color) {
-            drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
+        fun lane(x: Float, fraction: Float, color: Color, marker: Color) {
             val height = size.height * fraction.coerceIn(0f, 1f)
-            if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
+            if (segments.size > 1 && race != null) {
+                var bottom = size.height
+                val restColor = if (color == Color(0xFFFFCD72)) Color(0xFFFFE3AA) else Color(0xFF8BD6FA)
+                segments.forEachIndexed { index, segment ->
+                    val bandHeight = size.height * weights[index] / total
+                    drawRect(if (segment.difficulty.get() == Difficulty.REST) restColor else color,
+                        Offset(x, bottom - bandHeight), Size(laneWidth, bandHeight))
+                    bottom -= bandHeight
+                }
+                drawRect(Color(0xFF042C3D).copy(alpha = 0.58f), Offset(x, 0f), Size(laneWidth, size.height - height))
+            } else {
+                drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
+                if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
+            }
             val y = (size.height - height).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
-            drawLine(color,
-                Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
+            drawLine(marker, Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
         }
         if (race != null) {
-            val raceOffset = if (segments.size > 1) 16.dp.toPx() else 0f
-            if (segments.size > 1) {
-                var bottom = size.height
-                segments.forEachIndexed { index, segment ->
-                    val height = size.height * weights[index] / total
-                    drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
-                        Offset(2.dp.toPx(), bottom - height), Size(laneWidth, height))
-                    bottom -= height
-                }
-                val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
-                drawLine(Color.White, Offset(0f, y), Offset(13.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
-            }
-            lane(raceOffset + 2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF))
-            lane(raceOffset + 18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72))
+            lane(2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF), Color.White)
+            lane(18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72), Color(0xFFFFCD72))
         } else if (segments.size > 1) {
             val x = (size.width - laneWidth) / 2
             var bottom = size.height
@@ -481,7 +480,7 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
             drawRect(Color(0xFF042C3D).copy(alpha = 0.18f), Offset(x, 0f), Size(laneWidth, size.height * (1f - position)))
             val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
             drawLine(Color.White, Offset(x - 3.dp.toPx(), y), Offset(x + laneWidth + 3.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
-        } else lane((size.width - laneWidth) / 2, position, Color(0xFF0B8FFF))
+        } else lane((size.width - laneWidth) / 2, position, Color(0xFF0B8FFF), Color.White)
     }
 }
 
