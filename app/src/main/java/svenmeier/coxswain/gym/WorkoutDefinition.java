@@ -115,6 +115,16 @@ public final class WorkoutDefinition {
         return SessionType.INTERVAL;
     }
 
+    /** Fixed-time programs, including intervals, are ranked by meters covered. */
+    public static boolean ranksByDistance(Program program) {
+        if (program == null || program.getSegmentsCount() == 0) return false;
+        for (Segment segment : program.getSegments()) {
+            if (segment.duration.get() <= 0 || segment.distance.get() > 0
+                    || segment.strokes.get() > 0 || segment.energy.get() > 0) return false;
+        }
+        return true;
+    }
+
     public static PerformanceGoal goalOf(Program program) {
         if (program != null) {
             for (Segment segment : program.getSegments()) {

@@ -215,7 +215,7 @@ private fun ProgramDetailsScreen(
             "%d:%02d /500 m".format(Locale.getDefault(), pace / 60, pace % 60)
         }
     }
-    val timed = type == svenmeier.coxswain.gym.SessionType.DURATION
+    val timed = WorkoutDefinition.ranksByDistance(program)
     val raceToggleDescription = stringResource(R.string.ui_race_your_best)
     // Use the same completed, compatible sessions as Race Your Best.
     val completedHistory = raceCandidates.sortedByDescending { it.start.get() }

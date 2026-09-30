@@ -302,6 +302,28 @@ public class GymProgressTest {
         assertFalse(gym.isRacePreferred(program));
     }
 
+    @Test
+    public void timedIntervalRaceUsesDistanceForBestAndOutcome() {
+        Program program = new Program("Timed intervals");
+        program.getSegment(0).setDuration(10);
+        program.addSegment(new Segment(Difficulty.REST).setDuration(5));
+        program.addSegment(new Segment(Difficulty.HARD).setDuration(10));
+        gym.mergeProgram(program);
+        gym.select(program);
+        gym.onMeasured(measurement(10, 100, 24));
+        gym.onMeasured(measurement(15, 100, 0));
+        gym.onMeasured(measurement(25, 200, 24));
+        Workout baseline = gym.complete();
+        gym.race(program, baseline);
+        gym.onMeasured(measurement(10, 250, 24));
+        gym.onMeasured(measurement(15, 250, 0));
+        gym.onMeasured(measurement(25, 500, 24));
+        Workout result = gym.complete();
+        assertEquals(svenmeier.coxswain.gym.RaceOutcome.WON, result.raceOutcome.get());
+        assertEquals(300, result.raceMargin.get().intValue());
+        assertEquals(result.start.get(), gym.getRaceCandidates(program).get(0).start.get());
+    }
+
     private Workout finish(Program program, Measurement measurement) {
         gym.select(program);
         gym.onMeasured(measurement);

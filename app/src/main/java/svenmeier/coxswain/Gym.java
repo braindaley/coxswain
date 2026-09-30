@@ -332,7 +332,7 @@ public class Gym {
             }
         }
         Collections.sort(candidates, (left, right) -> {
-            boolean timed = WorkoutDefinition.typeOf(selectedProgram) == SessionType.DURATION;
+            boolean timed = WorkoutDefinition.ranksByDistance(selectedProgram);
             int leftValue = timed ? left.distance.get() : left.duration.get();
             int rightValue = timed ? right.distance.get() : right.duration.get();
             return timed ? Integer.compare(rightValue, leftValue) : Integer.compare(leftValue, rightValue);
@@ -582,8 +582,7 @@ public class Gym {
         if (pace == null || workout.sessionType.get() != SessionType.RACE) return;
         workout.raceReference.set(pace);
         int margin;
-        if (program != null && program.getSegmentsCount() == 1
-                && program.getSegment(0).duration.get() > 0) {
+        if (WorkoutDefinition.ranksByDistance(program)) {
             margin = workout.distance.get() - pace.distance.get();
         } else {
             margin = (pace.duration.get() - workout.duration.get()) * 1000;
