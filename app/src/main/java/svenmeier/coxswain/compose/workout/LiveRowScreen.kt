@@ -456,8 +456,11 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
                     drawRect(if (segment.difficulty.get() == Difficulty.REST) restColor else color,
                         Offset(x, bottom - bandHeight), Size(laneWidth, bandHeight))
                     bottom -= bandHeight
+                    if (index < segments.lastIndex) {
+                        drawLine(Color(0xFF042C3D), Offset(x, bottom), Offset(x + laneWidth, bottom), 2.dp.toPx())
+                    }
                 }
-                drawRect(Color(0xFF042C3D).copy(alpha = 0.58f), Offset(x, 0f), Size(laneWidth, size.height - height))
+                drawRect(Color(0xFF042C3D).copy(alpha = 0.18f), Offset(x, 0f), Size(laneWidth, size.height - height))
             } else {
                 drawRoundRect(Color(0xFF244758), Offset(x, 0f), Size(laneWidth, size.height), androidx.compose.ui.geometry.CornerRadius(6.dp.toPx()))
                 if (height > 0f) drawRect(color, Offset(x, size.height - height), Size(laneWidth, height))
@@ -476,6 +479,9 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
                 drawRect(if (segment.difficulty.get() == Difficulty.REST) Color(0xFF8BD6FA) else Color(0xFF0B63F6),
                     Offset(x, bottom - height), Size(laneWidth, height))
                 bottom -= height
+                if (index < segments.lastIndex) {
+                    drawLine(Color(0xFF042C3D), Offset(x, bottom), Offset(x + laneWidth, bottom), 2.dp.toPx())
+                }
             }
             drawRect(Color(0xFF042C3D).copy(alpha = 0.18f), Offset(x, 0f), Size(laneWidth, size.height * (1f - position)))
             val y = (size.height * (1f - position)).coerceIn(2.dp.toPx(), size.height - 2.dp.toPx())
