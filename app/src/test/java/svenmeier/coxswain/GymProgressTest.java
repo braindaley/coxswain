@@ -315,6 +315,9 @@ public class GymProgressTest {
         gym.onMeasured(measurement(25, 200, 24));
         Workout baseline = gym.complete();
         gym.race(program, baseline);
+        assertEquals(50f, gym.getPaceDistanceAt(5), .001f);
+        assertEquals(100f, gym.getPaceDistanceAt(12), .001f);
+        assertEquals(100f, gym.getPaceDistanceAt(15), .001f);
         gym.onMeasured(measurement(10, 250, 24));
         gym.onMeasured(measurement(15, 250, 0));
         gym.onMeasured(measurement(25, 500, 24));

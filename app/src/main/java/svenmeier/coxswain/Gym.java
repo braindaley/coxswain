@@ -53,6 +53,7 @@ import svenmeier.coxswain.gym.RaceOutcome;
 import svenmeier.coxswain.gym.SessionType;
 import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.gym.Snapshot;
+import svenmeier.coxswain.gym.RaceReplay;
 import svenmeier.coxswain.gym.Workout;
 import svenmeier.coxswain.gym.WorkoutDefinition;
 import svenmeier.coxswain.gym.WorkoutStatus;
@@ -113,6 +114,9 @@ public class Gym {
      * Optional pace workout.
      */
     public Workout pace;
+
+    private Workout replayWorkout;
+    private RaceReplay replay;
 
 	/**
      * The current workout.
@@ -701,6 +705,27 @@ public class Gym {
         pausedOffsets.setEnergy(pausedOffsets.getEnergy() + Math.max(0, end.getEnergy() - start.getEnergy()));
     }
 
+    private RaceReplay paceReplay() {
+        if (pace == null) return null;
+        if (replayWorkout != pace || replay == null) {
+            List<Snapshot> samples = new ArrayList<>(getSnapshots(pace).list());
+            samples.sort((left, right) -> Long.compare(Row.getID(left), Row.getID(right)));
+            replay = new RaceReplay(pace, samples);
+            replayWorkout = pace;
+        }
+        return replay;
+    }
+
+    public float getPaceDistanceAt(int seconds) {
+        RaceReplay value = paceReplay();
+        return value == null ? 0f : value.distanceAt(seconds);
+    }
+
+    public float getPaceTimeAtDistance(int meters) {
+        RaceReplay value = paceReplay();
+        return value == null ? 0f : value.timeAtDistance(meters);
+    }
+
     public Match<Snapshot> getSnapshots(Workout workout) {
         Snapshot prototype = new Snapshot();
 
@@ -804,6 +829,7 @@ public class Gym {
                 for (Snapshot snapshot : getSnapshots(value).list()) {
                     JSONObject sample = new JSONObject();
                     sample.put("difficulty", snapshot.difficulty.get().name());
+                    sample.put("duration", snapshot.duration.get());
                     sample.put("distance", snapshot.distance.get());
                     sample.put("strokes", snapshot.strokes.get());
                     sample.put("energy", snapshot.energy.get());
@@ -887,6 +913,7 @@ public class Gym {
                         Snapshot snapshot = new Snapshot();
                         snapshot.workout.set(value);
                         snapshot.difficulty.set(Difficulty.valueOf(data.getString("difficulty")));
+                        snapshot.duration.set(data.optInt("duration", 0));
                         snapshot.distance.set(data.getInt("distance")); snapshot.strokes.set(data.getInt("strokes")); snapshot.energy.set(data.getInt("energy"));
                         snapshot.speed.set(data.getInt("speed")); snapshot.pulse.set(data.getInt("pulse")); snapshot.strokeRate.set(data.getInt("strokeRate"));
                         snapshot.strokeRatio.set(data.getInt("strokeRatio")); snapshot.power.set(data.getInt("power"));

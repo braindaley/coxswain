@@ -20,13 +20,24 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
-	static final int DATABASE_VERSION = 3;
+	static final int DATABASE_VERSION = 4;
 
 	GymVersioning() {
 		add(new WrongIndices());
 		add(new WorkoutIdentity());
 		add(new SegmentNames());
+		add(new SnapshotTiming());
 	}
+
+	private static class SnapshotTiming implements Upgrade {
+        @Override public void apply(SQLiteDatabase database) {
+            if (!Column.exists("Snapshot", database)) return;
+            for (Column column : Column.get("Snapshot", database)) {
+                if (column.name.equals("duration")) return;
+            }
+            database.execSQL("ALTER TABLE Snapshot ADD COLUMN duration INTEGER DEFAULT 0");
+        }
+    }
 
 	private static class SegmentNames implements Upgrade {
 		@Override

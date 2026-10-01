@@ -25,6 +25,9 @@ public class Snapshot extends Propoid {
 
     public final Property<Workout> workout = property();
 
+    /** Elapsed workout seconds; zero on legacy samples with unknown timing. */
+    public final Property<Integer> duration = property();
+
     public final Property<Difficulty> difficulty = property();
 
     /**
@@ -62,6 +65,7 @@ public class Snapshot extends Propoid {
     public final Property<Integer> power = property();
 
     public Snapshot() {
+        duration.set(0);
         difficulty.set(Difficulty.NONE);
         distance.set(0);
         strokes.set(0);
@@ -74,6 +78,7 @@ public class Snapshot extends Propoid {
     }
 
     public Snapshot(Difficulty aDifficulty, Measurement measurement) {
+        duration.set(measurement.getDuration());
         difficulty.set(aDifficulty);
         distance.set(measurement.getDistance());
         strokes.set(measurement.getStrokes());

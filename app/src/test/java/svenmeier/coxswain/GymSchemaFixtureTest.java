@@ -113,7 +113,7 @@ public class GymSchemaFixtureTest {
                 "programDefinition", "status", "pausedDuration", "completed", "goalType",
                 "goalTarget", "raceReference", "raceOutcome", "raceMargin");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
-                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power");
+                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration");
     }
 
     private void assertColumns(String table, String... expected) {

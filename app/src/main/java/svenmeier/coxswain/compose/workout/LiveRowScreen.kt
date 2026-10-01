@@ -440,7 +440,7 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     val completion = gym.progress?.completion()?.coerceIn(0f, 1f) ?: 0f
     val position = if (weights.isNotEmpty())
         (weights.take(activeIndex).sum() + weights[activeIndex] * completion) / total else completion
-    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program) }
+    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
     Canvas(modifier.padding(vertical = 4.dp).semantics {
         contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, saved best ${(race.bestProgress * 100).toInt()} percent"
         else "Workout ${(position * 100).toInt()} percent complete"
@@ -496,7 +496,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     val segments = gym.program?.getSegments().orEmpty()
     val active = gym.progress?.segment ?: segments.firstOrNull()
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
-    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program) }
+    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
@@ -731,8 +731,8 @@ private fun segmentTarget(segment: Segment): String = when {
 
 data class RaceDisplay(val currentProgress: Float, val bestProgress: Float, val leadMeters: Int, val bestMeters: Int)
 
-internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?): RaceDisplay {
-    val expectedDistance = if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
+internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?, recordedDistance: Float? = null): RaceDisplay {
+    val expectedDistance = recordedDistance ?: if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
     val distanceRace = program?.getSegmentsCount() == 1 && (program.getSegment(0).distance.get() > 0)
     val target = if (distanceRace) program.getSegment(0).distance.get().coerceAtLeast(1) else pace.distance.get().coerceAtLeast(1)
     return RaceDisplay(
@@ -780,13 +780,13 @@ internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
         ValueBinding.DELTA_DISTANCE -> {
             val pace = gym.pace
             if (pace != null && pace.duration.get() > 0) {
-                m.distance - (pace.distance.get() * m.duration / pace.duration.get())
+                m.distance - gym.getPaceDistanceAt(m.duration).toInt()
             } else 0
         }
         ValueBinding.DELTA_DURATION -> {
             val pace = gym.pace
             if (pace != null && pace.distance.get() > 0) {
-                m.duration - (pace.duration.get() * m.distance / pace.distance.get())
+                m.duration - gym.getPaceTimeAtDistance(m.distance).toInt()
             } else 0
         }
         else -> 0
