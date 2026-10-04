@@ -180,6 +180,21 @@ class PetePlanIntegrationTest {
         assertEquals(completed.start.get(), target.source.start.get())
     }
 
+    @Test fun bestDistanceReferenceAcceptsOvershootAndUsesTimeAtTarget() {
+        val store = PetePlanStore(context, gym)
+        val state = store.enroll(LocalDate.of(2026, 10, 4))
+        gym.select(Program.meters("10K overshoot", 10000, Difficulty.MEDIUM))
+        gym.onMeasured(measurement(2900, 9900, 1160))
+        gym.onMeasured(measurement(3000, 10003, 1200))
+        val completed = gym.complete()
+        val expected = kotlin.math.round(gym.getWorkoutTimeAtDistance(completed, 10000) * 500 / 10000).toInt()
+        val resolver = PeteGoalResolver.load(context, store, gym)
+        val target = resolver.resolve(store.catalog.session(20, 2), state) as PeteGoal.Speed
+        assertEquals(expected, target.splitSeconds)
+        assertEquals(completed.start.get(), target.source.start.get())
+        assertTrue(gym.getWorkoutTimeAtDistance(completed, 10000) < 3000f)
+    }
+
     private fun measurement(seconds: Int, meters: Int, strokes: Int): Measurement = Measurement().apply {
         duration = seconds
         distance = meters

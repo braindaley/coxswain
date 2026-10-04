@@ -33,9 +33,10 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 
-private val PlanBlue = Color(0xFF0B63F6)
-private val PlanInk = Color(0xFF10213F)
-private val PlanMuted = Color(0xFF53647C)
+private val PlanBlue: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val PlanMuted: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 @Composable
 fun PetePlanScreen(
@@ -79,7 +80,7 @@ fun PetePlanScreen(
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
-            Modifier.fillMaxWidth().background(PlanBlue).height(76.dp).padding(horizontal = 10.dp),
+            Modifier.fillMaxWidth().background(Color(0xFF0B63F6)).height(76.dp).padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = ::goBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White) }
@@ -182,7 +183,7 @@ fun PetePlanScreen(
                             SessionRow(session, done, session.estimatedMinutes(estimateSplit)) { brief = session }
                         }
                     }
-                    if (active && required == 3) Text("Required rows complete. The next week starts Sunday.", color = Color(0xFF167653), fontWeight = FontWeight.Bold)
+                    if (active && required == 3) Text("Required rows complete. The next week starts Sunday.", color = PlanBlue, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -259,7 +260,7 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
                 Text("Week ended · choose whether to move on or repeat", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text("Review week") }
             } else if (state.finished) {
-                Text("Plan finished", color = Color(0xFF167653), fontWeight = FontWeight.Bold)
+                Text("Plan finished", color = PlanBlue, fontWeight = FontWeight.Bold)
             } else {
                 val split = store.estimateSplit()
                 Text("REQUIRED", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -273,7 +274,9 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
                     val done = store.completedWorkout(state, state.activeWeek, state.activeAttempt, session.index) != null
                     SessionRow(session, done, session.estimatedMinutes(split)) { onSession(session.index) }
                 }
-                TextButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text("View all 24 weeks") }
+            }
+            TextButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+                Text(if (state.finished) "View progress and manage plan" else "View all 24 weeks")
             }
         }
     }
@@ -383,7 +386,7 @@ private fun PlanCard(content: @Composable ColumnScope.() -> Unit) {
 private fun SessionRow(session: PeteSession, done: Boolean, minutes: Int, onClick: () -> Unit) {
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (done) Icon(Icons.Default.Check, contentDescription = "Completed", tint = Color(0xFF167653), modifier = Modifier.size(23.dp))
+        if (done) Icon(Icons.Default.Check, contentDescription = "Completed", tint = PlanBlue, modifier = Modifier.size(23.dp))
         else Text("${session.index + 1}", color = PlanMuted, modifier = Modifier.width(23.dp))
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {

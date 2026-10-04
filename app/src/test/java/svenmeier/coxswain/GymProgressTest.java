@@ -56,6 +56,33 @@ public class GymProgressTest {
     }
 
     @Test
+    public void reconnectRebasesResetCountersWithoutDiscardingWorkout() {
+        gym.startFreeRow();
+        gym.onMeasured(measurement(30, 100, 24));
+        gym.connectionLost();
+        gym.connectionRestarted();
+        gym.onMeasured(measurement(0, 0, 0));
+        gym.resume();
+        gym.onMeasured(measurement(10, 40, 24));
+        Workout result = gym.complete();
+        assertEquals(40, result.duration.get().intValue());
+        assertEquals(140, result.distance.get().intValue());
+    }
+
+    @Test
+    public void incompleteDistanceRaceHasNoWinningOutcome() {
+        Program program = Program.meters("Race", 100, Difficulty.HARD);
+        gym.mergeProgram(program);
+        finish(program, measurement(30, 100, 24));
+        gym.setRacePreferred(program, true);
+        gym.startPreferredProgram(program);
+        gym.onMeasured(measurement(10, 20, 24));
+        Workout result = gym.endEarly();
+        assertEquals(svenmeier.coxswain.gym.RaceOutcome.NONE, result.raceOutcome.get());
+        assertEquals(0, result.raceMargin.get().intValue());
+    }
+
+    @Test
     public void progressUsesValuesRelativeToSegmentStart() {
         Segment segment = new Segment(Difficulty.HARD).setDistance(1000).setStrokeRate(24);
         Measurement start = measurement(20, 100, 20);

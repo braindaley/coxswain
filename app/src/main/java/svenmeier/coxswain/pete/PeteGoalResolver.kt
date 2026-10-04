@@ -69,7 +69,9 @@ class PeteGoalResolver private constructor(
             val cap = if (priorRate > rule.getInt("value")) priorRate - 1 else rule.getInt("value")
             return PeteGoal.StrokeRateCap(cap, source, "Ease down from $priorRate SPM; work toward 24 SPM over time.")
         }
-        val baseline = store.averageSplit(source)
+        val baseline = if (rule.optString("mode") == "BEST_DISTANCE")
+            (gym.getWorkoutTimeAtDistance(source, rule.getInt("value")) * 500 / rule.getInt("value")).roundToInt()
+        else store.averageSplit(source)
             ?: return PeteGoal.Unavailable("The earlier row has no usable active-time split.")
         if (kind == "REFERENCE") return PeteGoal.Reference(baseline, source, rule.optString("description", "Use this result as your pacing reference."))
         val target = baseline + rule.optInt("offsetSeconds")
@@ -91,13 +93,13 @@ class PeteGoalResolver private constructor(
         if (rule.optString("mode") == "BEST_DISTANCE") {
             val meters = rule.optInt("value")
             return gym.getAllWorkouts().list().filter { workout ->
-                workout.status.get() == WorkoutStatus.COMPLETED && workout.distance.get() == meters &&
+                workout.status.get() == WorkoutStatus.COMPLETED && (workout.distance.get() ?: 0) >= meters &&
                     store.activeSeconds(workout) > 0 &&
                     runCatching {
                         val program = WorkoutDefinition.thaw(workout.programDefinition.get())
                         program != null && program.getSegmentsCount() == 1 && program.getSegment(0).distance.get() == meters
                     }.getOrDefault(false)
-            }.minByOrNull { store.activeSeconds(it) }
+            }.minByOrNull { gym.getWorkoutTimeAtDistance(it, meters) }
         }
         val refs = rule.optJSONArray("sources") ?: return null
         val candidates = (0 until refs.length()).mapNotNull { i ->

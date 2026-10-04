@@ -1,0 +1,31 @@
+package svenmeier.coxswain
+
+import org.junit.Assert.*
+import org.junit.Test
+import svenmeier.coxswain.gym.*
+
+class WorkoutStatisticsTest {
+    private fun sample(time: Int, distance: Int, strokes: Int, power: Int, rest: Boolean = false) = Snapshot().apply {
+        duration.set(time); this.distance.set(distance); this.strokes.set(strokes)
+        this.power.set(power); strokeRate.set(24); speed.set(400)
+        difficulty.set(if (rest) Difficulty.REST else Difficulty.HARD)
+    }
+    @Test fun averagesExcludeRestAndUseWorkTotalsAndElapsedWeights() {
+        val workout = Workout().apply { duration.set(150); distance.set(520); strokes.set(50) }
+        val result = WorkoutStatistics(workout, listOf(sample(60, 200, 24, 100), sample(90, 220, 26, 0, true), sample(150, 520, 50, 200)))
+        assertEquals(120, result.workSeconds)
+        assertEquals(500, result.workMeters)
+        assertEquals(48, result.workStrokes)
+        assertEquals(120, result.averageSplit)
+        assertEquals(150, result.averagePower)
+        assertEquals(24, result.averageRate)
+        assertEquals(listOf(60f, 90f, 150f), result.samples.map { it.first })
+        assertEquals(listOf(60f, 90f), result.boundaries)
+    }
+    @Test fun zeroPowerDuringWorkCountsAndDuplicateTimestampsDoNotAddWeight() {
+        val workout = Workout().apply { duration.set(90); distance.set(300) }
+        val result = WorkoutStatistics(workout, listOf(sample(30, 100, 12, 150), sample(30, 100, 12, 150), sample(90, 300, 36, 0)))
+        assertEquals(50, result.averagePower)
+        assertEquals(2, result.samples.size)
+    }
+}

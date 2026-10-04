@@ -179,7 +179,9 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         foreground.connected();
 
         this.program = gym.program;
-        if (this.program != null) {
+        this.sessionGeneration = gym.getSessionGeneration();
+        if (gym.hasActiveSession()) {
+            gym.connectionRestarted();
             rower.getMeasurement().reset();
 
             foreground.changed();

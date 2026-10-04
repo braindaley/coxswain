@@ -86,6 +86,7 @@ public class Gym {
     private Measurement pausedAtMeasurement;
 
     private Measurement pausedOffsets = new Measurement();
+    private Measurement connectionOffsets = new Measurement();
 
     private boolean paused;
 
@@ -537,6 +538,7 @@ public class Gym {
         this.measurement = new Measurement();
         this.rawMeasurement = new Measurement();
         this.pausedOffsets = new Measurement();
+        this.connectionOffsets = new Measurement();
         this.pausedAtMeasurement = null;
         this.paused = false;
         this.pausedAtMillis = 0;
@@ -564,6 +566,7 @@ public class Gym {
         this.measurement = new Measurement();
         this.rawMeasurement = new Measurement();
         this.pausedOffsets = new Measurement();
+        this.connectionOffsets = new Measurement();
         this.pausedAtMeasurement = null;
         this.paused = false;
         this.current = null;
@@ -629,6 +632,16 @@ public class Gym {
         }
     }
 
+    /** Rebase a reset transport counter onto the preserved workout totals. */
+    public void connectionRestarted() {
+        connectionOffsets.setDuration(measurement.getDuration() + pausedOffsets.getDuration());
+        connectionOffsets.setDistance(measurement.getDistance() + pausedOffsets.getDistance());
+        connectionOffsets.setStrokes(measurement.getStrokes() + pausedOffsets.getStrokes());
+        connectionOffsets.setEnergy(measurement.getEnergy() + pausedOffsets.getEnergy());
+        rawMeasurement = new Measurement();
+        if (paused) pausedAtMeasurement = new Measurement();
+    }
+
     public Workout complete() {
         return finalizeSession(WorkoutStatus.COMPLETED);
     }
@@ -674,6 +687,11 @@ public class Gym {
     private void finalizeRace(Workout workout) {
         if (pace == null || workout.sessionType.get() != SessionType.RACE) return;
         workout.raceReference.set(pace);
+        if (workout.status.get() != WorkoutStatus.COMPLETED) {
+            workout.raceOutcome.set(RaceOutcome.NONE);
+            workout.raceMargin.set(0);
+            return;
+        }
         int margin;
         if (WorkoutDefinition.ranksByDistance(program)) {
             margin = workout.distance.get() - pace.distance.get();
@@ -793,10 +811,10 @@ public class Gym {
 
     private Measurement normalized(Measurement raw) {
         Measurement adjusted = new Measurement(raw);
-        adjusted.setDuration(Math.max(0, raw.getDuration() - pausedOffsets.getDuration()));
-        adjusted.setDistance(Math.max(0, raw.getDistance() - pausedOffsets.getDistance()));
-        adjusted.setStrokes(Math.max(0, raw.getStrokes() - pausedOffsets.getStrokes()));
-        adjusted.setEnergy(Math.max(0, raw.getEnergy() - pausedOffsets.getEnergy()));
+        adjusted.setDuration(Math.max(0, raw.getDuration() + connectionOffsets.getDuration() - pausedOffsets.getDuration()));
+        adjusted.setDistance(Math.max(0, raw.getDistance() + connectionOffsets.getDistance() - pausedOffsets.getDistance()));
+        adjusted.setStrokes(Math.max(0, raw.getStrokes() + connectionOffsets.getStrokes() - pausedOffsets.getStrokes()));
+        adjusted.setEnergy(Math.max(0, raw.getEnergy() + connectionOffsets.getEnergy() - pausedOffsets.getEnergy()));
         return adjusted;
     }
 
@@ -827,6 +845,12 @@ public class Gym {
     public float getPaceTimeAtDistance(int meters) {
         RaceReplay value = paceReplay();
         return value == null ? 0f : value.timeAtDistance(meters);
+    }
+
+    public float getWorkoutTimeAtDistance(Workout workout, int meters) {
+        List<Snapshot> samples = new ArrayList<>(getSnapshots(workout).list());
+        samples.sort((left, right) -> Long.compare(Row.getID(left), Row.getID(right)));
+        return new RaceReplay(workout, samples).timeAtDistance(meters);
     }
 
     public Match<Snapshot> getSnapshots(Workout workout) {
