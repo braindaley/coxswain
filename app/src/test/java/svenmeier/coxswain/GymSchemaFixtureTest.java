@@ -105,7 +105,7 @@ public class GymSchemaFixtureTest {
         repository.query(new Workout());
         repository.query(new Snapshot());
 
-        assertColumns("Program", "_id", "_type", "name", "segments");
+        assertColumns("Program", "_id", "_type", "name", "segments", "identity");
         assertColumns("Segment", "_id", "_type", "name", "difficulty", "distance", "duration",
                 "strokes", "energy", "speed", "strokeRate", "pulse", "power");
         assertColumns("Workout", "_id", "_type", "program", "location", "start", "duration",
@@ -116,7 +116,7 @@ public class GymSchemaFixtureTest {
                 "planGoalValue", "planGoalSourceStart", "planActiveSeconds",
                 "planActiveDistance", "planActiveStrokes");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
-                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration");
+                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration", "recordedAt");
     }
 
     private void assertColumns(String table, String... expected) {

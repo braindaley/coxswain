@@ -81,6 +81,7 @@ public class TcxImport implements Import<Workout> {
 			}
 
 			gym.add(tcx2Workout.getProgramName(), tcx2Workout.getWorkout(), tcx2Workout.getSnapshots());
+			gym.notifyImportedData();
 		}
 	}
 

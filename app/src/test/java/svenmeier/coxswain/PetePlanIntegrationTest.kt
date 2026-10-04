@@ -46,6 +46,22 @@ class PetePlanIntegrationTest {
         PreferenceManager.getDefaultSharedPreferences(context).edit().remove("petes_plan_state_v1").commit()
     }
 
+    @Test fun ordinaryIntervalPaceEstimateExcludesRest() {
+        val store = PetePlanStore(context, gym)
+        val program = Program("Ordinary interval")
+        program.getSegment(0).setDuration(60)
+        program.addSegment(Segment(Difficulty.REST).setDuration(30))
+        program.addSegment(Segment(Difficulty.MEDIUM).setDuration(60))
+        gym.select(program)
+        gym.onMeasured(measurement(60, 200, 24))
+        gym.onMeasured(measurement(90, 220, 26))
+        gym.onMeasured(measurement(150, 420, 50))
+        val row = gym.complete()
+        assertEquals(120, store.activeSeconds(row))
+        assertEquals(400, store.activeDistance(row))
+        assertEquals(150, store.averageSplit(row))
+    }
+
     @Test fun catalogIncludesAllWeeksAndBuildsFullIntervalWithRest() {
         val catalog = PetePlanCatalog.load(context)
         assertEquals(24, catalog.weeks.size)

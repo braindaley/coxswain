@@ -27,6 +27,36 @@ import static org.junit.Assert.assertTrue;
 public class Workout2HealthConnectTest {
 
     @Test
+    public void exportUsesRecordedTimesDeduplicatesAndPreservesPauseGaps() {
+        Workout workout = new Workout();
+        long start = 1_700_000_000_000L;
+        workout.start.set(start); workout.duration.set(60); workout.pausedDuration.set(30);
+        workout.completed.set(start + 90_000);
+        Snapshot first = new Snapshot();
+        first.duration.set(10); first.power.set(100); first.recordedAt.set(start + 10_000);
+        Snapshot duplicate = new Snapshot();
+        duplicate.duration.set(10); duplicate.power.set(120); duplicate.recordedAt.set(start + 10_000);
+        Snapshot afterPause = new Snapshot();
+        afterPause.duration.set(40); afterPause.power.set(200); afterPause.recordedAt.set(start + 70_000);
+        List<Record> records = new Workout2HealthConnect().map(workout, java.util.Arrays.asList(first, duplicate, afterPause));
+        PowerRecord power = (PowerRecord) findRecord(records, PowerRecord.class);
+        assertEquals(2, power.getSamples().size());
+        assertEquals(start + 10_000, power.getSamples().get(0).getTime().toEpochMilli());
+        assertEquals(start + 70_000, power.getSamples().get(1).getTime().toEpochMilli());
+        assertEquals(start + 90_000, power.getEndTime().toEpochMilli());
+    }
+
+    @Test
+    public void exportUsesElapsedSecondsWhenLegacyWallTimesAreAbsent() {
+        Workout workout = new Workout();
+        workout.start.set(1_700_000_000_000L); workout.duration.set(100);
+        Snapshot first = new Snapshot(); first.duration.set(10); first.power.set(100);
+        Snapshot last = new Snapshot(); last.duration.set(80); last.power.set(200);
+        PowerRecord power = (PowerRecord) findRecord(new Workout2HealthConnect().map(workout, java.util.Arrays.asList(first, last)), PowerRecord.class);
+        assertEquals(workout.start.get() + 80_000, power.getSamples().get(1).getTime().toEpochMilli());
+    }
+
+    @Test
     public void mapsWorkoutSummaryAndSamples() {
         Workout workout = new Workout();
         workout.start.set(1_700_000_000_000L);

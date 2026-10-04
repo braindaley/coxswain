@@ -8,6 +8,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -20,6 +22,18 @@ class WorkoutSetupScreenTest {
 
     @get:Rule
     val compose = createComposeRule()
+
+    @Test
+    fun quickIntervalDraftSurvivesStateRestoration() {
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
+            CoxswainTheme { WorkoutSetupScreen("Intervals", {}, {}, {}) }
+        }
+        compose.onAllNodesWithText("Distance")[1].performClick()
+        compose.onNodeWithText("500").performTextReplacement("750")
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithText("750").assertIsDisplayed()
+    }
 
     @Test
     fun intervalBuilderChangesTypesValuesAddsDeletesAndRejectsZero() {

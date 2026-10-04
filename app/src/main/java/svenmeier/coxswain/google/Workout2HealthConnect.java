@@ -40,7 +40,8 @@ public class Workout2HealthConnect {
         if (workout.duration.get() <= 0) return records;
 
         Instant start = Instant.ofEpochMilli(workout.start.get());
-        Instant end = start.plusMillis(workout.duration.get() * 1000L);
+        Instant end = start.plusMillis((workout.duration.get() + workout.pausedDuration.get()) * 1000L);
+        if (workout.completed.get() != null && workout.completed.get() > end.toEpochMilli()) end = Instant.ofEpochMilli(workout.completed.get());
         ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(start);
 
         // 1. Exercise Session
@@ -67,12 +68,22 @@ public class Workout2HealthConnect {
         // 4. Power
         List<PowerRecord.Sample> powerSamples = new ArrayList<>();
 
-        int size = snapshots.size();
+        boolean timed = !snapshots.isEmpty() && snapshots.stream().allMatch(s -> s.duration.get() != null && s.duration.get() > 0);
+        java.util.TreeMap<Long, Snapshot> timeline = new java.util.TreeMap<>();
+        for (int i = 0; i < snapshots.size(); i++) {
+            Snapshot sample = snapshots.get(i);
+            long elapsed = timed ? sample.duration.get() * 1000L : workout.duration.get() * 1000L * (i + 1) / snapshots.size();
+            long recorded = sample.recordedAt.get() == null ? 0L : sample.recordedAt.get();
+            long time = recorded >= start.toEpochMilli() && recorded <= end.toEpochMilli() ? recorded : start.toEpochMilli() + elapsed;
+            timeline.put(Math.max(start.toEpochMilli(), Math.min(end.toEpochMilli() - 1, time)), sample);
+        }
+        List<java.util.Map.Entry<Long, Snapshot>> entries = new ArrayList<>(timeline.entrySet());
+        int size = entries.size();
         int step = Math.max(1, (size + MAX_SAMPLES - 1) / MAX_SAMPLES);
 
-        for (int i = 0; i < size && i < workout.duration.get(); i += step) {
-            Snapshot snapshot = snapshots.get(i);
-            Instant time = start.plusMillis(i * 1000L);
+        for (int i = 0; i < size; i += step) {
+            Snapshot snapshot = entries.get(i).getValue();
+            Instant time = Instant.ofEpochMilli(entries.get(i).getKey());
             
             // Health Connect requires heart rate > 0
             int pulse = snapshot.pulse.get();

@@ -138,7 +138,7 @@ class PetePlanStore(context: Context, private val gym: Gym) {
     }
 
     fun activeSeconds(workout: Workout): Int {
-        if (!workout.planEnrollment.get().isNullOrEmpty() && (workout.planActiveSeconds.get() ?: 0) > 0)
+        if ((workout.planActiveSeconds.get() ?: 0) > 0)
             return workout.planActiveSeconds.get() ?: 0
         val elapsed = (workout.duration.get() ?: 0).coerceAtLeast(0)
         if (workout.planEnrollment.get().isNullOrEmpty()) return elapsed
@@ -149,11 +149,11 @@ class PetePlanStore(context: Context, private val gym: Gym) {
     }
 
     fun activeDistance(workout: Workout): Int =
-        if (!workout.planEnrollment.get().isNullOrEmpty() && (workout.planActiveSeconds.get() ?: 0) > 0)
+        if ((workout.planActiveSeconds.get() ?: 0) > 0)
             workout.planActiveDistance.get() ?: 0 else workout.distance.get() ?: 0
 
     fun activeStrokes(workout: Workout): Int =
-        if (!workout.planEnrollment.get().isNullOrEmpty() && (workout.planActiveSeconds.get() ?: 0) > 0)
+        if ((workout.planActiveSeconds.get() ?: 0) > 0)
             workout.planActiveStrokes.get() ?: 0 else workout.strokes.get() ?: 0
 
     fun averageSplit(workout: Workout): Int? {

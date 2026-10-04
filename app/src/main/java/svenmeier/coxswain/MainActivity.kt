@@ -35,6 +35,9 @@ import svenmeier.coxswain.google.HealthConnectExport
 import svenmeier.coxswain.google.HealthConnectManageActivity
 import svenmeier.coxswain.pete.PetePlanStore
 import svenmeier.coxswain.pete.PeteGoal
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -44,7 +47,7 @@ class MainActivity : ComponentActivity() {
         setTurnScreenOn(true)
         val gym = Gym.instance(this)
 
-        handleIntent(intent, gym)
+        if (savedInstanceState == null) handleIntent(intent, gym)
 
         setContent {
             CoxswainTheme {
@@ -60,6 +63,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?, gym: Gym) {
         if (intent == null) return
+        if (Intent.ACTION_VIEW == intent.action || Intent.ACTION_SEND == intent.action) {
+            svenmeier.coxswain.io.ImportIntention(this).onIntent(intent)
+            return
+        }
 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED == intent.action) {
             @Suppress("DEPRECATION")
@@ -102,17 +109,38 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
     val restoreFailed = stringResource(R.string.ui_restore_failed)
     val backupReadFailed = stringResource(R.string.ui_backup_read_failed)
     val programCopy = stringResource(R.string.ui_program_copy)
+    val backupScope = rememberCoroutineScope()
+    var backupBusy by remember { mutableStateOf(false) }
     val createBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        if (uri != null) runCatching { activity.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(gym.createBackup()) } }
-            .onSuccess { Toast.makeText(activity, backupSaved, Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(activity, backupFailed.format(it.message), Toast.LENGTH_LONG).show() }
+        if (uri != null) backupScope.launch {
+            backupBusy = true
+            runCatching { withContext(Dispatchers.IO) {
+                val output = activity.contentResolver.openOutputStream(uri) ?: error("Cannot open backup destination")
+                output.bufferedWriter().use { it.write(gym.createBackup()) }
+            } }.onSuccess { Toast.makeText(activity, backupSaved, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(activity, backupFailed.format(it.message), Toast.LENGTH_LONG).show() }
+            backupBusy = false
+        }
     }
     val restoreBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) runCatching { activity.contentResolver.openInputStream(uri)?.bufferedReader()?.use { gym.restoreBackup(it.readText()) } ?: error(backupReadFailed) }
-            .onSuccess { refreshKey++; Toast.makeText(activity, backupRestored, Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(activity, restoreFailed.format(it.message), Toast.LENGTH_LONG).show() }
+        if (uri != null) backupScope.launch {
+            backupBusy = true
+            runCatching { withContext(Dispatchers.IO) {
+                check(!gym.hasActiveSession()) { "End the active row before restoring a backup" }
+                activity.contentResolver.openInputStream(uri)?.bufferedReader()?.use { gym.restoreBackup(it.readText()) } ?: error(backupReadFailed)
+            } }.onSuccess { refreshKey++; Toast.makeText(activity, backupRestored, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(activity, restoreFailed.format(it.message), Toast.LENGTH_LONG).show() }
+            backupBusy = false
+        }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(gym) {
+        val listener = Gym.Listener { scope ->
+            if (scope == null || scope is Program || scope is svenmeier.coxswain.gym.Workout) refreshKey++
+        }
+        gym.addListener(listener)
+        onDispose { gym.removeListener(listener) }
+    }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) refreshKey++ }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -126,6 +154,7 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
         TabItem(stringResource(R.string.ui_more), Icons.Default.MoreHoriz)
     )
 
+    if (backupBusy) AlertDialog(onDismissRequest = {}, confirmButton = {}, title = { Text("Working on backup") }, text = { CircularProgressIndicator() })
     Scaffold(
         bottomBar = {
             Column {

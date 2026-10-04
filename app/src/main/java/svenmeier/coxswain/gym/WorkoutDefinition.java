@@ -19,6 +19,7 @@ public final class WorkoutDefinition {
         try {
             JSONObject root = new JSONObject();
             root.put("name", program.name.get());
+            root.put("identity", program.identity.get());
             JSONArray segments = new JSONArray();
             for (Segment segment : program.getSegments()) {
                 JSONObject value = new JSONObject();
@@ -75,6 +76,7 @@ public final class WorkoutDefinition {
             JSONObject root = new JSONObject(definition);
             Program program = new Program();
             program.name.set(root.optString("name", "Workout"));
+            program.identity.set(root.optString("identity", null));
             program.segments.set(new ArrayList<>());
             JSONArray segments = root.getJSONArray("segments");
             for (int index = 0; index < segments.length(); index++) {

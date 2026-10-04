@@ -70,7 +70,7 @@ class ProgramActivity : FragmentActivity() {
             val compatibility = WorkoutDefinition.compatibilityKey(program)
             val history = ArrayList(gym.getAllWorkouts().list()).filter { workout ->
                 WorkoutDefinition.compatibilityKey(workout.programDefinition.get()) == compatibility ||
-                    workout.programName.get() == program.name.get()
+                    runCatching { propoid.db.aspect.Row.getID(workout.program.get()) == propoid.db.aspect.Row.getID(program) }.getOrDefault(false)
             }.sortedByDescending { it.start.get() }
             val raceCandidates = gym.getRaceCandidates(program)
             setContent {
@@ -100,7 +100,7 @@ class ProgramActivity : FragmentActivity() {
             return
         }
 
-        draftProgram = if (originalProgram != null) {
+        draftProgram = savedInstanceState?.getString("draft")?.let { WorkoutDefinition.thaw(it) } ?: if (originalProgram != null) {
             cloneProgram(originalProgram!!)
         } else {
             Program(getString(R.string.program_name_new)).apply {
@@ -151,6 +151,11 @@ class ProgramActivity : FragmentActivity() {
                 )
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        if (::draftProgram.isInitialized) outState.putString("draft", WorkoutDefinition.freeze(draftProgram))
+        super.onSaveInstanceState(outState)
     }
 
     private fun cloneProgram(original: Program): Program {
@@ -215,12 +220,13 @@ private fun ProgramDetailsScreen(
             "%d:%02d /500 m".format(Locale.getDefault(), pace / 60, pace % 60)
         }
     }
+    val resultGym = Gym.instance(androidx.compose.ui.platform.LocalContext.current)
     val timed = WorkoutDefinition.ranksByDistance(program)
     val raceToggleDescription = stringResource(R.string.ui_race_your_best)
     // Use the same completed, compatible sessions as Race Your Best.
     val completedHistory = raceCandidates.sortedByDescending { it.start.get() }
     val best = raceCandidates.firstOrNull()
-    val averageResult = if (completedHistory.isEmpty()) null else if (timed) completedHistory.map { it.distance.get() }.average().toInt() else completedHistory.map { it.duration.get() }.average().toInt()
+    val averageResult = if (completedHistory.isEmpty()) null else if (timed) completedHistory.map { resultGym.activeDistance(it) }.average().toInt() else completedHistory.map { resultGym.resultSeconds(it, program) }.average().toInt()
 
     Scaffold(
         topBar = {
@@ -327,7 +333,7 @@ private fun ProgramDetailsScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(pluralStringResource(R.plurals.ui_workouts_completed, completedHistory.size, completedHistory.size), fontWeight = FontWeight.Bold)
                     if (best != null) {
-                        DetailValueRow(stringResource(R.string.ui_best), if (timed) "%,d m".format(Locale.getDefault(), best.distance.get()) else formatProgramTime(best.duration.get()))
+                        DetailValueRow(stringResource(R.string.ui_best), if (timed) "%,d m".format(Locale.getDefault(), resultGym.activeDistance(best)) else formatProgramTime(resultGym.resultSeconds(best, program).toInt()))
                         averageResult?.let { average ->
                             DetailValueRow(stringResource(R.string.ui_average), if (timed) "%,d m".format(Locale.getDefault(), average) else formatProgramTime(average))
                         }

@@ -81,6 +81,7 @@ public class ProgramImport implements Import<Program> {
 			}
 
 			gym.mergeProgram(program);
+			gym.notifyImportedData();
 		}
 	}
 

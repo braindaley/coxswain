@@ -18,6 +18,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,7 +95,7 @@ fun WorkoutSetupScreen(
     onStart: (Program) -> Unit,
     onSaveAsProgram: (Program) -> Unit
 ) {
-    var selectedType by remember(initialType) { mutableStateOf(initialType) }
+    var selectedType by rememberSaveable(initialType) { mutableStateOf(initialType) }
     val typeOptions = listOf(
         "Duration" to stringResource(R.string.ui_duration),
         "Distance" to stringResource(R.string.ui_distance),
@@ -102,12 +104,18 @@ fun WorkoutSetupScreen(
     val selectedTypeLabel = typeOptions.first { it.first == selectedType }.second
     val quickWorkoutName = stringResource(R.string.ui_quick_workout)
     val defaultProgramName = stringResource(R.string.ui_default_program_name)
-    var targetValue by remember(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
-    var selectedGoal by remember { mutableStateOf("None") }
-    var goalValue by remember { mutableIntStateOf(26) }
-    var pendingSave by remember { mutableStateOf<Program?>(null) }
-    var programName by remember { mutableStateOf(defaultProgramName) }
-    val intervalSegments = remember { mutableStateListOf(DraftSegment(SegmentType.DURATION, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.DURATION, 5)) }
+    var targetValue by rememberSaveable(initialType) { mutableIntStateOf(if (initialType == "Distance") 5000 else 60) }
+    var selectedGoal by rememberSaveable { mutableStateOf("None") }
+    var goalValue by rememberSaveable { mutableIntStateOf(26) }
+    var pendingSave by rememberSaveable(stateSaver = androidx.compose.runtime.saveable.Saver<Program?, String>(
+        save = { svenmeier.coxswain.gym.WorkoutDefinition.freeze(it) ?: "" },
+        restore = { svenmeier.coxswain.gym.WorkoutDefinition.thaw(it) }
+    )) { mutableStateOf<Program?>(null) }
+    var programName by rememberSaveable { mutableStateOf(defaultProgramName) }
+    val intervalSegments = rememberSaveable(saver = listSaver<androidx.compose.runtime.snapshots.SnapshotStateList<DraftSegment>, String>(
+        save = { rows -> rows.map { "${it.type.name}:${it.value}" } },
+        restore = { rows -> mutableStateListOf<DraftSegment>().apply { addAll(rows.map { DraftSegment(SegmentType.valueOf(it.substringBefore(':')), it.substringAfter(':').toInt()) }) } }
+    )) { mutableStateListOf(DraftSegment(SegmentType.DURATION, 5), DraftSegment(SegmentType.REST, 1), DraftSegment(SegmentType.DURATION, 5)) }
     val definitionValid = if (selectedType == "Intervals") intervalSegments.isNotEmpty() && intervalSegments.all { it.value > 0 } else targetValue > 0
 
     Scaffold(

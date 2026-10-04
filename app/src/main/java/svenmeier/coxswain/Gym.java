@@ -38,7 +38,6 @@ import propoid.core.Propoid;
 import propoid.db.LookupException;
 import propoid.db.Match;
 import propoid.db.Order;
-import propoid.db.Range;
 import propoid.db.Reference;
 import propoid.db.Repository;
 import propoid.db.Transaction;
@@ -49,6 +48,7 @@ import propoid.util.content.Preference;
 import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Measurement;
 import svenmeier.coxswain.gym.Program;
+import svenmeier.coxswain.gym.PerformanceGoal;
 import svenmeier.coxswain.gym.RaceOutcome;
 import svenmeier.coxswain.gym.SessionType;
 import svenmeier.coxswain.gym.Segment;
@@ -129,6 +129,9 @@ public class Gym {
 
     private Workout replayWorkout;
     private RaceReplay replay;
+    private int replayScoringDistance;
+    private boolean replayEstimated;
+    private boolean targetReached;
 
 	/**
      * The current workout.
@@ -174,8 +177,20 @@ public class Gym {
         // index snapshots by workout
         Snapshot snapshotIndex = new Snapshot();
         repository.index(snapshotIndex, false, Order.ascending(snapshotIndex.workout));
+        Workout interrupted = new Workout();
+        for (Workout saved : repository.query(interrupted, equal(interrupted.status, WorkoutStatus.ACTIVE)).list()) {
+            saved.status.set(WorkoutStatus.ENDED_EARLY);
+            saved.completed.set(saved.start.get() + saved.duration.get() * 1000L);
+            repository.merge(saved);
+        }
         
         Match<Program> query = repository.query(new Program());
+        for (Program saved : query.list()) {
+            if (saved.identity.get() == null) {
+                saved.identity.set(java.util.UUID.randomUUID().toString());
+                repository.merge(saved);
+            }
+        }
         if (query.count() == 0) {
             repository.insert(Program.meters(String.format(context.getString(R.string.distance_meters), 500), 500, Difficulty.EASY));
             repository.insert(Program.meters(String.format(context.getString(R.string.distance_meters), 1000), 1000, Difficulty.EASY));
@@ -218,8 +233,12 @@ public class Gym {
                     Where.lessEqual(workout.start, calendar.getTimeInMillis()),
                         Where.is(snapshot.workout, Where.any())
                 );
-        for (Workout compact : repository.query(workout, where).list(Range.limit(count), Order.ascending(workout.start))) {
+        int compacted = 0;
+        for (Workout compact : repository.query(workout, where).list(Order.ascending(workout.start))) {
+            // Structured recordings may be future race or coaching references.
+            if (compact.programDefinition.get() != null) continue;
             repository.query(snapshot, equal(snapshot.workout, compact)).delete();
+            if (++compacted >= count) break;
         }
 
         repository.vacuum();
@@ -283,7 +302,12 @@ public class Gym {
     }
 
     public void mergeProgram(Program program) {
+        if (program.identity.get() == null) program.identity.set(java.util.UUID.randomUUID().toString());
         repository.merge(program);
+    }
+
+    public void notifyImportedData() {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> fireChanged(null));
     }
 
     public void mergeSegment(Segment segment) {
@@ -341,17 +365,20 @@ public class Gym {
         Workout prototype = new Workout();
         String compatibility = WorkoutDefinition.compatibilityKey(selectedProgram);
         List<Workout> candidates = new ArrayList<>();
+        Map<Workout, Float> scores = new HashMap<>();
+        boolean timed = WorkoutDefinition.ranksByDistance(selectedProgram);
+        boolean containsRest = selectedProgram.getSegments().stream().anyMatch(segment -> segment.difficulty.get() == Difficulty.REST);
         for (Workout candidate : repository.query(prototype,
                 equal(prototype.status, WorkoutStatus.COMPLETED)).list()) {
             if (compatibility.equals(WorkoutDefinition.compatibilityKey(candidate.programDefinition.get()))) {
+                if (containsRest && (candidate.planActiveSeconds.get() == null || candidate.planActiveSeconds.get() <= 0)
+                        && getSnapshots(candidate).count() == 0) continue;
                 candidates.add(candidate);
+                scores.put(candidate, timed ? (float) activeDistance(candidate) : resultSeconds(candidate, selectedProgram));
             }
         }
         Collections.sort(candidates, (left, right) -> {
-            boolean timed = WorkoutDefinition.ranksByDistance(selectedProgram);
-            int leftValue = timed ? left.distance.get() : left.duration.get();
-            int rightValue = timed ? right.distance.get() : right.duration.get();
-            return timed ? Integer.compare(rightValue, leftValue) : Integer.compare(leftValue, rightValue);
+            return timed ? Float.compare(scores.get(right), scores.get(left)) : Float.compare(scores.get(left), scores.get(right));
         });
         return candidates;
     }
@@ -418,13 +445,55 @@ public class Gym {
     }
 
     public boolean isRacePreferred(Program program) {
-        return context.getSharedPreferences("program_race", Context.MODE_PRIVATE)
-                .getBoolean(WorkoutDefinition.compatibilityKey(program), !getRaceCandidates(program).isEmpty());
+        SharedPreferences preferences = context.getSharedPreferences("program_race", Context.MODE_PRIVATE);
+        String key = racePreferenceKey(program);
+        if (preferences.contains(key)) return preferences.getBoolean(key, false);
+        String legacy = WorkoutDefinition.compatibilityKey(program);
+        if (preferences.contains(legacy)) return preferences.getBoolean(legacy, false);
+        return !getRaceCandidates(program).isEmpty();
     }
 
     public void setRacePreferred(Program program, boolean enabled) {
         context.getSharedPreferences("program_race", Context.MODE_PRIVATE).edit()
-                .putBoolean(WorkoutDefinition.compatibilityKey(program), enabled).apply();
+                .putBoolean(racePreferenceKey(program), enabled).apply();
+    }
+
+    private String racePreferenceKey(Program program) {
+        Program saved = resolveSavedProgram(program);
+        return saved == null ? "detached:" + program.name.get() + WorkoutDefinition.compatibilityKey(program)
+                : "program:" + saved.identity.get();
+    }
+
+    public Program resolveSavedProgram(Program definition) {
+        if (definition == null) return null;
+        if (Row.getID(definition) != Row.TRANSIENT) return definition;
+        for (Program saved : getPrograms().list()) {
+            if (definition.identity.get() != null && definition.identity.get().equals(saved.identity.get())) return saved;
+        }
+        if (definition.identity.get() != null) return null;
+        for (Program saved : getPrograms().list()) {
+            if (saved.name.get().equals(definition.name.get()) &&
+                    WorkoutDefinition.compatibilityKey(saved).equals(WorkoutDefinition.compatibilityKey(definition))) return saved;
+        }
+        return null;
+    }
+
+    public int activeDistance(Workout workout) {
+        Program definition = WorkoutDefinition.thaw(workout.programDefinition.get());
+        if (WorkoutDefinition.ranksByDistance(definition)) {
+            List<Snapshot> samples = new ArrayList<>(getSnapshots(workout).list());
+            samples.sort((left, right) -> Long.compare(Row.getID(left), Row.getID(right)));
+            int target = 0;
+            for (Segment segment : definition.getSegments()) target += segment.duration.get();
+            return Math.round(new RaceReplay(workout, samples, true).distanceAt(target));
+        }
+        return new WorkoutStatistics(workout, getSnapshots(workout).list()).getWorkMeters();
+    }
+
+    public float resultSeconds(Workout workout, Program definition) {
+        if (definition.getSegmentsCount() == 1 && definition.getSegment(0).distance.get() > 0)
+            return getWorkoutTimeAtDistance(workout, definition.getSegment(0).distance.get());
+        return workout.duration.get();
     }
 
     public void startPreferredProgram(Program program) {
@@ -534,6 +603,7 @@ public class Gym {
     }
 
     private void prepareSession(SessionType type) {
+        targetReached = false;
         this.sessionType = type;
         this.measurement = new Measurement();
         this.rawMeasurement = new Measurement();
@@ -664,7 +734,7 @@ public class Gym {
         if (paused) resume();
         Workout finalized = current;
         finalized.status.set(status);
-        if (planEnrollment != null) {
+        if (program != null) {
             finalized.planActiveSeconds.set(getPlanActiveSeconds());
             finalized.planActiveDistance.set(getPlanLiveDistance());
             finalized.planActiveStrokes.set(getPlanActiveStrokes());
@@ -694,9 +764,9 @@ public class Gym {
         }
         int margin;
         if (WorkoutDefinition.ranksByDistance(program)) {
-            margin = workout.distance.get() - pace.distance.get();
+            margin = activeDistance(workout) - activeDistance(pace);
         } else {
-            margin = (pace.duration.get() - workout.duration.get()) * 1000;
+            margin = Math.round((resultSeconds(pace, program) - resultSeconds(workout, program)) * 1000);
         }
         workout.raceMargin.set(margin);
         workout.raceOutcome.set(margin > 0 ? RaceOutcome.WON
@@ -716,6 +786,7 @@ public class Gym {
      */
     public Event onMeasured(Measurement measurement) {
         Event event = Event.ACKNOWLEDGED;
+        if (targetReached) return event;
 
         this.rawMeasurement = new Measurement(measurement);
 
@@ -797,6 +868,7 @@ public class Gym {
                 mergeWorkout(current);
 
                 progress = null;
+                targetReached = true;
 
                 event = Event.PROGRAM_FINISHED;
             } else {
@@ -831,7 +903,9 @@ public class Gym {
         if (replayWorkout != pace || replay == null) {
             List<Snapshot> samples = new ArrayList<>(getSnapshots(pace).list());
             samples.sort((left, right) -> Long.compare(Row.getID(left), Row.getID(right)));
-            replay = new RaceReplay(pace, samples);
+            replay = new RaceReplay(pace, samples, true);
+            replayEstimated = samples.isEmpty() || samples.stream().anyMatch(sample -> sample.duration.get() == null || sample.duration.get() <= 0);
+            replayScoringDistance = activeDistance(pace);
             replayWorkout = pace;
         }
         return replay;
@@ -839,7 +913,7 @@ public class Gym {
 
     public float getPaceDistanceAt(int seconds) {
         RaceReplay value = paceReplay();
-        return value == null ? 0f : value.distanceAt(seconds);
+        return value == null ? 0f : Math.min(replayScoringDistance, value.distanceAt(seconds));
     }
 
     public float getPaceTimeAtDistance(int meters) {
@@ -926,7 +1000,11 @@ public class Gym {
             JSONObject root = new JSONObject();
             root.put("version", 1);
             JSONArray programs = new JSONArray();
-            for (Program value : getPrograms().list()) programs.put(new JSONObject(WorkoutDefinition.freeze(value)));
+            for (Program value : getPrograms().list()) {
+                JSONObject definition = new JSONObject(WorkoutDefinition.freeze(value));
+                definition.put("racePreferred", isRacePreferred(value));
+                programs.put(definition);
+            }
             root.put("programs", programs);
 
             JSONArray workouts = new JSONArray();
@@ -967,6 +1045,7 @@ public class Gym {
                     JSONObject sample = new JSONObject();
                     sample.put("difficulty", snapshot.difficulty.get().name());
                     sample.put("duration", snapshot.duration.get());
+                    sample.put("recordedAt", snapshot.recordedAt.get());
                     sample.put("distance", snapshot.distance.get());
                     sample.put("strokes", snapshot.strokes.get());
                     sample.put("energy", snapshot.energy.get());
@@ -988,6 +1067,11 @@ public class Gym {
                 if (value instanceof Boolean || value instanceof Number || value instanceof String) preferences.put(entry.getKey(), value);
             }
             root.put("preferences", preferences);
+            JSONObject healthExports = new JSONObject();
+            for (Map.Entry<String, ?> entry : context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).getAll().entrySet()) {
+                if (entry.getKey().matches("[0-9]+") && entry.getValue() instanceof Boolean) healthExports.put(entry.getKey(), entry.getValue());
+            }
+            root.put("healthConnectExports", healthExports);
             return root.toString(2);
         } catch (JSONException impossible) {
             throw new IllegalStateException("Could not create backup", impossible);
@@ -999,91 +1083,111 @@ public class Gym {
         try {
             JSONObject root = new JSONObject(backup);
             if (root.optInt("version") != 1) throw new IllegalArgumentException("Unsupported backup version");
-            JSONArray programs = root.getJSONArray("programs");
-            for (int i = 0; i < programs.length(); i++) {
-                Program restored = WorkoutDefinition.thaw(programs.getJSONObject(i).toString());
-                boolean exists = false;
-                for (Program current : getPrograms().list()) {
-                    if (current.name.get().equals(restored.name.get()) && WorkoutDefinition.compatibilityKey(current).equals(WorkoutDefinition.compatibilityKey(restored))) { exists = true; break; }
-                }
-                if (!exists) mergeProgram(restored);
-            }
-
-            Map<Long, Workout> restoredByStart = new HashMap<>();
-            JSONArray workouts = root.getJSONArray("workouts");
-            for (int i = 0; i < workouts.length(); i++) {
-                JSONObject item = workouts.getJSONObject(i);
-                long start = item.getLong("start");
-                Workout example = new Workout();
-                Workout value = repository.query(example, equal(example.start, start)).first();
-                if (value == null) {
-                    value = new Workout();
-                    value.start.set(start);
-                    value.duration.set(item.getInt("duration"));
-                    value.distance.set(item.getInt("distance"));
-                    value.strokes.set(item.getInt("strokes"));
-                    value.energy.set(item.getInt("energy"));
-                    value.evaluate.set(item.optBoolean("evaluate", true));
-                    value.status.set(WorkoutStatus.valueOf(item.getString("status")));
-                    value.sessionType.set(SessionType.valueOf(item.getString("sessionType")));
-                    value.programName.set(item.optString("programName", null));
-                    value.programDefinition.set(item.optString("programDefinition", null));
-                    String restoredCompatibility = WorkoutDefinition.compatibilityKey(value.programDefinition.get());
-                    if (restoredCompatibility != null) {
-                        for (Program candidate : getPrograms().list()) {
-                            if (restoredCompatibility.equals(WorkoutDefinition.compatibilityKey(candidate))) {
-                                value.program.set(candidate);
-                                break;
-                            }
+            validateBackup(root);
+            repository.transactional(() -> {
+                try {
+                    JSONArray programs = root.getJSONArray("programs");
+                    for (int i = 0; i < programs.length(); i++) {
+                        Program restored = WorkoutDefinition.thaw(programs.getJSONObject(i).toString());
+                        boolean exists = false;
+                        for (Program current : getPrograms().list()) {
+                            if (restored.identity.get() != null ? restored.identity.get().equals(current.identity.get())
+                                    : current.name.get().equals(restored.name.get()) && WorkoutDefinition.compatibilityKey(current).equals(WorkoutDefinition.compatibilityKey(restored))) { exists = true; break; }
+                        }
+                        if (!exists) {
+                            if (restored.identity.get() == null) restored.identity.set(java.util.UUID.randomUUID().toString());
+                            mergeProgram(restored);
                         }
                     }
-                    value.pausedDuration.set(item.optInt("pausedDuration"));
-                    value.completed.set(item.optLong("completed"));
-                    value.goalType.set(svenmeier.coxswain.gym.PerformanceGoal.valueOf(item.optString("goalType", "NONE")));
-                    value.goalTarget.set(item.optInt("goalTarget"));
-                    value.raceOutcome.set(RaceOutcome.valueOf(item.optString("raceOutcome", "NONE")));
-                    value.raceMargin.set(item.optInt("raceMargin"));
-                    value.planEnrollment.set(item.optString("planEnrollment", null));
-                    value.planWeek.set(item.optInt("planWeek"));
-                    value.planAttempt.set(item.optInt("planAttempt"));
-                    value.planSession.set(item.optInt("planSession", -1));
-                    value.planGoalKind.set(item.optString("planGoalKind", null));
-                    value.planGoalValue.set(item.optInt("planGoalValue"));
-                    value.planGoalSourceStart.set(item.optLong("planGoalSourceStart"));
-                    value.planActiveSeconds.set(item.optInt("planActiveSeconds"));
-                    value.planActiveDistance.set(item.optInt("planActiveDistance"));
-                    value.planActiveStrokes.set(item.optInt("planActiveStrokes"));
-                    repository.merge(value);
-                    JSONArray samples = item.getJSONArray("snapshots");
-                    for (int s = 0; s < samples.length(); s++) {
-                        JSONObject data = samples.getJSONObject(s);
-                        Snapshot snapshot = new Snapshot();
-                        snapshot.workout.set(value);
-                        snapshot.difficulty.set(Difficulty.valueOf(data.getString("difficulty")));
-                        snapshot.duration.set(data.optInt("duration", 0));
-                        snapshot.distance.set(data.getInt("distance")); snapshot.strokes.set(data.getInt("strokes")); snapshot.energy.set(data.getInt("energy"));
-                        snapshot.speed.set(data.getInt("speed")); snapshot.pulse.set(data.getInt("pulse")); snapshot.strokeRate.set(data.getInt("strokeRate"));
-                        snapshot.strokeRatio.set(data.getInt("strokeRatio")); snapshot.power.set(data.getInt("power"));
-                        repository.merge(snapshot);
-                    }
-                }
-                restoredByStart.put(start, value);
-            }
-            for (int i = 0; i < workouts.length(); i++) {
-                JSONObject item = workouts.getJSONObject(i);
-                if (item.has("raceReferenceStart")) {
-                    Workout value = restoredByStart.get(item.getLong("start"));
-                    Workout reference = restoredByStart.get(item.getLong("raceReferenceStart"));
-                    if (value != null && reference != null) { value.raceReference.set(reference); repository.merge(value); }
-                }
-            }
 
+                    Map<Long, Workout> restoredByStart = new HashMap<>();
+                    JSONArray workouts = root.getJSONArray("workouts");
+                    for (int i = 0; i < workouts.length(); i++) {
+                        JSONObject item = workouts.getJSONObject(i);
+                        long start = item.getLong("start");
+                        Workout example = new Workout();
+                        Workout value = repository.query(example, equal(example.start, start)).first();
+                        if (value == null) {
+                            value = new Workout();
+                            value.start.set(start);
+                            value.duration.set(item.getInt("duration"));
+                            value.distance.set(item.getInt("distance"));
+                            value.strokes.set(item.getInt("strokes"));
+                            value.energy.set(item.getInt("energy"));
+                            value.evaluate.set(item.optBoolean("evaluate", true));
+                            value.status.set(WorkoutStatus.valueOf(item.getString("status")));
+                            value.sessionType.set(SessionType.valueOf(item.getString("sessionType")));
+                            value.programName.set(item.optString("programName", null));
+                            value.programDefinition.set(item.optString("programDefinition", null));
+                            Program originalDefinition = WorkoutDefinition.thaw(value.programDefinition.get());
+                            Program originalSaved = resolveSavedProgram(originalDefinition);
+                            String restoredCompatibility = WorkoutDefinition.compatibilityKey(value.programDefinition.get());
+                            if (restoredCompatibility != null) {
+                                for (Program candidate : getPrograms().list()) {
+                                    if (originalSaved != null ? Row.getID(candidate) == Row.getID(originalSaved) : restoredCompatibility.equals(WorkoutDefinition.compatibilityKey(candidate))) {
+                                        value.program.set(candidate);
+                                        break;
+                                    }
+                                }
+                            }
+                            value.pausedDuration.set(item.optInt("pausedDuration"));
+                            value.completed.set(item.optLong("completed"));
+                            value.goalType.set(svenmeier.coxswain.gym.PerformanceGoal.valueOf(item.optString("goalType", "NONE")));
+                            value.goalTarget.set(item.optInt("goalTarget"));
+                            value.raceOutcome.set(RaceOutcome.valueOf(item.optString("raceOutcome", "NONE")));
+                            value.raceMargin.set(item.optInt("raceMargin"));
+                            value.planEnrollment.set(item.optString("planEnrollment", null));
+                            value.planWeek.set(item.optInt("planWeek"));
+                            value.planAttempt.set(item.optInt("planAttempt"));
+                            value.planSession.set(item.optInt("planSession", -1));
+                            value.planGoalKind.set(item.optString("planGoalKind", null));
+                            value.planGoalValue.set(item.optInt("planGoalValue"));
+                            value.planGoalSourceStart.set(item.optLong("planGoalSourceStart"));
+                            value.planActiveSeconds.set(item.optInt("planActiveSeconds"));
+                            value.planActiveDistance.set(item.optInt("planActiveDistance"));
+                            value.planActiveStrokes.set(item.optInt("planActiveStrokes"));
+                            repository.merge(value);
+                            JSONArray samples = item.getJSONArray("snapshots");
+                            for (int s = 0; s < samples.length(); s++) {
+                                JSONObject data = samples.getJSONObject(s);
+                                Snapshot snapshot = new Snapshot();
+                                snapshot.workout.set(value);
+                                snapshot.difficulty.set(Difficulty.valueOf(data.getString("difficulty")));
+                                snapshot.duration.set(data.optInt("duration", 0));
+                                snapshot.recordedAt.set(data.optLong("recordedAt", 0L));
+                                snapshot.distance.set(data.getInt("distance")); snapshot.strokes.set(data.getInt("strokes")); snapshot.energy.set(data.getInt("energy"));
+                                snapshot.speed.set(data.getInt("speed")); snapshot.pulse.set(data.getInt("pulse")); snapshot.strokeRate.set(data.getInt("strokeRate"));
+                                snapshot.strokeRatio.set(data.getInt("strokeRatio")); snapshot.power.set(data.getInt("power"));
+                                repository.merge(snapshot);
+                            }
+                        }
+                        restoredByStart.put(start, value);
+                    }
+                    for (int i = 0; i < workouts.length(); i++) {
+                        JSONObject item = workouts.getJSONObject(i);
+                        if (item.has("raceReferenceStart")) {
+                            Workout value = restoredByStart.get(item.getLong("start"));
+                            Workout reference = restoredByStart.get(item.getLong("raceReferenceStart"));
+                            if (value != null && reference != null) { value.raceReference.set(reference); repository.merge(value); }
+                        }
+                    }
+
+                } catch (JSONException invalid) { throw new IllegalArgumentException("Invalid Coxswain backup", invalid); }
+            });
+            JSONArray definitions = root.getJSONArray("programs");
+            for (int i = 0; i < definitions.length(); i++) {
+                JSONObject item = definitions.getJSONObject(i);
+                Program saved = resolveSavedProgram(WorkoutDefinition.thaw(item.toString()));
+                if (saved != null && item.has("racePreferred")) setRacePreferred(saved, item.getBoolean("racePreferred"));
+            }
             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
             JSONObject preferences = root.optJSONObject("preferences");
             if (preferences != null) {
                 java.util.Iterator<String> keys = preferences.keys();
                 while (keys.hasNext()) {
                     String key = keys.next();
+                    // Storage paths and device connections are installation-specific.
+                    if (key.equals(context.getString(R.string.preference_data_external))) continue;
                     Object value = preferences.get(key);
                     if (value instanceof Boolean) editor.putBoolean(key, (Boolean)value);
                     else if (value instanceof Integer) editor.putInt(key, (Integer)value);
@@ -1093,10 +1197,86 @@ public class Gym {
                 }
             }
             editor.apply();
-            fireChanged(null);
+            JSONObject healthExports = root.optJSONObject("healthConnectExports");
+            if (healthExports != null) {
+                SharedPreferences.Editor healthEditor = context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).edit();
+                java.util.Iterator<String> keys = healthExports.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    healthEditor.putBoolean(key, healthExports.getBoolean(key));
+                }
+                healthEditor.apply();
+            }
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> fireChanged(null));
         } catch (JSONException | IllegalArgumentException invalid) {
             throw new IllegalArgumentException("Invalid Coxswain backup", invalid);
         }
+    }
+
+    private void validateBackup(JSONObject root) throws JSONException {
+        JSONObject preferences = root.optJSONObject("preferences");
+        if (root.has("preferences") && preferences == null) throw new IllegalArgumentException("Invalid preferences");
+        if (preferences != null) {
+            java.util.Iterator<String> keys = preferences.keys();
+            while (keys.hasNext()) {
+                Object value = preferences.get(keys.next());
+                if (!(value instanceof Boolean || value instanceof Number || value instanceof String))
+                    throw new IllegalArgumentException("Invalid preference value");
+            }
+        }
+        JSONObject healthExports = root.optJSONObject("healthConnectExports");
+        if (healthExports != null) {
+            java.util.Iterator<String> keys = healthExports.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                if (!key.matches("[0-9]+")) throw new IllegalArgumentException("Invalid health export identity");
+                healthExports.getBoolean(key);
+            }
+        }
+        JSONArray programs = root.getJSONArray("programs");
+        java.util.Set<String> identities = new java.util.HashSet<>();
+        for (int i = 0; i < programs.length(); i++) {
+            JSONObject item = programs.getJSONObject(i);
+            Program definition = WorkoutDefinition.thaw(item.toString());
+            if (definition.identity.get() != null && !identities.add(definition.identity.get()))
+                throw new IllegalArgumentException("Duplicate program identity");
+            if (item.has("racePreferred")) item.getBoolean("racePreferred");
+        }
+        JSONArray rows = root.getJSONArray("workouts");
+        java.util.Set<Long> starts = new java.util.HashSet<>();
+        for (int i = 0; i < rows.length(); i++) {
+            JSONObject row = rows.getJSONObject(i);
+            if (!starts.add(row.getLong("start"))) throw new IllegalArgumentException("Duplicate workout identity");
+            WorkoutStatus status = WorkoutStatus.valueOf(row.getString("status"));
+            if (status != WorkoutStatus.COMPLETED && status != WorkoutStatus.ENDED_EARLY)
+                throw new IllegalArgumentException("Backup contains an unfinished workout");
+            SessionType.valueOf(row.getString("sessionType"));
+            PerformanceGoal.valueOf(row.optString("goalType", "NONE"));
+            RaceOutcome.valueOf(row.optString("raceOutcome", "NONE"));
+            WorkoutDefinition.thaw(row.optString("programDefinition", null));
+            for (String field : new String[]{"duration", "distance", "strokes", "energy"})
+                if (row.getInt(field) < 0) throw new IllegalArgumentException("Negative workout total");
+            JSONArray samples = row.getJSONArray("snapshots");
+            for (int j = 0; j < samples.length(); j++) {
+                JSONObject sample = samples.getJSONObject(j);
+                Difficulty.valueOf(sample.getString("difficulty"));
+                for (String field : new String[]{"distance", "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power"}) sample.getInt(field);
+            }
+        }
+    }
+
+    public Measurement getRaceMeasurement() {
+        Measurement result = new Measurement(measurement);
+        result.setDistance(getPlanLiveDistance());
+        return result;
+    }
+
+    public int getPaceScoringDistance() {
+        return paceReplay() == null ? 0 : replayScoringDistance;
+    }
+
+    public boolean isPaceReplayEstimated() {
+        return paceReplay() != null && replayEstimated;
     }
 
     public class Progress {

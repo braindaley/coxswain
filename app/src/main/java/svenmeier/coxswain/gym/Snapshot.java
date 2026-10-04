@@ -27,6 +27,8 @@ public class Snapshot extends Propoid {
 
     /** Elapsed workout seconds; zero on legacy samples with unknown timing. */
     public final Property<Integer> duration = property();
+    /** Wall-clock sample time, including pauses; zero for older recordings. */
+    public final Property<Long> recordedAt = property();
 
     public final Property<Difficulty> difficulty = property();
 
@@ -66,6 +68,7 @@ public class Snapshot extends Propoid {
 
     public Snapshot() {
         duration.set(0);
+        recordedAt.set(0L);
         difficulty.set(Difficulty.NONE);
         distance.set(0);
         strokes.set(0);
@@ -78,6 +81,7 @@ public class Snapshot extends Propoid {
     }
 
     public Snapshot(Difficulty aDifficulty, Measurement measurement) {
+        recordedAt.set(System.currentTimeMillis());
         duration.set(measurement.getDuration());
         difficulty.set(aDifficulty);
         distance.set(measurement.getDistance());

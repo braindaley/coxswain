@@ -27,6 +27,7 @@ import propoid.db.aspect.Row;
 public class Program extends Propoid {
 
     public final Property<String> name = property();
+    public final Property<String> identity = property();
 
     public final Property<List<Segment>> segments = property();
 
@@ -34,6 +35,7 @@ public class Program extends Propoid {
     }
 
     public Program(String name) {
+        this.identity.set(java.util.UUID.randomUUID().toString());
         this.name.set(name);
 
         this.segments.set(new ArrayList<Segment>());

@@ -20,6 +20,17 @@ class ProgramIntervalEditingTest {
     val compose = createAndroidComposeRule<ProgramActivity>()
 
     @Test
+    fun draftSurvivesActivityRecreation() {
+        compose.onNodeWithText("Intervals").performClick()
+        compose.onAllNodesWithText("60:00").get(0).performClick()
+        onView(withId(R.id.btn_duration_plus)).perform(espressoClick())
+        onView(withText("OK")).perform(espressoClick())
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithText("60:30").assertIsDisplayed()
+    }
+
+    @Test
     fun changingIntervalDurationRefreshesBuilderCard() {
         compose.onNodeWithText("Intervals").performClick()
         compose.onAllNodesWithText("60:00").get(0).performClick()

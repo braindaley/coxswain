@@ -37,6 +37,10 @@ public class ImportIntention {
 	}
 
 	public boolean importFrom(Uri uri) {
+		if (uri == null) {
+			Toast.makeText(activity, R.string.import_unknown, Toast.LENGTH_LONG).show();
+			return false;
+		}
 		Import<?> importer = null;
 
 		try {

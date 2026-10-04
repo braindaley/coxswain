@@ -20,7 +20,7 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
-	static final int DATABASE_VERSION = 5;
+	static final int DATABASE_VERSION = 6;
 
 	GymVersioning() {
 		add(new WrongIndices());
@@ -28,7 +28,20 @@ class GymVersioning extends DefaultVersioning {
 		add(new SegmentNames());
 		add(new SnapshotTiming());
 		add(new PetePlanIdentity());
+		add(new RecordingAndProgramIdentity());
 	}
+
+    private static class RecordingAndProgramIdentity implements Upgrade {
+        @Override public void apply(SQLiteDatabase database) {
+            add(database, "Snapshot", "recordedAt", "INTEGER DEFAULT 0");
+            add(database, "Program", "identity", "TEXT");
+        }
+        private void add(SQLiteDatabase database, String table, String name, String type) {
+            if (!Column.exists(table, database)) return;
+            for (Column column : Column.get(table, database)) if (column.name.equals(name)) return;
+            database.execSQL("ALTER TABLE " + table + " ADD COLUMN " + name + " " + type);
+        }
+    }
 
 	private static class PetePlanIdentity implements Upgrade {
 		@Override public void apply(SQLiteDatabase database) {

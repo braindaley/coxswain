@@ -441,7 +441,7 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     val completion = gym.progress?.completion()?.coerceIn(0f, 1f) ?: 0f
     val position = if (weights.isNotEmpty())
         (weights.take(activeIndex).sum() + weights[activeIndex] * completion) / total else completion
-    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
+    val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
         ?: planRaceDisplay(gym)
     Canvas(modifier.padding(vertical = 4.dp).semantics {
         contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, ${if (gym.hasPlanPaceTarget()) "target pace" else "saved row"} ${(race.bestProgress * 100).toInt()} percent"
@@ -498,7 +498,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     val segments = gym.program?.getSegments().orEmpty()
     val active = gym.progress?.segment ?: segments.firstOrNull()
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
-    val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
+    val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
         ?: planRaceDisplay(gym)
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
@@ -547,7 +547,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
                 Text(if (gym.hasPlanPaceTarget()) "━ Target · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
-                     else "━ ${if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${formatClock(gym.pace!!.duration.get())}",
+                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${formatClock(gym.pace!!.duration.get())}",
                     modifier = Modifier.weight(1f), color = Color(0xFFFFCD72), fontSize = 15.sp,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -759,10 +759,10 @@ private fun planRaceDisplay(gym: Gym): RaceDisplay? {
     )
 }
 
-internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?, recordedDistance: Float? = null): RaceDisplay {
+internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?, recordedDistance: Float? = null, benchmarkDistance: Int? = null): RaceDisplay {
     val expectedDistance = recordedDistance ?: if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f
     val distanceRace = program?.getSegmentsCount() == 1 && (program.getSegment(0).distance.get() > 0)
-    val target = if (distanceRace) program.getSegment(0).distance.get().coerceAtLeast(1) else pace.distance.get().coerceAtLeast(1)
+    val target = if (distanceRace) program.getSegment(0).distance.get().coerceAtLeast(1) else (benchmarkDistance ?: pace.distance.get()).coerceAtLeast(1)
     return RaceDisplay(
         (current.distance.toFloat() / target).coerceIn(0f, 1f),
         (expectedDistance / target).coerceIn(0f, 1f),
@@ -808,13 +808,13 @@ internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
         ValueBinding.DELTA_DISTANCE -> {
             val pace = gym.pace
             if (pace != null && pace.duration.get() > 0) {
-                m.distance - gym.getPaceDistanceAt(m.duration).toInt()
+                gym.getPlanLiveDistance() - gym.getPaceDistanceAt(m.duration).toInt()
             } else 0
         }
         ValueBinding.DELTA_DURATION -> {
             val pace = gym.pace
             if (pace != null && pace.distance.get() > 0) {
-                m.duration - gym.getPaceTimeAtDistance(m.distance).toInt()
+                m.duration - gym.getPaceTimeAtDistance(gym.getPlanLiveDistance()).toInt()
             } else 0
         }
         else -> 0
