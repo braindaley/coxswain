@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Workout
+import svenmeier.coxswain.pete.PetePlanStore
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -54,7 +55,10 @@ fun HomeScreen(
     onConnectRower: () -> Unit,
     onSettings: () -> Unit,
     onWorkoutDetails: (Workout) -> Unit = {},
-    onRowAgain: (Workout) -> Unit = {}
+    onRowAgain: (Workout) -> Unit = {},
+    peteStore: PetePlanStore? = null,
+    onOpenPetePlan: () -> Unit = {},
+    onPeteSession: (Int) -> Unit = {}
 ) {
     var connectionUpdate by remember { mutableIntStateOf(0) }
     DisposableEffect(gym) {
@@ -73,10 +77,16 @@ fun HomeScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (peteStore?.state()?.started == true) {
+                PetePlanHomeCard(peteStore, onOpenPetePlan, onPeteSession)
+            }
             gym?.getAllWorkouts()?.list()?.maxByOrNull { it.start.get() }?.let { last ->
                 LastWorkoutCard(last, { onWorkoutDetails(last) }, { onRowAgain(last) })
             }
             gym?.let { HomeProgress(it) { onQuickStart("Duration") } }
+            if (peteStore?.state()?.started == false) {
+                PetePlanHomeCard(peteStore, onOpenPetePlan, onPeteSession)
+            }
         }
     }
 }

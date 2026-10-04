@@ -90,12 +90,13 @@ fun LiveRowScreen(
     } else null
     val sessionTitle = when {
         rest != null -> "REST INTERVAL"
+        gym.isPlanSession -> "PETE'S PLAN"
         gym.pace != null -> "RACE YOUR BEST"
         gym.program != null -> gym.program.name.get()?.uppercase() ?: "WORKOUT"
         else -> "FREE ROW"
     }
     val goalBinding = activeSegment?.let(::goalBinding)
-    val goal = if (goalBinding != null) goalDisplay(goalBinding, activeSegment, gym.getMeasurement()) else null
+    val goal = if (goalBinding != null) goalDisplay(goalBinding, activeSegment, gym.getMeasurement(), gym.hasPlanRateCap()) else null
     var countdownTick by remember { mutableIntStateOf(0) }
     LaunchedEffect(rest != null, gym.isPaused) {
         if (rest != null && !gym.isPaused) {
@@ -237,7 +238,7 @@ fun LiveRowScreen(
     ) { innerPadding ->
         Row(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D)).padding(horizontal = 10.dp)) {
             if (gym.program != null || gym.pace != null) {
-                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null) 30.dp else 24.dp))
+                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null || gym.hasPlanPaceTarget()) 30.dp else 24.dp))
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f).fillMaxHeight()) {
@@ -441,8 +442,9 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     val position = if (weights.isNotEmpty())
         (weights.take(activeIndex).sum() + weights[activeIndex] * completion) / total else completion
     val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
+        ?: planRaceDisplay(gym)
     Canvas(modifier.padding(vertical = 4.dp).semantics {
-        contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, saved best ${(race.bestProgress * 100).toInt()} percent"
+        contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, ${if (gym.hasPlanPaceTarget()) "target pace" else "saved row"} ${(race.bestProgress * 100).toInt()} percent"
         else "Workout ${(position * 100).toInt()} percent complete"
     }) {
         val laneWidth = 9.dp.toPx()
@@ -497,6 +499,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     val active = gym.progress?.segment ?: segments.firstOrNull()
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
     val race = gym.pace?.let { raceDisplay(gym.getMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration)) }
+        ?: planRaceDisplay(gym)
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
@@ -510,7 +513,8 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     }
     val detail = when {
         rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
-        race != null -> "Your best · ${formatClock(gym.pace!!.duration.get())}"
+        race != null && gym.hasPlanPaceTarget() -> "Target pace · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
+        race != null -> "${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${formatClock(gym.pace!!.duration.get())}"
         segments.size > 1 -> "Interval ${index + 1} of ${segments.size}"
         active != null && active.distance.get() > 0 -> {
             val remaining = getValueForBinding(ValueBinding.DISTANCE, gym)
@@ -542,7 +546,8 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         if (race != null) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
-                Text("━ Saved best · ${formatClock(gym.pace!!.duration.get())}",
+                Text(if (gym.hasPlanPaceTarget()) "━ Target · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
+                     else "━ ${if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${formatClock(gym.pace!!.duration.get())}",
                     modifier = Modifier.weight(1f), color = Color(0xFFFFCD72), fontSize = 15.sp,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -694,9 +699,14 @@ internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: 
 
 data class GoalDisplay(val variance: String, val target: String, val state: Int)
 
-internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement): GoalDisplay? {
+internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement, rateCap: Boolean = false): GoalDisplay? {
     if (segment == null || segment.getLimit() <= 0) return null
     return when {
+        binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 && rateCap -> {
+            val difference = measurement.strokeRate - segment.strokeRate.get()
+            GoalDisplay(if (difference == 0) "${measurement.strokeRate}" else if (difference > 0) "+$difference" else "$difference",
+                "≤${segment.strokeRate.get()} SPM", if (difference <= 0) 1 else -1)
+        }
         binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 -> signedGoal(measurement.strokeRate - segment.strokeRate.get(), "${segment.strokeRate.get()}", "", "${segment.strokeRate.get()}")
         binding == ValueBinding.POWER && segment.power.get() > 0 -> signedGoal(measurement.power - segment.power.get(), "${segment.power.get()}", "", "${segment.power.get()} W")
         binding == ValueBinding.PULSE && segment.pulse.get() > 0 -> signedGoal(measurement.pulse - segment.pulse.get(), "${segment.pulse.get()}", "", "${segment.pulse.get()} BPM")
@@ -730,6 +740,24 @@ private fun segmentTarget(segment: Segment): String = when {
 }
 
 data class RaceDisplay(val currentProgress: Float, val bestProgress: Float, val leadMeters: Int, val bestMeters: Int)
+
+private fun planRaceDisplay(gym: Gym): RaceDisplay? {
+    if (!gym.hasPlanPaceTarget()) return null
+    val program = gym.program ?: return null
+    val work = program.getSegments().filter { it.difficulty.get() != Difficulty.REST }
+    val split = gym.planTargetSplitSeconds.coerceAtLeast(1)
+    val targetDistance = if (work.all { it.distance.get() > 0 })
+        work.sumOf { it.distance.get() }.toFloat()
+    else work.sumOf { it.duration.get() } * 500f / split
+    if (targetDistance <= 0f) return null
+    val live = gym.planLiveDistance.toFloat()
+    val target = gym.planTargetDistance
+    return RaceDisplay(
+        (live / targetDistance).coerceIn(0f, 1f),
+        (target / targetDistance).coerceIn(0f, 1f),
+        (live - target).toInt(), target.toInt()
+    )
+}
 
 internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?, recordedDistance: Float? = null): RaceDisplay {
     val expectedDistance = recordedDistance ?: if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f

@@ -33,6 +33,8 @@ import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.google.HealthConnectExport
 import svenmeier.coxswain.google.HealthConnectManageActivity
+import svenmeier.coxswain.pete.PetePlanStore
+import svenmeier.coxswain.pete.PeteGoal
 
 class MainActivity : ComponentActivity() {
 
@@ -88,7 +90,10 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContainer(gym: Gym, activity: MainActivity) {
+    val peteStore = remember(gym) { PetePlanStore(activity, gym) }
     var currentTab by remember { mutableIntStateOf(0) }
+    var showPetePlan by remember { mutableStateOf(false) }
+    var initialPeteSession by remember { mutableStateOf<Int?>(null) }
     var connectRequest by remember { mutableIntStateOf(0) }
     var refreshKey by remember { mutableIntStateOf(0) }
     val backupSaved = stringResource(R.string.ui_backup_saved)
@@ -136,6 +141,8 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
                             selected = isSelected,
                             onClick = {
                                 currentTab = index
+                                showPetePlan = false
+                                initialPeteSession = null
                                 if (index != 3) connectRequest = 0
                             },
                             icon = {
@@ -175,10 +182,32 @@ fun MainContainer(gym: Gym, activity: MainActivity) {
             modifier = Modifier.padding(innerPadding),
             color = MaterialTheme.colorScheme.background
         ) {
-            when (currentTab) {
+            if (showPetePlan) {
+                PetePlanScreen(
+                    gym = gym,
+                    store = peteStore,
+                    refreshKey = refreshKey,
+                    initialSessionIndex = initialPeteSession,
+                    onInitialSessionConsumed = { initialPeteSession = null },
+                    onBack = { showPetePlan = false },
+                    onStartWorkout = { session, goal, state ->
+                        val program = session.program(goal)
+                        gym.startPlanSession(
+                            program, state.enrollmentId, state.activeWeek, state.activeAttempt,
+                            session.index, goal.kind, goal.value,
+                            goal.sourceWorkout?.start?.get() ?: 0L,
+                            (goal as? PeteGoal.RowAgainst)?.source
+                        )
+                        WorkoutActivity.start(activity)
+                    }
+                )
+            } else when (currentTab) {
                 0 -> HomeScreen(
                     gym = gym,
                     refreshKey = refreshKey,
+                    peteStore = peteStore,
+                    onOpenPetePlan = { showPetePlan = true },
+                    onPeteSession = { index -> initialPeteSession = index; showPetePlan = true },
                     onFreeRow = {
                         gym.startFreeRow()
                         WorkoutActivity.start(activity)

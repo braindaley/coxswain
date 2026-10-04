@@ -20,13 +20,34 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
-	static final int DATABASE_VERSION = 4;
+	static final int DATABASE_VERSION = 5;
 
 	GymVersioning() {
 		add(new WrongIndices());
 		add(new WorkoutIdentity());
 		add(new SegmentNames());
 		add(new SnapshotTiming());
+		add(new PetePlanIdentity());
+	}
+
+	private static class PetePlanIdentity implements Upgrade {
+		@Override public void apply(SQLiteDatabase database) {
+			if (!Column.exists("Workout", database)) return;
+			for (String[] column : new String[][] {
+					{"planEnrollment", "TEXT"}, {"planWeek", "INTEGER"},
+					{"planAttempt", "INTEGER"}, {"planSession", "INTEGER"},
+					{"planGoalKind", "TEXT"}, {"planGoalValue", "INTEGER"},
+					{"planGoalSourceStart", "INTEGER"},
+					{"planActiveSeconds", "INTEGER"}, {"planActiveDistance", "INTEGER"},
+					{"planActiveStrokes", "INTEGER"}
+			}) {
+				boolean exists = false;
+				for (Column present : Column.get("Workout", database)) {
+					if (present.name.equals(column[0])) { exists = true; break; }
+				}
+				if (!exists) database.execSQL("ALTER TABLE Workout ADD COLUMN " + column[0] + " " + column[1]);
+			}
+		}
 	}
 
 	private static class SnapshotTiming implements Upgrade {

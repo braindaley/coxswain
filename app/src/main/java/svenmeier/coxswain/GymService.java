@@ -198,7 +198,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         if (event == Event.REJECTED) {
             Toast.makeText(this, R.string.rowing_measurement_rejected, Toast.LENGTH_LONG).show();
             gym.discard();
-        } else if (event == Event.PROGRAM_FINISHED && endWorkout.get() == true) {
+        } else if (event == Event.PROGRAM_FINISHED && (gym.isPlanSession() || endWorkout.get() == true)) {
             Toast.makeText(this, R.string.rowing_program_finished, Toast.LENGTH_LONG).show();
             gym.complete();
         } else if (program != null){

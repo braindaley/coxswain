@@ -115,6 +115,17 @@ public class Gym {
      */
     public Workout pace;
 
+    private String planEnrollment;
+    private int planWeek;
+    private int planAttempt;
+    private int planSession = -1;
+    private String planGoalKind;
+    private int planGoalValue;
+    private long planGoalSourceStart;
+    private int completedRestSeconds;
+    private int completedRestDistance;
+    private int completedRestStrokes;
+
     private Workout replayWorkout;
     private RaceReplay replay;
 
@@ -437,6 +448,59 @@ public class Gym {
         prepareSession(SessionType.FREE);
     }
 
+    /** Launch a transient, frozen Pete's Plan workout without adding it to My Programs. */
+    public void startPlanSession(Program definition, String enrollment, int week, int attempt,
+                                 int session, String goalKind, int goalValue, long sourceStart,
+                                 Workout reference) {
+        if (definition == null || enrollment == null || week < 1 || attempt < 1 || session < 0 || session > 4) {
+            throw new IllegalArgumentException("Invalid Pete's Plan session");
+        }
+        if ("ROW_AGAINST".equals(goalKind) && reference != null) race(definition, reference);
+        else select(definition);
+        this.planEnrollment = enrollment;
+        this.planWeek = week;
+        this.planAttempt = attempt;
+        this.planSession = session;
+        this.planGoalKind = goalKind;
+        this.planGoalValue = goalValue;
+        this.planGoalSourceStart = sourceStart;
+    }
+
+    public boolean hasPlanPaceTarget() {
+        return "SPEED".equals(planGoalKind) && planGoalValue > 0;
+    }
+
+    public boolean isPlanSession() { return planEnrollment != null; }
+
+    public boolean hasPlanRateCap() { return "RATE_CAP".equals(planGoalKind); }
+
+    /** Seconds of actual rowing; planned rests and pauses cannot advance a virtual pace. */
+    public int getPlanActiveSeconds() {
+        int currentRest = progress != null && progress.segment.difficulty.get() == Difficulty.REST
+                ? Math.max(0, measurement.getDuration() - progress.getStartMeasurement().getDuration()) : 0;
+        return Math.max(0, measurement.getDuration() - completedRestSeconds - currentRest);
+    }
+
+    public int getPlanLiveDistance() {
+        int currentRest = progress != null && progress.segment.difficulty.get() == Difficulty.REST
+                ? Math.max(0, measurement.getDistance() - progress.getStartMeasurement().getDistance()) : 0;
+        return Math.max(0, measurement.getDistance() - completedRestDistance - currentRest);
+    }
+
+    public int getPlanActiveStrokes() {
+        int currentRest = progress != null && progress.segment.difficulty.get() == Difficulty.REST
+                ? Math.max(0, measurement.getStrokes() - progress.getStartMeasurement().getStrokes()) : 0;
+        return Math.max(0, measurement.getStrokes() - completedRestStrokes - currentRest);
+    }
+
+    public float getPlanTargetDistance() {
+        return hasPlanPaceTarget() ? getPlanActiveSeconds() * 500f / planGoalValue : 0f;
+    }
+
+    public int getPlanTargetSplitSeconds() {
+        return hasPlanPaceTarget() ? planGoalValue : 0;
+    }
+
     public void repeat(Workout pace) {
         Program program;
         try {
@@ -479,6 +543,16 @@ public class Gym {
         this.pausedMillis = 0;
         this.current = null;
         this.progress = null;
+        this.planEnrollment = null;
+        this.planWeek = 0;
+        this.planAttempt = 0;
+        this.planSession = -1;
+        this.planGoalKind = null;
+        this.planGoalValue = 0;
+        this.planGoalSourceStart = 0;
+        this.completedRestSeconds = 0;
+        this.completedRestDistance = 0;
+        this.completedRestStrokes = 0;
         this.sessionGeneration++;
         fireChanged(type);
     }
@@ -494,6 +568,16 @@ public class Gym {
         this.paused = false;
         this.current = null;
         this.progress = null;
+        this.planEnrollment = null;
+        this.planWeek = 0;
+        this.planAttempt = 0;
+        this.planSession = -1;
+        this.planGoalKind = null;
+        this.planGoalValue = 0;
+        this.planGoalSourceStart = 0;
+        this.completedRestSeconds = 0;
+        this.completedRestDistance = 0;
+        this.completedRestStrokes = 0;
         this.sessionGeneration++;
         fireChanged(null);
     }
@@ -567,6 +651,11 @@ public class Gym {
         if (paused) resume();
         Workout finalized = current;
         finalized.status.set(status);
+        if (planEnrollment != null) {
+            finalized.planActiveSeconds.set(getPlanActiveSeconds());
+            finalized.planActiveDistance.set(getPlanLiveDistance());
+            finalized.planActiveStrokes.set(getPlanActiveStrokes());
+        }
         if (status == WorkoutStatus.ENDED_EARLY) {
             DiagnosticsLog.record(context, "Workout ended before its target");
         }
@@ -637,6 +726,15 @@ public class Gym {
         if (current == null) {
             current = program == null ? new Workout(null) : program.newWorkout();
             current.freeze(program, sessionType);
+            if (planEnrollment != null) {
+                current.planEnrollment.set(planEnrollment);
+                current.planWeek.set(planWeek);
+                current.planAttempt.set(planAttempt);
+                current.planSession.set(planSession);
+                current.planGoalKind.set(planGoalKind);
+                current.planGoalValue.set(planGoalValue);
+                current.planGoalSourceStart.set(planGoalSourceStart);
+            }
             if (pace != null) current.raceReference.set(pace);
             current.location.set(getLocation());
             mergeWorkout(current);
@@ -671,6 +769,11 @@ public class Gym {
         }
 
         if (progress != null && progress.completion() == 1.0f) {
+            if (progress.segment.difficulty.get() == Difficulty.REST) {
+                completedRestSeconds += Math.max(0, measurement.getDuration() - progress.getStartMeasurement().getDuration());
+                completedRestDistance += Math.max(0, measurement.getDistance() - progress.getStartMeasurement().getDistance());
+                completedRestStrokes += Math.max(0, measurement.getStrokes() - progress.getStartMeasurement().getStrokes());
+            }
             Segment next = program.getNextSegment(progress.segment);
             if (next == null) {
                 mergeWorkout(current);
@@ -824,6 +927,16 @@ public class Gym {
                 item.put("goalTarget", value.goalTarget.get());
                 item.put("raceOutcome", value.raceOutcome.get().name());
                 item.put("raceMargin", value.raceMargin.get());
+                item.put("planEnrollment", value.planEnrollment.get());
+                item.put("planWeek", value.planWeek.get());
+                item.put("planAttempt", value.planAttempt.get());
+                item.put("planSession", value.planSession.get());
+                item.put("planGoalKind", value.planGoalKind.get());
+                item.put("planGoalValue", value.planGoalValue.get());
+                item.put("planGoalSourceStart", value.planGoalSourceStart.get());
+                item.put("planActiveSeconds", value.planActiveSeconds.get());
+                item.put("planActiveDistance", value.planActiveDistance.get());
+                item.put("planActiveStrokes", value.planActiveStrokes.get());
                 try { item.put("raceReferenceStart", value.raceReference.get().start.get()); } catch (Exception ignored) {}
                 JSONArray snapshots = new JSONArray();
                 for (Snapshot snapshot : getSnapshots(value).list()) {
@@ -906,6 +1019,16 @@ public class Gym {
                     value.goalTarget.set(item.optInt("goalTarget"));
                     value.raceOutcome.set(RaceOutcome.valueOf(item.optString("raceOutcome", "NONE")));
                     value.raceMargin.set(item.optInt("raceMargin"));
+                    value.planEnrollment.set(item.optString("planEnrollment", null));
+                    value.planWeek.set(item.optInt("planWeek"));
+                    value.planAttempt.set(item.optInt("planAttempt"));
+                    value.planSession.set(item.optInt("planSession", -1));
+                    value.planGoalKind.set(item.optString("planGoalKind", null));
+                    value.planGoalValue.set(item.optInt("planGoalValue"));
+                    value.planGoalSourceStart.set(item.optLong("planGoalSourceStart"));
+                    value.planActiveSeconds.set(item.optInt("planActiveSeconds"));
+                    value.planActiveDistance.set(item.optInt("planActiveDistance"));
+                    value.planActiveStrokes.set(item.optInt("planActiveStrokes"));
                     repository.merge(value);
                     JSONArray samples = item.getJSONArray("snapshots");
                     for (int s = 0; s < samples.length(); s++) {
@@ -1000,7 +1123,10 @@ public class Gym {
                 return false;
             } else if (measurement.getPulse() < progress.segment.pulse.get()) {
                 return false;
-            } else if (measurement.getStrokeRate() < progress.segment.strokeRate.get()) {
+            } else if (progress.segment.strokeRate.get() > 0 &&
+                    (hasPlanRateCap()
+                            ? measurement.getStrokeRate() > progress.segment.strokeRate.get()
+                            : measurement.getStrokeRate() < progress.segment.strokeRate.get())) {
                 return false;
 			} else if (measurement.getPower() < progress.segment.power.get()) {
 				return false;
@@ -1035,7 +1161,9 @@ public class Gym {
             String limit = "";
 
             if (segment.strokeRate.get() > 0) {
-                limit = String.format(context.getString(R.string.strokeRate_strokesPerMinute), segment.strokeRate.get());
+                limit = hasPlanRateCap()
+                        ? "at or below " + segment.strokeRate.get() + " strokes per minute"
+                        : String.format(context.getString(R.string.strokeRate_strokesPerMinute), segment.strokeRate.get());
             } else if (segment.speed.get() > 0) {
                 limit = String.format(context.getString(R.string.speed_metersPerSecond), segment.speed.get() / 100f);
             } else if (segment.pulse.get() > 0){

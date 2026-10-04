@@ -111,7 +111,10 @@ public class GymSchemaFixtureTest {
         assertColumns("Workout", "_id", "_type", "program", "location", "start", "duration",
                 "distance", "strokes", "energy", "evaluate", "sessionType", "programName",
                 "programDefinition", "status", "pausedDuration", "completed", "goalType",
-                "goalTarget", "raceReference", "raceOutcome", "raceMargin");
+                "goalTarget", "raceReference", "raceOutcome", "raceMargin",
+                "planEnrollment", "planWeek", "planAttempt", "planSession", "planGoalKind",
+                "planGoalValue", "planGoalSourceStart", "planActiveSeconds",
+                "planActiveDistance", "planActiveStrokes");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
                 "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration");
     }

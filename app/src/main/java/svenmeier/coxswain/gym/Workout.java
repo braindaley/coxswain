@@ -78,6 +78,21 @@ public class Workout extends Propoid {
     /** signed finishing margin in milliseconds or meters, according to session type */
     public final Property<Integer> raceMargin = property();
 
+    /** Stable Pete's Plan session identity; null on ordinary workouts. */
+    public final Property<String> planEnrollment = property();
+    public final Property<Integer> planWeek = property();
+    public final Property<Integer> planAttempt = property();
+    public final Property<Integer> planSession = property();
+
+    /** Frozen coaching target and the completed workout that supplied it. */
+    public final Property<String> planGoalKind = property();
+    public final Property<Integer> planGoalValue = property();
+    public final Property<Long> planGoalSourceStart = property();
+    /** Rowing-only totals, excluding prescribed rest and pauses. */
+    public final Property<Integer> planActiveSeconds = property();
+    public final Property<Integer> planActiveDistance = property();
+    public final Property<Integer> planActiveStrokes = property();
+
     public Workout() {
         this.duration.set(0);
         this.distance.set(0);
@@ -93,6 +108,14 @@ public class Workout extends Propoid {
         this.goalTarget.set(0);
         this.raceOutcome.set(RaceOutcome.NONE);
         this.raceMargin.set(0);
+        this.planWeek.set(0);
+        this.planAttempt.set(0);
+        this.planSession.set(-1);
+        this.planGoalValue.set(0);
+        this.planGoalSourceStart.set(0L);
+        this.planActiveSeconds.set(0);
+        this.planActiveDistance.set(0);
+        this.planActiveStrokes.set(0);
     }
 
     public Workout(Program program) {
