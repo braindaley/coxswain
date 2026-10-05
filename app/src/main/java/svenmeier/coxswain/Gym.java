@@ -223,7 +223,7 @@ public class Gym {
      * @param count maximum count of workouts to compact
      */
     public void compact(int count) {
-        int days = Preference.getInt(context, R.string.preference_compact).fallback(180).get();
+        int days = Math.max(1, Preference.getInt(context, R.string.preference_compact).fallback(180).get());
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, -days);
         Workout workout = new Workout();

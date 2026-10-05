@@ -15,38 +15,35 @@
  */
 package svenmeier.coxswain.view;
 
-import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.fragment.app.FragmentTransaction;
-import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import svenmeier.coxswain.Coxswain;
-import svenmeier.coxswain.Gym;
 import svenmeier.coxswain.R;
-import svenmeier.coxswain.google.HealthConnectBridge;
-import svenmeier.coxswain.util.PermissionBlock;
 import svenmeier.coxswain.view.preference.ResultPreference;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
-    private Map<ResultPreference, Integer> requestCodes = new HashMap<>();
+    private Map<String, Integer> requestCodes = new HashMap<>();
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preferences, rootKey);
+        if (savedInstanceState != null) {
+            Bundle routes = savedInstanceState.getBundle("picker_routes");
+            if (routes != null) for (String key : routes.keySet()) requestCodes.put(key, routes.getInt(key));
+        }
 
         Preference bindings = findPreference(getString(R.string.preference_workout_bindings_reset));
         bindings.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -55,61 +52,45 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 propoid.util.content.Preference.getEnum(getActivity(), ValueBinding.class, R.string.preference_workout_binding).setList(new ArrayList<ValueBinding>());
                 propoid.util.content.Preference.getEnum(getActivity(), ValueBinding.class, R.string.preference_workout_binding_pace).setList(new ArrayList<ValueBinding>());
 
+                requireContext().getSharedPreferences("live_row_display", android.content.Context.MODE_PRIVATE)
+                        .edit().clear().apply();
                 return true;
             }
         });
 
-        final CheckBoxPreference external = (CheckBoxPreference) findPreference(getString(R.string.preference_data_external));
-        external.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object o) {
-                if (Boolean.TRUE.equals(o)) {
-                    new PermissionBlock(getActivity()) {
-                        @Override
-                        protected void onPermissionsApproved() {
-                            external.setChecked(true);
-                        }
-                    }.acquirePermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-                    return false;
-                }
-
-                return true;
-            }
-        });
-
-        final CheckBoxPreference trace = (CheckBoxPreference) findPreference(getString(R.string.preference_hardware_trace));
-        trace.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object o) {
-                if (Boolean.TRUE.equals(o)) {
-                    new PermissionBlock(getActivity()) {
-                        @Override
-                        protected void onPermissionsApproved() {
-                            trace.setChecked(true);
-                        }
-                    }.acquirePermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-                    return false;
-                }
-
-                return true;
-            }
-        });
-
+        // App-private diagnostic files do not require shared-storage permission.
         Preference log = findPreference(getString(R.string.preference_hardware_log));
-        log.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                new PermissionBlock(getActivity()) {
-                    @Override
-                    protected void onPermissionsApproved() {
-                        exportLog();
-                    }
-                }.acquirePermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                return true;
-            }
+        log.setOnPreferenceClickListener(preference -> {
+            exportLog();
+            return true;
         });
+
+        // Storage switching currently selects a separate database without migration.
+        Preference external = findPreference(getString(R.string.preference_data_external));
+        external.setEnabled(false);
+        external.setSummary(R.string.settings_storage_unavailable);
+
+        // Legacy controls have no consumer in the current Compose application.
+        int[] unsupported = { R.string.preference_picture_in_picture,
+            R.string.preference_integration_intent, R.string.preference_integration_intent_uri,
+            R.string.preference_end_workout_result, R.string.preference_distance_unit,
+            R.string.preference_energy_unit, R.string.preference_split_distance,
+            R.string.preference_numbers_arabic };
+        for (int key : unsupported) {
+            Preference obsolete = findPreference(getString(key));
+            if (obsolete != null) obsolete.setVisible(false);
+        }
+
+        int[] reconnect = { R.string.preference_adjust_energy, R.string.preference_weight,
+                R.string.preference_adjust_speed, R.string.preference_hardware_trace,
+                R.string.preference_hardware_legacy, R.string.preference_hardware_heart_sensor };
+        for (int key : reconnect) {
+            Preference setting = findPreference(getString(key));
+            if (setting != null) {
+                CharSequence original = setting.getSummary();
+                setting.setSummary((original == null ? "" : original + "\n") + getString(R.string.settings_reconnect));
+            }
+        }
 
         Preference devices = findPreference(getString(R.string.preference_devices));
         devices.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -128,17 +109,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             healthConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    try {
-                        Intent intent = HealthConnectBridge.getSettingsIntent();
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        try {
-                            Intent legacyIntent = new Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS");
-                            startActivity(legacyIntent);
-                        } catch (Exception e2) {
-                            Toast.makeText(getActivity(), R.string.ui_health_settings_failed, Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                    startActivity(new Intent(requireContext(),
+                            svenmeier.coxswain.google.HealthConnectManageActivity.class));
                     return true;
                 }
             });
@@ -148,24 +120,28 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public static final String LOG_FILE = "coxswain.log";
 
     private void exportLog() {
-        int toast;
-
-        try {
-            File dir = Coxswain.getExternalFilesDir(getContext());
-            dir.mkdirs();
-            dir.setReadable(true, false);
-
-            File file = new File(dir, LOG_FILE);
-
-            Runtime.getRuntime().exec(new String[]{"logcat", "-f", file.getAbsolutePath()});
-
-            toast = R.string.preference_hardware_log_finished;
-        } catch (IOException e) {
-            Log.e(Coxswain.TAG, "expor log failed", e);
-            toast = R.string.preference_hardware_log_failed;
-        }
-
-        Toast.makeText(getContext(), toast, Toast.LENGTH_LONG).show();
+        final android.content.Context context = requireContext();
+        new Thread(() -> {
+            int message = R.string.preference_hardware_log_failed;
+            Process process = null;
+            try {
+                File file = new File(Coxswain.getExternalFilesDir(context), LOG_FILE);
+                file.getParentFile().mkdirs();
+                process = new ProcessBuilder("logcat", "-d", "-f", file.getAbsolutePath())
+                        .redirectErrorStream(true).start();
+                if (process.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
+                        && process.exitValue() == 0 && file.exists()) {
+                    message = R.string.preference_hardware_log_finished;
+                }
+            } catch (Exception e) {
+                Log.e(Coxswain.TAG, "Export log failed", e);
+            } finally {
+                if (process != null) process.destroy();
+            }
+            final int result = message;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                    Toast.makeText(context, result, Toast.LENGTH_LONG).show());
+        }, "settings-log-export").start();
     }
 
     @Override
@@ -184,11 +160,19 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         return super.onPreferenceTreeClick(preference);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        Bundle routes = new Bundle();
+        for (Map.Entry<String, Integer> route : requestCodes.entrySet()) routes.putInt(route.getKey(), route.getValue());
+        state.putBundle("picker_routes", routes);
+    }
+
     private int requestCode(ResultPreference preference) {
-        Integer code = requestCodes.get(preference);
+        Integer code = requestCodes.get(preference.getKey());
         if (code == null) {
             code = requestCodes.size();
-            requestCodes.put(preference, code);
+            requestCodes.put(preference.getKey(), code);
         }
 
         return code;
@@ -197,9 +181,10 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (resultCode != 0) {
-            for (Map.Entry<ResultPreference, Integer> entry : requestCodes.entrySet()) {
+            for (Map.Entry<String, Integer> entry : requestCodes.entrySet()) {
                 if (entry.getValue() == requestCode) {
-                    entry.getKey().onResult(intent);
+                    ResultPreference target = findPreference(entry.getKey());
+                    if (target != null && intent != null) target.onResult(intent);
                     return;
                 }
             }

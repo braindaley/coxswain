@@ -32,6 +32,7 @@ public class SettingsActivity extends AbstractActivity {
         setContentView(R.layout.layout_settings);
 
         // must add fragment via transaction, otherwise is can not be replaced
+        if (savedInstanceState != null) return;
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.settings_fragment, new SettingsFragment(), "settings");
         transaction.commit();

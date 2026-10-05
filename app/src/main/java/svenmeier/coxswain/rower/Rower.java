@@ -71,7 +71,7 @@ public abstract class Rower {
         }
 
         if (Preference.getBoolean(context, R.string.preference_adjust_energy).get()) {
-            measurement = new EnergyAdjuster(measurement, Preference.getInt(context, R.string.preference_weight).fallback(90).get());
+            measurement = new EnergyAdjuster(measurement, Preference.getInt(context, R.string.preference_weight).fallback(68).get());
         }
 
         return measurement;

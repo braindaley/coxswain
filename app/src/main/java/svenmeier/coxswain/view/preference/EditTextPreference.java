@@ -67,7 +67,10 @@ public class EditTextPreference extends androidx.preference.EditTextPreference {
 		@Override
 		public boolean onPreferenceChange(Preference preference, Object newValue) {
 			try {
-				Integer.parseInt(newValue.toString());
+				int value = Integer.parseInt(newValue.toString());
+                if (value <= 0) return false;
+                String weightKey = preference.getContext().getString(svenmeier.coxswain.R.string.preference_weight);
+                if (weightKey.equals(preference.getKey()) && (value < 40 || value > 160)) return false;
 			} catch (NumberFormatException ex) {
 				return false;
 			}

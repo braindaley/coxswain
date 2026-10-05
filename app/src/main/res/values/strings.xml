@@ -654,4 +654,6 @@
     <string name="preference_snapshots_show_rests" translatable="false">preference_snapshots_show_rests</string>
 
     <string name="help_url" translatable="false">https://github.com/svenmeier/coxswain/wiki/User-Guide</string>
+    <string name="settings_storage_unavailable">Storage switching is unavailable until history can be migrated safely.</string>
+    <string name="settings_reconnect">Reconnect the rower after changing this setting.</string>
 </resources>
