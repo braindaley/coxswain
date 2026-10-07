@@ -1,6 +1,6 @@
 # Pete's Plan implementation
 
-The app includes the supplied 24-week beginner schedule: three required and two optional full sessions each week. The introduction card appears at the bottom of Home before enrollment; the active-week card appears above Last workout after enrollment. The overview includes all weeks, completed-session checks, estimated session times with an adjustable estimate pace, and weekly meters/time charts.
+The app includes the supplied 24-week beginner schedule: three required and two optional full sessions each week. The introduction card appears at the bottom of Home before enrollment; the active-week card appears above Last workout after enrollment. The overview includes all weeks, completed-session checks, estimated session times based on completed rowing history, and weekly meters/time charts.
 
 Weeks run Sunday–Saturday in the local timezone. Three completed required sessions allow automatic advancement on Sunday. An incomplete week pauses for a move-on or repeat decision. Repeating creates a fresh attempt; stopping the plan removes participation state and returns Home to the introduction card. Completed workouts remain in History. A new enrollment receives a new identity and cannot inherit completion from a stopped enrollment.
 
@@ -17,3 +17,8 @@ A source review corrected the Week 4 optional interval to reference the optional
 Automated integration coverage includes the full catalog, interval rest accounting, incomplete-session exclusion, named reference resolution, stop/re-enroll history preservation, explicit optional fallbacks, and best-duration selection. The debug build and full unit suite are the release checks for this checkpoint.
 
 Device testing with a real rower remains necessary. Advanced coaching still needs explicit per-piece result records and changing target profiles (such as beating the first piece's distance during the second), target overrides, comparison selection when both a coaching target and recorded best are available, and historical coaching presentation. References that require comparing two prior session types currently show one pacing reference plus the original comparison guidance. These are follow-up items; the current implementation is a testing checkpoint rather than a claim that every coaching instruction is automated.
+
+
+## Automatic time estimates (October 6, 2026)
+
+The estimate-pace slider is removed. Distance-session estimates prefer the completed row named by the coaching rule, then the latest completed workout with matching distance/piece structure, then the latest completed workout with usable rowing-only split data. Full-session numeric pace instructions include their explicit pace offset in the estimate; a first-piece-only target uses the source average as an approximation for the full workout. Prescribed rests are included, but rest time and distance are excluded from the source split. Timed rows use their prescribed duration plus rests directly. Each session shows its source, or “Initial estimate · no completed pace yet” for the 2:30/500 m fallback. Old slider preferences are ignored. Estimates do not modify coaching targets.

@@ -211,6 +211,41 @@ class PetePlanIntegrationTest {
         assertTrue(gym.getWorkoutTimeAtDistance(completed, 10000) < 3000f)
     }
 
+    @Test fun estimatesUseCompletedCoachingReferenceInsteadOfSliderOrNewerUnrelatedRow() {
+        val store = PetePlanStore(context, gym)
+        val state = store.enroll(LocalDate.of(2026, 10, 4))
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+            .putInt("petes_plan_estimated_split_seconds", 240).commit()
+        gym.startPlanSession(Program.meters("First 5K", 5000, Difficulty.MEDIUM), state.enrollmentId,
+            1, 1, 0, "NONE", 0, 0L, null)
+        gym.onMeasured(measurement(1500, 5000, 600))
+        val source = gym.complete()
+        gym.select(Program.meters("Unrelated completed row", 1000, Difficulty.MEDIUM))
+        gym.onMeasured(measurement(200, 1000, 80))
+        gym.complete()
+        val estimate = store.timeEstimate(store.catalog.session(1, 2), state)
+        assertEquals(25, estimate.minutes)
+        assertEquals(150, estimate.splitSeconds)
+        assertEquals(source.start.get(), estimate.source!!.start.get())
+        assertFalse(estimate.initial)
+    }
+
+    @Test fun estimatesFallBackClearlyAndTimedRowsIncludeRestWithoutHistory() {
+        val store = PetePlanStore(context, gym)
+        val state = store.enroll(LocalDate.of(2026, 10, 4))
+        gym.select(Program.meters("Incomplete fast row", 5000, Difficulty.MEDIUM))
+        gym.onMeasured(measurement(60, 1000, 24))
+        gym.endEarly()
+        val initial = store.timeEstimate(store.catalog.session(1, 0), state)
+        assertEquals(25, initial.minutes)
+        assertTrue(initial.initial)
+        assertNull(initial.source)
+        val timed = store.timeEstimate(store.catalog.session(1, 4), state)
+        assertEquals(22, timed.minutes)
+        assertFalse(timed.initial)
+        assertNull(timed.source)
+    }
+
     private fun measurement(seconds: Int, meters: Int, strokes: Int): Measurement = Measurement().apply {
         duration = seconds
         distance = meters

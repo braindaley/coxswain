@@ -30,6 +30,7 @@ data class PetePlanState(
 class PetePlanStore(context: Context, private val gym: Gym) {
     private val preferences = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     val catalog: PetePlanCatalog = PetePlanCatalog.load(context.applicationContext)
+    private val estimateResolver by lazy { PeteGoalResolver.load(context.applicationContext, this, gym) }
 
     fun state(today: LocalDate = LocalDate.now(ZoneId.systemDefault())): PetePlanState {
         var value = read()
@@ -163,15 +164,29 @@ class PetePlanStore(context: Context, private val gym: Gym) {
         return (500.0 * seconds / distance).roundToInt().takeIf { it in 45..600 }
     }
 
-    fun estimateSplit(): Int = preferences.getInt(ESTIMATE_KEY, 0).takeIf { it in 90..240 } ?: gym.getAllWorkouts().list()
-        .filter { it.status.get() == WorkoutStatus.COMPLETED }
-        .maxByOrNull { it.start.get() ?: 0L }
-        ?.let(::averageSplit) ?: 150
-
-    fun setEstimateSplit(secondsPer500m: Int) {
-        require(secondsPer500m in 90..240)
-        preferences.edit().putInt(ESTIMATE_KEY, secondsPer500m).apply()
+    /** Estimates never use the retired slider preference or prescribe a coaching goal. */
+    fun timeEstimate(session: PeteSession, state: PetePlanState = state()): PeteTimeEstimate {
+        if (session.unit == PeteSession.Unit.MINUTES) {
+            return PeteTimeEstimate(session.estimatedMinutes(150), null, null, false)
+        }
+        val goal = estimateResolver.resolve(session, state)
+        val coachingSource = goal.sourceWorkout?.takeIf { averageSplit(it) != null }
+        val completed = gym.getAllWorkouts().list()
+            .sortedByDescending { it.start.get() ?: 0L }
+            .filter { averageSplit(it) != null }
+        val comparable = completed.firstOrNull { workout ->
+            runCatching {
+                val program = WorkoutDefinition.thaw(workout.programDefinition.get()) ?: return@runCatching false
+                val work = program.getSegments().filter { it.difficulty.get() != Difficulty.REST }
+                work.size == session.pieces && work.all { it.distance.get() == session.amount }
+            }.getOrDefault(false)
+        }
+        val source = coachingSource ?: comparable ?: completed.firstOrNull()
+        val split = if (goal is PeteGoal.Speed && goal.firstPieces == 0 && coachingSource != null)
+            goal.splitSeconds else source?.let(::averageSplit)
+        return PeteTimeEstimate(session.estimatedMinutes(split ?: 150), split, source, source == null)
     }
+
 
     private fun read(): PetePlanState {
         val json = preferences.getString(KEY, null) ?: return PetePlanState()
@@ -204,9 +219,15 @@ class PetePlanStore(context: Context, private val gym: Gym) {
 
     companion object {
         private const val KEY = "petes_plan_state_v1"
-        private const val ESTIMATE_KEY = "petes_plan_estimated_split_seconds"
     }
 }
+
+data class PeteTimeEstimate(
+    val minutes: Int,
+    val splitSeconds: Int?,
+    val source: Workout?,
+    val initial: Boolean
+)
 
 private fun calendarWeekStart(today: LocalDate): LocalDate =
     today.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY))

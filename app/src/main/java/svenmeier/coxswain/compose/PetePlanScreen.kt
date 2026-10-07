@@ -59,7 +59,6 @@ fun PetePlanScreen(
     var chartMetric by remember { mutableStateOf("meters") }
     var selectedChartWeek by remember { mutableIntStateOf(planState.activeWeek) }
     var confirmStop by remember { mutableStateOf(false) }
-    var estimateSplit by remember(refresh) { mutableIntStateOf(store.estimateSplit()) }
 
     LaunchedEffect(initialSessionIndex) {
         if (initialSessionIndex != null && planState.started) {
@@ -99,12 +98,11 @@ fun PetePlanScreen(
                     Text("Pete's Plan builds your indoor rowing gradually. Each Sunday–Saturday week has three required rows and two optional rows. Pick the full row that fits your day.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     val firstEnd = LocalDate.now().with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SATURDAY))
                     Text("Start today · Week 1 ends ${planDate(firstEnd)}", color = PlanBlue, fontWeight = FontWeight.Bold)
-                    EstimatePaceCard(estimateSplit) { estimateSplit = it; store.setEstimateSplit(it) }
                     PlanCard {
                         Text("Week 1 preview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         store.catalog.weeks[0].forEach { session ->
-                            SessionRow(session, false, session.estimatedMinutes(estimateSplit), onClick = {})
+                            SessionRow(session, false, store.timeEstimate(session, planState), onClick = {})
                         }
                     }
                     Button(
@@ -124,7 +122,6 @@ fun PetePlanScreen(
                     if (planState.pendingRollover) RolloverCard(planState, store.requiredComplete(planState), onDecision = {
                         store.resolveRollover(it); revision++; viewWeek = store.state().activeWeek
                     })
-                    EstimatePaceCard(estimateSplit) { estimateSplit = it; store.setEstimateSplit(it) }
                     if (planState.finished) PlanCard { Text("24-week plan finished", fontWeight = FontWeight.Bold) }
                     if (planState.started) PlanProgressChart(store, planState, chartMetric, selectedChartWeek,
                         onMetric = { chartMetric = it }, onWeek = { selectedChartWeek = it })
@@ -174,13 +171,13 @@ fun PetePlanScreen(
                         Text("REQUIRED · SEPARATE DAYS", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                         store.catalog.weeks[viewWeek - 1].take(3).forEach { session ->
                             val done = store.completedWorkout(planState, viewWeek, displayAttempt, session.index) != null
-                            SessionRow(session, done, session.estimatedMinutes(estimateSplit)) { brief = session }
+                            SessionRow(session, done, store.timeEstimate(session, planState)) { brief = session }
                         }
                         Spacer(Modifier.height(12.dp))
                         Text("OPTIONAL", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                         store.catalog.weeks[viewWeek - 1].drop(3).forEach { session ->
                             val done = store.completedWorkout(planState, viewWeek, displayAttempt, session.index) != null
-                            SessionRow(session, done, session.estimatedMinutes(estimateSplit)) { brief = session }
+                            SessionRow(session, done, store.timeEstimate(session, planState)) { brief = session }
                         }
                     }
                     if (active && required == 3) Text("Required rows complete. The next week starts Sunday.", color = PlanBlue, fontWeight = FontWeight.Bold)
@@ -262,17 +259,16 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
             } else if (state.finished) {
                 Text("Plan finished", color = PlanBlue, fontWeight = FontWeight.Bold)
             } else {
-                val split = store.estimateSplit()
                 Text("REQUIRED", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 store.catalog.weeks[state.activeWeek - 1].take(3).forEach { session ->
                     val done = store.completedWorkout(state, state.activeWeek, state.activeAttempt, session.index) != null
-                    SessionRow(session, done, session.estimatedMinutes(split)) { onSession(session.index) }
+                    SessionRow(session, done, store.timeEstimate(session, state)) { onSession(session.index) }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text("OPTIONAL", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 store.catalog.weeks[state.activeWeek - 1].drop(3).forEach { session ->
                     val done = store.completedWorkout(state, state.activeWeek, state.activeAttempt, session.index) != null
-                    SessionRow(session, done, session.estimatedMinutes(split)) { onSession(session.index) }
+                    SessionRow(session, done, store.timeEstimate(session, state)) { onSession(session.index) }
                 }
             }
             TextButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
@@ -383,7 +379,7 @@ private fun PlanCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun SessionRow(session: PeteSession, done: Boolean, minutes: Int, onClick: () -> Unit) {
+private fun SessionRow(session: PeteSession, done: Boolean, estimate: svenmeier.coxswain.pete.PeteTimeEstimate, onClick: () -> Unit) {
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         if (done) Icon(Icons.Default.Check, contentDescription = "Completed", tint = PlanBlue, modifier = Modifier.size(23.dp))
@@ -392,8 +388,14 @@ private fun SessionRow(session: PeteSession, done: Boolean, minutes: Int, onClic
         Column(Modifier.weight(1f)) {
             Text(session.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(if (done) "Completed" else if (session.optional) "Optional" else "Required", color = PlanMuted, fontSize = 11.sp)
+            Text(when {
+                estimate.initial -> "Initial estimate · no completed pace yet"
+                estimate.source != null -> "Based on ${estimate.source.programName("your earlier row")}"
+                session.totalRestSeconds > 0 -> "Set rowing time + ${clock(session.totalRestSeconds)} rest"
+                else -> "Set rowing time"
+            }, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
-        Text("~$minutes min", color = PlanBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Text("~${estimate.minutes} min", color = PlanBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = PlanMuted, modifier = Modifier.size(18.dp))
     }
 }
@@ -408,18 +410,5 @@ private fun sourceLabel(workout: Workout, store: PetePlanStore): String {
     return "${workout.programName("Earlier row")} ($day$split)"
 }
 
-@Composable
-private fun EstimatePaceCard(seconds: Int, onChange: (Int) -> Unit) {
-    PlanCard {
-        Text("Estimated pace · ${clock(seconds)} /500 m", fontWeight = FontWeight.Bold)
-        Text("Adjust this to make the row time estimates useful for your schedule.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-        Slider(
-            value = seconds.toFloat(),
-            onValueChange = { onChange((it / 5).toInt().coerceIn(18, 48) * 5) },
-            valueRange = 90f..240f,
-            steps = 29
-        )
-    }
-}
 private fun planDate(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
 private fun planDateRange(state: PetePlanState): String = state.weekStart?.let { "${planDate(it)}–${planDate(it.plusDays(6))} · Ends Saturday" } ?: "Sunday–Saturday"
