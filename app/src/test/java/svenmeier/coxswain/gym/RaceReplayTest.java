@@ -43,4 +43,12 @@ public class RaceReplayTest {
         RaceReplay replay = new RaceReplay(workout(), Collections.emptyList());
         assertEquals(500f, replay.distanceAt(50), .001f);
     }
+    @Test public void legacyNullActiveTotalsDoNotCrashRowingReplay() {
+        Workout legacy = workout();
+        legacy.planActiveSeconds.set(null); legacy.planActiveDistance.set(null); legacy.planActiveStrokes.set(null);
+        RaceReplay replay = new RaceReplay(legacy, Arrays.asList(sample(20, 100), sample(100, 1000)), true);
+        assertEquals(550f, replay.distanceAt(60), .001f);
+        RaceReplay estimated = new RaceReplay(legacy, Collections.emptyList(), true);
+        assertEquals(500f, estimated.distanceAt(50), .001f);
+    }
 }

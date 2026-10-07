@@ -31,7 +31,12 @@ public final class RaceReplay {
             if (time == times.get(times.size() - 1)) distances.set(distances.size() - 1, distance);
             else { times.add(time); distances.add(distance); }
         }
-        float finalDistance = rowingOnly ? (workout.planActiveSeconds.get() > 0 ? workout.planActiveDistance.get() : workout.distance.get() - restDistance) : workout.distance.get();
+        Integer activeSeconds = workout.planActiveSeconds.get();
+        Integer activeDistance = workout.planActiveDistance.get();
+        boolean hasActiveTotals = activeSeconds != null && activeSeconds > 0 && activeDistance != null;
+        float finalDistance = rowingOnly
+                ? (hasActiveTotals ? activeDistance : workout.distance.get() - restDistance)
+                : workout.distance.get();
         if (duration > times.get(times.size() - 1)) {
             times.add((float) duration); distances.add(finalDistance);
         } else if (duration > 0) distances.set(distances.size() - 1, finalDistance);

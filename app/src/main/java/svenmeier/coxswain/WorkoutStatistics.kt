@@ -6,11 +6,14 @@ import svenmeier.coxswain.gym.Workout
 import kotlin.math.roundToInt
 
 /** Recorded timestamps are authoritative; legacy recordings have only evenly spaced samples. */
-internal class WorkoutStatistics(workout: Workout, snapshots: List<Snapshot>) {
+internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
+    // Propoid query lists close their cursor when an iteration finishes.
+    // Statistics need several passes, so materialize once at the boundary.
+    private val snapshots = ArrayList(recordings)
     val duration = workout.duration.get().coerceAtLeast(0)
-    private val timed = snapshots.any { it.duration.get() > 0 }
+    private val timed = snapshots.isNotEmpty() && snapshots.all { (it.duration.get() ?: 0) > 0 }
     val samples: List<Pair<Float, Snapshot>> = if (timed) snapshots
-        .map { it.duration.get().coerceIn(0, duration).toFloat() to it }
+        .map { (it.duration.get() ?: 0).coerceIn(0, duration).toFloat() to it }
         .sortedBy { it.first }.distinctByLastTime()
     else snapshots.mapIndexed { index, sample ->
         (duration.toFloat() * (index + 1) / snapshots.size) to sample
@@ -43,9 +46,11 @@ internal class WorkoutStatistics(workout: Workout, snapshots: List<Snapshot>) {
         }
     }
     private val hasRest = restRanges.isNotEmpty() && timed
-    val workSeconds = if (workout.planActiveSeconds.get() > 0) workout.planActiveSeconds.get() else if (hasRest) seconds.roundToInt() else duration
-    val workMeters = if (workout.planActiveSeconds.get() > 0) workout.planActiveDistance.get() else if (hasRest) meters else workout.distance.get()
-    val workStrokes = if (workout.planActiveSeconds.get() > 0) workout.planActiveStrokes.get() else if (hasRest) strokes else workout.strokes.get()
+    private val hasActiveTotals = (workout.planActiveSeconds.get() ?: 0) > 0 &&
+        workout.planActiveDistance.get() != null && workout.planActiveStrokes.get() != null
+    val workSeconds = if (hasActiveTotals) workout.planActiveSeconds.get() else if (hasRest) seconds.roundToInt() else duration
+    val workMeters = if (hasActiveTotals) workout.planActiveDistance.get() else if (hasRest) meters else workout.distance.get()
+    val workStrokes = if (hasActiveTotals) workout.planActiveStrokes.get() else if (hasRest) strokes else workout.strokes.get()
     val averageSplit = if (workMeters > 0) (workSeconds * 500.0 / workMeters).roundToInt() else null
     val averagePower = if (seconds > 0) (weightedPower / seconds).roundToInt() else null
     val averageRate = if (workSeconds > 0) (workStrokes * 60.0 / workSeconds).roundToInt() else null

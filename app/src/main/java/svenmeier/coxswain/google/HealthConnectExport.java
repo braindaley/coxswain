@@ -77,7 +77,10 @@ public class HealthConnectExport extends Export<Workout> {
             public void onSuccess(Set<String> granted) {
                 // We require at least Exercise permission to do anything useful
                 if (granted.contains("android.permission.health.WRITE_EXERCISE")) {
-                    export(workout, granted);
+                    Set<String> relevant = new HashSet<>(granted);
+                    relevant.retainAll(PERMISSIONS);
+                    if (!needsExport(context, workout, relevant)) return;
+                    export(workout, relevant);
                 } else {
                     requestPermissions();
                 }
@@ -138,7 +141,7 @@ public class HealthConnectExport extends Export<Workout> {
         Futures.addCallback(insertFuture, new FutureCallback<InsertRecordsResponse>() {
             @Override
             public void onSuccess(InsertRecordsResponse result) {
-                markExported(workout);
+                markExported(workout, granted);
                 DiagnosticsLog.record(context, "Health Connect successfully saved " + result.getRecordIdsList().size() + " records");
                 Log.d(Coxswain.TAG, "Inserted " + result.getRecordIdsList().size() + " records into Health Connect: " + result.getRecordIdsList());
                 toast(context.getString(R.string.healthconnect_export_finished));
@@ -158,18 +161,31 @@ public class HealthConnectExport extends Export<Workout> {
     }
 
     private boolean wasExported(Workout workout) {
-        return context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE)
-                .getBoolean(Long.toString(workout.start.get()), false);
+        return exportedPermissions(context, workout).containsAll(PERMISSIONS);
     }
 
-    private void markExported(Workout workout) {
+    static boolean needsExport(Context context, Workout workout, Set<String> granted) {
+        Set<String> relevant = new HashSet<>(granted);
+        relevant.retainAll(PERMISSIONS);
+        return !exportedPermissions(context, workout).containsAll(relevant);
+    }
+
+    static Set<String> exportedPermissions(Context context, Workout workout) {
+        return new HashSet<>(context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE)
+                .getStringSet("permissions:" + workout.start.get(), java.util.Collections.emptySet()));
+    }
+
+    private void markExported(Workout workout, Set<String> permissions) {
+        Set<String> exported = exportedPermissions(context, workout);
+        exported.addAll(permissions);
         context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).edit()
-                .putBoolean(Long.toString(workout.start.get()), true).apply();
+                .putBoolean(Long.toString(workout.start.get()), true)
+                .putStringSet("permissions:" + workout.start.get(), exported).apply();
     }
 
     /** Syncs every finalized workout. Stable client record IDs and local markers make retries safe. */
     public static void syncHistory(Context context) {
-        List<Workout> workouts = Gym.instance(context).getWorkouts().list();
+        List<Workout> workouts = Gym.instance(context).getAllWorkouts().list();
         if (workouts.isEmpty()) {
             Toast.makeText(context, R.string.ui_health_no_history, Toast.LENGTH_SHORT).show();
             return;

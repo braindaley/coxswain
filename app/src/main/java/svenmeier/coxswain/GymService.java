@@ -84,7 +84,14 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
             endRowing();
         }
         
-        if (!startRowing(intent)) {
+        try {
+            if (intent == null || !startRowing(intent)) stopSelf();
+        } catch (SecurityException revoked) {
+            DiagnosticsLog.record(this, "Connection permission unavailable: " + revoked.getMessage());
+            if (rower != null) rower.close();
+            rower = null;
+            gym.connectionLost();
+            Toast.makeText(this, R.string.ui_connection_permission_needed, Toast.LENGTH_LONG).show();
             stopSelf();
         }
 
@@ -245,9 +252,6 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
 
             if (Build.VERSION.SDK_INT >= 34) {
                 int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
-                if (rower instanceof BluetoothRower) {
-                    type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
-                }
                 startForeground(NOTIFICATION_ID, builder.build(), type);
             } else {
                 startForeground(NOTIFICATION_ID, builder.build());
@@ -330,6 +334,20 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
     }
 
     public static void start(Context context, Object connector) {
+        if (CONNECTOR_BLUETOOTH.equals(connector)) {
+            Intent setup = new Intent(context, svenmeier.coxswain.bluetooth.BluetoothConnectActivity.class);
+            if (!(context instanceof android.app.Activity)) setup.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(setup);
+            return;
+        }
+        startConnector(context, connector);
+    }
+
+    public static void startBluetoothReady(Context context) {
+        startConnector(context, CONNECTOR_BLUETOOTH);
+    }
+
+    private static void startConnector(Context context, Object connector) {
         Intent intent = createIntent(context, connector);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

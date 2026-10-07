@@ -560,4 +560,8 @@
 
     <string name="preference_devices_none_title">Keine Geräte</string>
     <string name="preference_devices_none_summary">Es sind keinen Geräte verbunden</string>
+    <string name="settings_storage_unavailable">Der Speicherort kann erst geändert werden, wenn der Verlauf sicher übertragen werden kann.</string>
+    <string name="settings_reconnect">Verbinde das Rudergerät nach einer Änderung dieser Einstellung erneut.</string>
+    <string name="ui_connection_permission_needed">Erlaube den Zugriff auf Geräte in der Nähe, um das Rudergerät zu verbinden.</string>
+    <string name="ui_bluetooth_enable_needed">Aktiviere Bluetooth, um das Rudergerät zu verbinden.</string>
 </resources>

@@ -261,7 +261,8 @@ public class BluetoothRower extends Rower {
 			registered = true;
 
 			if (adapter.isEnabled() == false) {
-				adapter.enable();
+                toast(context.getString(R.string.ui_bluetooth_enable_needed));
+                fireDisconnected();
 			} else {
 				proceed();
 			}

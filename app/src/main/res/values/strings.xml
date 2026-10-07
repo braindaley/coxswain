@@ -656,4 +656,6 @@
     <string name="help_url" translatable="false">https://github.com/svenmeier/coxswain/wiki/User-Guide</string>
     <string name="settings_storage_unavailable">Storage switching is unavailable until history can be migrated safely.</string>
     <string name="settings_reconnect">Reconnect the rower after changing this setting.</string>
+    <string name="ui_connection_permission_needed">Allow Nearby devices permission to connect the rower.</string>
+    <string name="ui_bluetooth_enable_needed">Turn on Bluetooth to connect the rower.</string>
 </resources>

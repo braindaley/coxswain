@@ -28,4 +28,24 @@ class WorkoutStatisticsTest {
         assertEquals(50, result.averagePower)
         assertEquals(2, result.samples.size)
     }
+    @Test fun migratedWorkoutsWithNullActiveTotalsStillShowStatistics() {
+        val workout = Workout().apply {
+            duration.set(150); distance.set(520); strokes.set(50)
+            planActiveSeconds.set(null); planActiveDistance.set(null); planActiveStrokes.set(null)
+        }
+        val result = WorkoutStatistics(workout, listOf(sample(60, 200, 24, 100),
+            sample(90, 220, 26, 0, true), sample(150, 520, 50, 200)))
+        assertEquals(120, result.workSeconds)
+        assertEquals(500, result.workMeters)
+        assertEquals(48, result.workStrokes)
+    }
+
+    @Test fun missingLegacySampleTimesUseEstimatedSpacing() {
+        val workout = Workout().apply { duration.set(60); distance.set(200) }
+        val first = sample(30, 100, 12, 100).apply { duration.set(null) }
+        val last = sample(60, 200, 24, 100)
+        val result = WorkoutStatistics(workout, listOf(first, last))
+        assertEquals(listOf(30f, 60f), result.samples.map { it.first })
+        assertEquals(60, result.workSeconds)
+    }
 }

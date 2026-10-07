@@ -507,12 +507,14 @@ public class Gym {
     }
 
     public void start(Program program, SessionType type) {
+        finishReplacedSession();
         this.pace = null;
         this.program = program;
         prepareSession(type);
     }
 
     public void startFreeRow() {
+        finishReplacedSession();
         this.pace = null;
         this.program = null;
         prepareSession(SessionType.FREE);
@@ -591,15 +593,26 @@ public class Gym {
         if (selectedProgram == null || pace == null || pace.status.get() != WorkoutStatus.COMPLETED) {
             throw new IllegalArgumentException("A race requires a selected program and a completed result");
         }
+        finishReplacedSession();
         this.pace = pace;
         this.program = selectedProgram;
         prepareSession(SessionType.RACE);
     }
 
     public void challenge(Workout pace) {
+        finishReplacedSession();
         this.pace = pace;
         this.program = Program.meters(context.getString(R.string.action_challenge), pace.distance.get(), Difficulty.NONE);
         prepareSession(SessionType.RACE);
+    }
+
+    /** Preserve recorded effort when a new row is explicitly selected from Home. */
+    private void finishReplacedSession() {
+        if (current != null && current.status.get() == WorkoutStatus.ACTIVE) {
+            WorkoutStatus status = sessionType == SessionType.FREE || progress == null
+                    ? WorkoutStatus.COMPLETED : WorkoutStatus.ENDED_EARLY;
+            finalizeSession(status, false);
+        }
     }
 
     private void prepareSession(SessionType type) {
@@ -727,6 +740,10 @@ public class Gym {
     }
 
     private Workout finalizeSession(WorkoutStatus status) {
+        return finalizeSession(status, true);
+    }
+
+    private Workout finalizeSession(WorkoutStatus status, boolean showResult) {
         if (current == null) {
             clearSession();
             return null;
@@ -750,7 +767,7 @@ public class Gym {
             Export.start(context, finalized);
         }
         clearSession();
-        fireChanged(finalized);
+        if (showResult) fireChanged(finalized);
         return finalized;
     }
 
@@ -795,12 +812,13 @@ public class Gym {
             return event;
         }
 
+        Measurement previous = new Measurement(this.measurement);
         this.measurement = normalized(measurement);
 
         if (sessionType != null) {
             if (this.measurement.anyTargetValue()) {
                 // delay workout creation
-                event = analyse(this.measurement);
+                event = analyse(this.measurement, previous);
             }
         }
 
@@ -809,7 +827,7 @@ public class Gym {
         return event;
     }
 
-    private Event analyse(Measurement measurement) {
+    private Event analyse(Measurement measurement, Measurement previous) {
         Event event = Event.ACKNOWLEDGED;
 
         if (current == null) {
@@ -845,40 +863,63 @@ public class Gym {
             return Event.REJECTED;
         }
 
-        seconds = (current.duration.get() - seconds);
+        Difficulty sampleDifficulty = progress == null ? Difficulty.NONE : progress.segment.difficulty.get();
+        // Advance from the prescribed boundary, not the next transport packet's timestamp.
+        // A single delayed packet can cover several short intervals.
+        while (progress != null && progress.completion() >= 1.0f) {
+            Measurement boundary = measurement;
+            if (progress.segment.duration.get() > 0 && progress.segment.distance.get() == 0
+                    && progress.segment.strokes.get() == 0 && progress.segment.energy.get() == 0) {
+                int end = progress.startMeasurement.getDuration() + progress.segment.duration.get();
+                boundary = interpolateAtTime(previous, measurement, end);
+                if (end > previous.getDuration() && end < measurement.getDuration()) {
+                    Snapshot sample = new Snapshot(progress.segment.difficulty.get(), boundary);
+                    sample.recordedAt.set(System.currentTimeMillis() - (measurement.getDuration() - end) * 1000L);
+                    sample.workout.set(current);
+                    repository.insert(sample);
+                }
+            }
+            sampleDifficulty = progress.segment.difficulty.get();
+            if (sampleDifficulty == Difficulty.REST) {
+                completedRestSeconds += Math.max(0, boundary.getDuration() - progress.startMeasurement.getDuration());
+                completedRestDistance += Math.max(0, boundary.getDistance() - progress.startMeasurement.getDistance());
+                completedRestStrokes += Math.max(0, boundary.getStrokes() - progress.startMeasurement.getStrokes());
+            }
+            Segment next = program.getNextSegment(progress.segment);
+            if (next == null) {
+                progress = null;
+                targetReached = true;
+                event = Event.PROGRAM_FINISHED;
+            } else {
+                progress = new Progress(next, boundary);
+                if (boundary.getDuration() < measurement.getDuration()) sampleDifficulty = next.difficulty.get();
+                event = Event.SEGMENT_CHANGED;
+            }
+        }
+
+        seconds = current.duration.get() - seconds;
         if (seconds > 0) {
             mergeWorkout(current);
-
-            // limit snapshots so this does not take forever
             for (seconds = Math.min(seconds, 10); seconds > 0; seconds--) {
-                Snapshot snapshot = new Snapshot(progress == null ? Difficulty.NONE : progress.segment.difficulty.get(), measurement);
+                Snapshot snapshot = new Snapshot(sampleDifficulty, measurement);
                 snapshot.workout.set(current);
                 repository.insert(snapshot);
             }
         }
 
-        if (progress != null && progress.completion() == 1.0f) {
-            if (progress.segment.difficulty.get() == Difficulty.REST) {
-                completedRestSeconds += Math.max(0, measurement.getDuration() - progress.getStartMeasurement().getDuration());
-                completedRestDistance += Math.max(0, measurement.getDistance() - progress.getStartMeasurement().getDistance());
-                completedRestStrokes += Math.max(0, measurement.getStrokes() - progress.getStartMeasurement().getStrokes());
-            }
-            Segment next = program.getNextSegment(progress.segment);
-            if (next == null) {
-                mergeWorkout(current);
-
-                progress = null;
-                targetReached = true;
-
-                event = Event.PROGRAM_FINISHED;
-            } else {
-                progress = new Progress(next, measurement);
-
-                event = Event.SEGMENT_CHANGED;
-            }
-        }
-
         return event;
+    }
+
+    private Measurement interpolateAtTime(Measurement before, Measurement after, int seconds) {
+        float fraction = after.getDuration() <= before.getDuration() ? 1f :
+                Math.max(0f, Math.min(1f, (seconds - before.getDuration()) /
+                        (float) (after.getDuration() - before.getDuration())));
+        Measurement result = new Measurement(after);
+        result.setDuration(seconds);
+        result.setDistance(before.getDistance() + Math.round((after.getDistance() - before.getDistance()) * fraction));
+        result.setStrokes(before.getStrokes() + Math.round((after.getStrokes() - before.getStrokes()) * fraction));
+        result.setEnergy(before.getEnergy() + Math.round((after.getEnergy() - before.getEnergy()) * fraction));
+        return result;
     }
 
     private Measurement normalized(Measurement raw) {
@@ -1067,6 +1108,9 @@ public class Gym {
                 if (value instanceof Boolean || value instanceof Number || value instanceof String) preferences.put(entry.getKey(), value);
             }
             root.put("preferences", preferences);
+            String metrics = context.getSharedPreferences("live_row_display", Context.MODE_PRIVATE)
+                    .getString("metric_bindings", null);
+            if (metrics != null) root.put("liveRowMetrics", metrics);
             JSONObject healthExports = new JSONObject();
             for (Map.Entry<String, ?> entry : context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).getAll().entrySet()) {
                 if (entry.getKey().matches("[0-9]+") && entry.getValue() instanceof Boolean) healthExports.put(entry.getKey(), entry.getValue());
@@ -1197,6 +1241,8 @@ public class Gym {
                 }
             }
             editor.apply();
+            if (root.has("liveRowMetrics")) context.getSharedPreferences("live_row_display", Context.MODE_PRIVATE)
+                    .edit().putString("metric_bindings", root.getString("liveRowMetrics")).apply();
             JSONObject healthExports = root.optJSONObject("healthConnectExports");
             if (healthExports != null) {
                 SharedPreferences.Editor healthEditor = context.getSharedPreferences("health_connect_exports", Context.MODE_PRIVATE).edit();
@@ -1223,6 +1269,11 @@ public class Gym {
                 if (!(value instanceof Boolean || value instanceof Number || value instanceof String))
                     throw new IllegalArgumentException("Invalid preference value");
             }
+        }
+        if (root.has("liveRowMetrics")) {
+            String[] bindings = root.getString("liveRowMetrics").split(",", -1);
+            if (bindings.length != 6) throw new IllegalArgumentException("Invalid live row layout");
+            for (String binding : bindings) svenmeier.coxswain.view.ValueBinding.valueOf(binding);
         }
         JSONObject healthExports = root.optJSONObject("healthConnectExports");
         if (healthExports != null) {
@@ -1400,7 +1451,7 @@ public class Gym {
     }
 
     private void fireChanged(Object scope) {
-        for (Listener listener : listeners) {
+        for (Listener listener : new ArrayList<>(listeners)) {
             listener.changed(scope);
         }
     }

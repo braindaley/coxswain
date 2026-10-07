@@ -570,4 +570,8 @@
 
     <string name="preference_devices_none_title">Pas d\'équipement</string>
     <string name="preference_devices_none_summary">Pas d\'équipement connecté en USB</string>
+    <string name="settings_storage_unavailable">Le changement de stockage sera disponible lorsque le transfert sécurisé de l’historique sera pris en charge.</string>
+    <string name="settings_reconnect">Reconnectez le rameur après avoir modifié ce réglage.</string>
+    <string name="ui_connection_permission_needed">Autorisez les appareils à proximité pour connecter le rameur.</string>
+    <string name="ui_bluetooth_enable_needed">Activez le Bluetooth pour connecter le rameur.</string>
 </resources>
