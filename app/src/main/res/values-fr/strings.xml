@@ -574,4 +574,25 @@
     <string name="settings_reconnect">Reconnectez le rameur après avoir modifié ce réglage.</string>
     <string name="ui_connection_permission_needed">Autorisez les appareils à proximité pour connecter le rameur.</string>
     <string name="ui_bluetooth_enable_needed">Activez le Bluetooth pour connecter le rameur.</string>
+    <string name="ui_chart_started_finished">Début %1$s · Fin %2$s</string>
+    <string name="ui_chart_estimated_clock">Les heures de cet ancien enregistrement sont estimées.</string>
+    <string name="ui_chart_include_startup">Inclure les premiers coups dans l’échelle</string>
+    <string name="ui_chart_startup_note">Les premiers coups sont pâles et peuvent être hors échelle. Sélectionnez un instant pour voir la valeur enregistrée.</string>
+    <string name="ui_chart_inspect">Examiner votre séance</string>
+    <string name="ui_chart_selected_time">%1$s · %2$s écoulées</string>
+    <string name="ui_chart_inspect_hint">Touchez un graphique ou déplacez le curseur pour comparer les mesures au même instant.</string>
+    <string name="ui_chart_interval_name">Intervalle %1$d</string>
+    <string name="ui_chart_light">Léger</string>
+    <string name="ui_chart_moderate">Modéré</string>
+    <string name="ui_chart_vigorous">Intense</string>
+    <string name="ui_chart_peak">Maximum</string>
+    <string name="ui_chart_row">Rame</string>
+    <string name="ui_chart_program_effort">Intensité programmée</string>
+    <string name="ui_chart_effort_note">Les couleurs indiquent l’intensité prévue pour chaque étape. Les repos sont ombrés.</string>
+    <string name="ui_chart_reference_legend">Pointillés courts : moyenne · Tirets : objectif de l’intervalle</string>
+    <string name="ui_chart_accessibility">%1$s selon l’heure. %2$s. Utilisez « Examiner votre séance » pour lire les mesures individuelles.</string>
+    <string name="ui_chart_intervals">Détail des intervalles</string>
+    <string name="ui_chart_estimated_intervals">Les limites des étapes de cet ancien enregistrement sont reconstituées à partir des objectifs du programme.</string>
+    <string name="ui_chart_target">Objectif</string>
+    <string name="ui_chart_target_difference">Moyenne moins objectif</string>
 </resources>

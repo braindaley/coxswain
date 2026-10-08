@@ -116,7 +116,7 @@ public class GymSchemaFixtureTest {
                 "planGoalValue", "planGoalSourceStart", "planActiveSeconds",
                 "planActiveDistance", "planActiveStrokes");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
-                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration", "recordedAt");
+                "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration", "recordedAt", "intervalIndex", "intervalStart");
     }
 
     private void assertColumns(String table, String... expected) {

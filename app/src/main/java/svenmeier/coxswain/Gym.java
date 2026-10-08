@@ -864,6 +864,8 @@ public class Gym {
         }
 
         Difficulty sampleDifficulty = progress == null ? Difficulty.NONE : progress.segment.difficulty.get();
+        int sampleInterval = progress == null ? -1 : program.getSegments().indexOf(progress.segment);
+        int sampleIntervalStart = progress == null ? 0 : progress.startMeasurement.getDuration();
         // Advance from the prescribed boundary, not the next transport packet's timestamp.
         // A single delayed packet can cover several short intervals.
         while (progress != null && progress.completion() >= 1.0f) {
@@ -874,12 +876,16 @@ public class Gym {
                 boundary = interpolateAtTime(previous, measurement, end);
                 if (end > previous.getDuration() && end < measurement.getDuration()) {
                     Snapshot sample = new Snapshot(progress.segment.difficulty.get(), boundary);
+                    sample.intervalIndex.set(program.getSegments().indexOf(progress.segment));
+                    sample.intervalStart.set(progress.startMeasurement.getDuration());
                     sample.recordedAt.set(System.currentTimeMillis() - (measurement.getDuration() - end) * 1000L);
                     sample.workout.set(current);
                     repository.insert(sample);
                 }
             }
             sampleDifficulty = progress.segment.difficulty.get();
+            sampleInterval = program.getSegments().indexOf(progress.segment);
+            sampleIntervalStart = progress.startMeasurement.getDuration();
             if (sampleDifficulty == Difficulty.REST) {
                 completedRestSeconds += Math.max(0, boundary.getDuration() - progress.startMeasurement.getDuration());
                 completedRestDistance += Math.max(0, boundary.getDistance() - progress.startMeasurement.getDistance());
@@ -892,7 +898,11 @@ public class Gym {
                 event = Event.PROGRAM_FINISHED;
             } else {
                 progress = new Progress(next, boundary);
-                if (boundary.getDuration() < measurement.getDuration()) sampleDifficulty = next.difficulty.get();
+                if (boundary.getDuration() < measurement.getDuration()) {
+                    sampleDifficulty = next.difficulty.get();
+                    sampleInterval = program.getSegments().indexOf(next);
+                    sampleIntervalStart = boundary.getDuration();
+                }
                 event = Event.SEGMENT_CHANGED;
             }
         }
@@ -902,6 +912,8 @@ public class Gym {
             mergeWorkout(current);
             for (seconds = Math.min(seconds, 10); seconds > 0; seconds--) {
                 Snapshot snapshot = new Snapshot(sampleDifficulty, measurement);
+                snapshot.intervalIndex.set(sampleInterval);
+                snapshot.intervalStart.set(sampleIntervalStart);
                 snapshot.workout.set(current);
                 repository.insert(snapshot);
             }
@@ -1087,6 +1099,8 @@ public class Gym {
                     sample.put("difficulty", snapshot.difficulty.get().name());
                     sample.put("duration", snapshot.duration.get());
                     sample.put("recordedAt", snapshot.recordedAt.get());
+                    sample.put("intervalIndex", snapshot.intervalIndex.get());
+                    sample.put("intervalStart", snapshot.intervalStart.get());
                     sample.put("distance", snapshot.distance.get());
                     sample.put("strokes", snapshot.strokes.get());
                     sample.put("energy", snapshot.energy.get());
@@ -1199,6 +1213,8 @@ public class Gym {
                                 snapshot.difficulty.set(Difficulty.valueOf(data.getString("difficulty")));
                                 snapshot.duration.set(data.optInt("duration", 0));
                                 snapshot.recordedAt.set(data.optLong("recordedAt", 0L));
+                                snapshot.intervalIndex.set(data.optInt("intervalIndex", -1));
+                                snapshot.intervalStart.set(data.optInt("intervalStart", 0));
                                 snapshot.distance.set(data.getInt("distance")); snapshot.strokes.set(data.getInt("strokes")); snapshot.energy.set(data.getInt("energy"));
                                 snapshot.speed.set(data.getInt("speed")); snapshot.pulse.set(data.getInt("pulse")); snapshot.strokeRate.set(data.getInt("strokeRate"));
                                 snapshot.strokeRatio.set(data.getInt("strokeRatio")); snapshot.power.set(data.getInt("power"));
@@ -1311,6 +1327,8 @@ public class Gym {
             for (int j = 0; j < samples.length(); j++) {
                 JSONObject sample = samples.getJSONObject(j);
                 Difficulty.valueOf(sample.getString("difficulty"));
+                if (sample.optInt("intervalIndex", -1) < -1 || sample.optInt("intervalStart", 0) < 0)
+                    throw new IllegalArgumentException("Invalid recorded interval");
                 for (String field : new String[]{"distance", "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power"}) sample.getInt(field);
             }
         }

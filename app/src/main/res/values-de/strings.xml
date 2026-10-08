@@ -564,4 +564,25 @@
     <string name="settings_reconnect">Verbinde das Rudergerät nach einer Änderung dieser Einstellung erneut.</string>
     <string name="ui_connection_permission_needed">Erlaube den Zugriff auf Geräte in der Nähe, um das Rudergerät zu verbinden.</string>
     <string name="ui_bluetooth_enable_needed">Aktiviere Bluetooth, um das Rudergerät zu verbinden.</string>
+    <string name="ui_chart_started_finished">Beginn %1$s · Ende %2$s</string>
+    <string name="ui_chart_estimated_clock">Die Uhrzeiten dieser älteren Aufzeichnung sind geschätzt.</string>
+    <string name="ui_chart_include_startup">Erste Schläge in die Diagrammskala einbeziehen</string>
+    <string name="ui_chart_startup_note">Die ersten Schläge sind blass und können außerhalb der Skala liegen. Wähle einen Zeitpunkt, um den aufgezeichneten Wert zu sehen.</string>
+    <string name="ui_chart_inspect">Rudereinheit untersuchen</string>
+    <string name="ui_chart_selected_time">%1$s · %2$s verstrichen</string>
+    <string name="ui_chart_inspect_hint">Tippe auf ein Diagramm oder bewege den Regler, um die Messwerte zum selben Zeitpunkt zu vergleichen.</string>
+    <string name="ui_chart_interval_name">Intervall %1$d</string>
+    <string name="ui_chart_light">Leicht</string>
+    <string name="ui_chart_moderate">Moderat</string>
+    <string name="ui_chart_vigorous">Intensiv</string>
+    <string name="ui_chart_peak">Spitze</string>
+    <string name="ui_chart_row">Rudern</string>
+    <string name="ui_chart_program_effort">Vorgegebene Belastung</string>
+    <string name="ui_chart_effort_note">Die Farben zeigen die vorgegebene Belastung jedes Schritts. Ruhephasen sind schattiert.</string>
+    <string name="ui_chart_reference_legend">Gepunktet: Trainingsdurchschnitt · Gestrichelt: Intervallziel</string>
+    <string name="ui_chart_accessibility">%1$s nach Uhrzeit. %2$s. Verwende „Rudereinheit untersuchen“, um einzelne Messwerte zu lesen.</string>
+    <string name="ui_chart_intervals">Intervallübersicht</string>
+    <string name="ui_chart_estimated_intervals">Die Schrittgrenzen dieser älteren Aufzeichnung werden aus den Programmzielen rekonstruiert.</string>
+    <string name="ui_chart_target">Ziel</string>
+    <string name="ui_chart_target_difference">Durchschnitt minus Ziel</string>
 </resources>

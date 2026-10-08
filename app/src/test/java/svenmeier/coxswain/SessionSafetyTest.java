@@ -69,4 +69,18 @@ public class SessionSafetyTest {
   String backup=gym.createBackup();layout.edit().clear().commit();gym.restoreBackup(backup);
   assertEquals("POWER,DISTANCE,SPLIT,STROKE_RATE,DURATION,PULSE",layout.getString("metric_bindings",null));
  }
+ @Test public void sameEffortIntervalsRecordIdentityAndSurviveBackup() {
+  Program p=Program.minutes("Pyramid",1,Difficulty.HARD);
+  p.getSegment(0).setDuration(5);p.addSegment(new Segment(Difficulty.HARD).setDuration(5));
+  p.addSegment(new Segment(Difficulty.HARD).setDuration(5));
+  gym.select(p);gym.onMeasured(m(15,150));Workout row=gym.complete();
+  java.util.List<Snapshot> samples=new java.util.ArrayList<>(gym.getSnapshots(row).list());
+  assertTrue(samples.stream().anyMatch(s -> s.intervalIndex.get()==0 && s.duration.get()==5));
+  assertTrue(samples.stream().anyMatch(s -> s.intervalIndex.get()==1 && s.intervalStart.get()==5));
+  assertTrue(samples.stream().anyMatch(s -> s.intervalIndex.get()==2 && s.intervalStart.get()==10));
+  String backup=gym.createBackup();gym.delete(row);gym.restoreBackup(backup);
+  Workout restored=gym.getAllWorkouts().list().get(0);
+  java.util.List<Snapshot> restoredSamples=new java.util.ArrayList<>(gym.getSnapshots(restored).list());
+  assertTrue(restoredSamples.stream().anyMatch(s -> s.intervalIndex.get()==2 && s.intervalStart.get()==10));
+ }
 }
