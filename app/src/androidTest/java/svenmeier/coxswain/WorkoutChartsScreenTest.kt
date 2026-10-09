@@ -34,7 +34,10 @@ class WorkoutChartsScreenTest {
     @Test fun clockChartsAreReadOnlyAndIntervalBreakdownIsReachable() = checkCharts(false)
     @Test fun darkChartsSupportLargerTextWithoutExtraControls() = checkCharts(true)
 
-    private fun checkCharts(dark: Boolean) {
+    @Test fun recordedHeartRateAddsStatisticsAndGraph() = checkCharts(false, true)
+    @Test fun darkHeartRateGraphIncludesRecovery() = checkCharts(true, true)
+
+    private fun checkCharts(dark: Boolean, withHeartRate: Boolean = false) {
         val start = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).parse("2026-10-08 06:00")!!.time
         val program = Program.minutes("Pyramid", 1, Difficulty.HARD).apply {
             getSegment(0).setDuration(60).setPower(100); getSegment(0).name.set("Build")
@@ -52,6 +55,7 @@ class WorkoutChartsScreenTest {
             difficulty.set(if (second in 61..90) Difficulty.REST else Difficulty.HARD)
             speed.set(if (second <= 4) 175 else if (second <= 60) 400 else if (second <= 90) 0 else 500)
             power.set(if (second <= 8 || second in 61..90) 0 else if (second <= 60) 100 else 200)
+            pulse.set(if (!withHeartRate || second in 100..105) 0 else if (second <= 60) 140 else if (second <= 90) 120 else 160)
             strokeRate.set(if (second in 61..90) 0 else 24); strokes.set(second / 2)
             distance.set(if (second <= 60) second * 4 else if (second <= 90) 240 else 240 + (second - 90) * 5)
         } }
@@ -77,6 +81,19 @@ class WorkoutChartsScreenTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         FileOutputStream(File(context.cacheDir, if (dark) "charts-dark.png" else "charts-light.png")).use {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+        if (withHeartRate) {
+            compose.onNodeWithText("Maximum heart rate").performScrollTo().assertIsDisplayed()
+            compose.onAllNodesWithText("160 BPM").onFirst().assertExists()
+            compose.onNodeWithContentDescription("Heart rate by clock time", substring = true)
+                .performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("BPM", substring = false).assertExists()
+            FileOutputStream(File(context.cacheDir, if (dark) "heart-chart-dark.png" else "heart-chart-light.png")).use {
+                compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+        } else {
+            compose.onNodeWithText("Average heart rate").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Heart rate by clock time", substring = true).assertDoesNotExist()
         }
         compose.onNodeWithText("Interval breakdown").performScrollTo().assertIsDisplayed()
         compose.onAllNodesWithText("Recover").onLast().performScrollTo().assertIsDisplayed()

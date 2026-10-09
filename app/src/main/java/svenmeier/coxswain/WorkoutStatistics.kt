@@ -58,6 +58,36 @@ internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
     val minimumRate = work.minOfOrNull { it.second.strokeRate.get() }
     val maximumRate = work.maxOfOrNull { it.second.strokeRate.get() }
     val maximumPower = work.maxOfOrNull { it.second.power.get() }
+    // Heart rate includes recovery, and unavailable readings never count as zero BPM.
+    val pulse = RecordedPulseStatistics(samples)
+}
+
+internal class RecordedPulseStatistics(samples: List<Pair<Float, Snapshot>>, start: Float = 0f,
+                                       end: Float = Float.MAX_VALUE) {
+    private val valid = samples.filter {
+        (it.first > start || start == 0f && it.first == 0f) && it.first <= end && (it.second.pulse.get() ?: 0) > 0
+    }
+    val minimum = valid.minOfOrNull { it.second.pulse.get() }
+    val maximum = valid.maxOfOrNull { it.second.pulse.get() }
+    val average: Int?
+    init {
+        var weighted = 0.0
+        var seconds = 0f
+        samples.forEachIndexed { index, (time, sample) ->
+            val pulse = sample.pulse.get() ?: 0
+            val previous = samples.getOrNull(index - 1)
+            val from = maxOf(start, previous?.first ?: 0f)
+            val to = minOf(end, time)
+            if (pulse > 0 && time in start..end && to > from) {
+                // A first reading or reconnection must not backfill an unobserved sensor gap.
+                val weight = if ((previous?.second?.pulse?.get() ?: 0) > 0) to - from else minOf(1f, to - from)
+                weighted += pulse * weight
+                seconds += weight
+            }
+        }
+        average = if (seconds > 0) (weighted / seconds).roundToInt()
+            else valid.map { it.second.pulse.get() }.takeIf { it.isNotEmpty() }?.average()?.roundToInt()
+    }
 }
 
 private fun List<Pair<Float, Snapshot>>.distinctByLastTime() = groupBy { it.first }.values.map { it.last() }

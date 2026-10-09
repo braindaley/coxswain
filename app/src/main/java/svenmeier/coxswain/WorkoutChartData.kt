@@ -9,16 +9,18 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 internal enum class ResultMeasure {
-    SPLIT, POWER, RATE;
+    SPLIT, POWER, RATE, PULSE;
     fun value(sample: Snapshot): Float? = when (this) {
         SPLIT -> sample.speed.get().takeIf { it > 0 }?.let { 50000f / it }
         POWER -> sample.power.get().toFloat()
         RATE -> sample.strokeRate.get().toFloat()
+        PULSE -> sample.pulse.get()?.takeIf { it > 0 }?.toFloat()
     }
     fun target(segment: Segment?): Float? = when (this) {
         SPLIT -> segment?.speed?.get()?.takeIf { it > 0 }?.let { 50000f / it }
         POWER -> segment?.power?.get()?.takeIf { it > 0 }?.toFloat()
         RATE -> segment?.strokeRate?.get()?.takeIf { it > 0 }?.toFloat()
+        PULSE -> segment?.pulse?.get()?.takeIf { it > 0 }?.toFloat()
     }
 }
 
@@ -34,7 +36,7 @@ internal data class ResultScale(val low: Float, val high: Float) {
     }
 }
 internal data class IntervalResult(val seconds: Int, val meters: Int, val split: Int?,
-                                   val power: Int?, val rate: Int?)
+                                   val power: Int?, val rate: Int?, val pulse: Int?)
 
 /** Display-only quality handling. Saved totals, race scoring and coaching references stay untouched. */
 internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatistics) {
@@ -156,7 +158,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         return raw
     }
     fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
-        if (point.elapsed < startupEnd) null else value(point, measure)
+        if (measure != ResultMeasure.PULSE && point.elapsed < startupEnd) null else value(point, measure)
 
     private fun findStartupEnd(): Float {
         val first = phases.firstOrNull { it.difficulty != Difficulty.REST } ?: return 0f
@@ -180,23 +182,25 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     }
 
     fun scale(measure: ResultMeasure): ResultScale {
-        val work = points.filter { !isRest(it) }
+        val work = points.filter { measure == ResultMeasure.PULSE || !isRest(it) }
         val average = when (measure) {
             ResultMeasure.SPLIT -> statistics.averageSplit
             ResultMeasure.POWER -> statistics.averagePower
             ResultMeasure.RATE -> statistics.averageRate
+            ResultMeasure.PULSE -> statistics.pulse.average
         }?.toFloat()
         val values = (work.mapNotNull { plottedValue(it, measure) } +
-            phases.filter { it.difficulty != Difficulty.REST }.mapNotNull { measure.target(it.segment) } + listOfNotNull(average))
+            phases.filter { measure == ResultMeasure.PULSE || it.difficulty != Difficulty.REST }
+                .mapNotNull { measure.target(it.segment) } + listOfNotNull(average))
         val low = values.minOrNull() ?: 0f
         val high = values.maxOrNull() ?: 1f
         val padding = max((high - low) * .12f, if (measure == ResultMeasure.SPLIT) 2f else 3f)
         return ResultScale((low - padding).coerceAtLeast(0f), high + padding)
     }
-    fun breaksBefore(index: Int): Boolean {
+    fun breaksBefore(index: Int, measure: ResultMeasure = ResultMeasure.SPLIT): Boolean {
         val before = points.getOrNull(index - 1) ?: return true
         val current = points[index]
-        return before.interval != current.interval ||
+        return (measure != ResultMeasure.PULSE && before.interval != current.interval) ||
             current.clock - before.clock - ((current.elapsed - before.elapsed) * 1000).toLong() > 2000L
     }
     fun intervalResult(phase: ResultPhase): IntervalResult {
@@ -225,6 +229,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         }
         return IntervalResult(seconds, meters, if (meters > 0) (seconds * 500f / meters).roundToInt() else null,
             if (weight > 0f) (power / weight).roundToInt() else null,
-            if (seconds > 0) (strokes * 60f / seconds).roundToInt() else null)
+            if (seconds > 0) (strokes * 60f / seconds).roundToInt() else null,
+            RecordedPulseStatistics(statistics.samples, phase.start, phase.end).average)
     }
 }

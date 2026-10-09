@@ -580,4 +580,8 @@
     <string name="ui_chart_estimated_intervals">Die Schrittgrenzen dieser älteren Aufzeichnung werden aus den Programmzielen rekonstruiert.</string>
     <string name="ui_chart_target">Ziel</string>
     <string name="ui_chart_target_difference">Durchschnitt minus Ziel</string>
+    <string name="ui_average_heart_rate">Durchschnittliche Herzfrequenz</string>
+    <string name="ui_minimum_heart_rate">Minimale Herzfrequenz</string>
+    <string name="ui_maximum_heart_rate">Maximale Herzfrequenz</string>
+    <string name="ui_chart_heart_statistics">Ø %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 </resources>

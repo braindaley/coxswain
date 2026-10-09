@@ -154,6 +154,33 @@ class WorkoutChartDataTest {
         assertNotNull(result.plottedValue(result.points[7], ResultMeasure.SPLIT))
         assertNotNull(result.plottedValue(result.points[8], ResultMeasure.SPLIT))
     }
+    @Test fun heartRateRetainsInitialReadingsRecoveryAndMissingSensorGaps() {
+        val program = Program.minutes("Recovery", 1, Difficulty.HARD).apply {
+            getSegment(0).setDuration(30); addSegment(Segment(Difficulty.REST).setDuration(30))
+        }
+        val result = chart(row(program = program),
+            sample(4, strokes = 2, index = 0).apply { pulse.set(110) },
+            sample(30, index = 0).apply { pulse.set(150) },
+            sample(40, index = 1, stepStart = 30).apply { pulse.set(140) },
+            sample(50, index = 1, stepStart = 30).apply { pulse.set(0) },
+            sample(60, index = 1, stepStart = 30).apply { pulse.set(120) })
+        assertNull(result.plottedValue(result.points[0], ResultMeasure.SPLIT))
+        assertEquals(110f, result.plottedValue(result.points[0], ResultMeasure.PULSE)!!, .001f)
+        assertEquals(140f, result.plottedValue(result.points[2], ResultMeasure.PULSE)!!, .001f)
+        assertNull(result.plottedValue(result.points[3], ResultMeasure.PULSE))
+        assertFalse(result.breaksBefore(2, ResultMeasure.PULSE))
+        assertTrue(result.scale(ResultMeasure.PULSE).low < 110f)
+        assertTrue(result.scale(ResultMeasure.PULSE).high > 150f)
+        assertNotNull(result.intervalResult(result.phases.last()).pulse)
+    }
+    @Test fun intervalWithoutPulseDoesNotBorrowThePreviousStepReading() {
+        val program = Program.minutes("Disconnected", 1, Difficulty.HARD).apply {
+            getSegment(0).setDuration(30); addSegment(Segment(Difficulty.REST).setDuration(30))
+        }
+        val result = chart(row(program = program), sample(30, index = 0).apply { pulse.set(150) },
+            sample(60, index = 1, stepStart = 30).apply { pulse.set(0) })
+        assertNull(result.intervalResult(result.phases.last()).pulse)
+    }
     @Test fun missingDefinitionAndEmptyRecordingsAreSafe() {
         val workout = row().apply { programDefinition.set("broken") }
         val result = chart(workout)

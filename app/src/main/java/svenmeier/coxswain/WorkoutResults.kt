@@ -63,6 +63,11 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_best_split), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
+        if (summary.pulse.average != null) {
+            ResultMetricRow(stringResource(R.string.ui_average_heart_rate), "${summary.pulse.average} BPM")
+            ResultMetricRow(stringResource(R.string.ui_minimum_heart_rate), "${summary.pulse.minimum} BPM")
+            ResultMetricRow(stringResource(R.string.ui_maximum_heart_rate), "${summary.pulse.maximum} BPM")
+        }
         Text(stringResource(R.string.ui_chart_started_finished, preciseFormat.format(Date(charts.start)), preciseFormat.format(Date(charts.end))),
             style = MaterialTheme.typography.bodyMedium)
         if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock),
@@ -74,6 +79,9 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
             stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"))
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
             stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
+        if (summary.pulse.average != null) ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
+            charts, clockFormat, summary.pulse.average?.toFloat(), stringResource(R.string.ui_chart_heart_statistics,
+                summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!))
         if (charts.phases.size > 1) IntervalResults(charts, preciseFormat)
     }
 }
@@ -95,7 +103,13 @@ fun RaceResultSummary(workout: Workout) {
 
 private fun formatSplit(seconds: Int): String = "%d:%02d /500 m".format(seconds / 60, seconds % 60)
 
-@Composable private fun ResultMetricRow(label: String, value: String) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(value, fontWeight = FontWeight.Bold) } }
+@Composable
+private fun ResultMetricRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(label, Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontWeight = FontWeight.Bold)
+    }
+}
 
 fun workoutDefinitionType(workout: Workout): SessionType {
     if (workout.sessionType.get() != SessionType.RACE) return workout.sessionType.get()
@@ -163,8 +177,9 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     val colors = effortColors()
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val hasSamples = charts.points.any { !charts.isRest(it) && (charts.plottedValue(it, measure) ?: 0f) > 0f }
-    val unit = when (measure) { ResultMeasure.SPLIT -> "/500 m"; ResultMeasure.POWER -> "W"; ResultMeasure.RATE -> "SPM" }
+    val includesRest = measure == ResultMeasure.PULSE
+    val hasSamples = charts.points.any { (includesRest || !charts.isRest(it)) && (charts.plottedValue(it, measure) ?: 0f) > 0f }
+    val unit = when (measure) { ResultMeasure.SPLIT -> "/500 m"; ResultMeasure.POWER -> "W"; ResultMeasure.RATE -> "SPM"; ResultMeasure.PULSE -> "BPM" }
     val chartDescription = stringResource(R.string.ui_chart_accessibility, title, statistics)
     fun label(value: Float) = if (measure == ResultMeasure.SPLIT) formatAxisTime(value.roundToInt()) else value.roundToInt().toString()
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -215,10 +230,10 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                         charts.points.forEachIndexed { index, point ->
                             val value = charts.plottedValue(point, measure)
                             val before = charts.points.getOrNull(index - 1)
-                            if (value != null && !charts.isRest(point)) {
+                            if (value != null && (includesRest || !charts.isRest(point))) {
                                 val color = colors.getValue(charts.phase(point)?.difficulty ?: Difficulty.NONE)
                                 val previous = before?.let { charts.plottedValue(it, measure) }
-                                if (before != null && previous != null && !charts.isRest(before) && !charts.breaksBefore(index)) {
+                                if (before != null && previous != null && (includesRest || !charts.isRest(before)) && !charts.breaksBefore(index, measure)) {
                                     drawLine(color, Offset(x(before.clock), y(previous)),
                                         Offset(x(point.clock), y(value)), 2.dp.toPx())
                                 } else drawCircle(color, 2.dp.toPx(), Offset(x(point.clock), y(value)))
@@ -259,6 +274,7 @@ private fun IntervalResults(charts: WorkoutChartData, clockFormat: SimpleDateFor
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 ResultMetricRow(stringResource(R.string.ui_time_rowed), formatAxisTime(result.seconds))
                 ResultMetricRow(stringResource(R.string.ui_distance), "%,d m".format(result.meters))
+                if (result.pulse != null) ResultMetricRow(stringResource(R.string.ui_average_heart_rate), "${result.pulse} BPM")
                 if (phase.difficulty != Difficulty.REST) {
                     ResultMetricRow(stringResource(R.string.ui_average_split), result.split?.let(::formatSplit) ?: "—")
                     ResultMetricRow(stringResource(R.string.ui_average_power), result.power?.let { "$it W" } ?: "—")
@@ -268,8 +284,8 @@ private fun IntervalResults(charts: WorkoutChartData, clockFormat: SimpleDateFor
                     }
                     if (goal != null) {
                         val (measure, target) = goal
-                        val actual = when (measure) { ResultMeasure.SPLIT -> result.split; ResultMeasure.POWER -> result.power; ResultMeasure.RATE -> result.rate }
-                        val unit = when (measure) { ResultMeasure.SPLIT -> "s /500 m"; ResultMeasure.POWER -> "W"; ResultMeasure.RATE -> "SPM" }
+                        val actual = when (measure) { ResultMeasure.SPLIT -> result.split; ResultMeasure.POWER -> result.power; ResultMeasure.RATE -> result.rate; ResultMeasure.PULSE -> result.pulse }
+                        val unit = when (measure) { ResultMeasure.SPLIT -> "s /500 m"; ResultMeasure.POWER -> "W"; ResultMeasure.RATE -> "SPM"; ResultMeasure.PULSE -> "BPM" }
                         val targetText = if (measure == ResultMeasure.SPLIT) formatSplit(target.roundToInt()) else "${target.roundToInt()} $unit"
                         ResultMetricRow(stringResource(R.string.ui_chart_target), targetText)
                         if (actual != null) ResultMetricRow(stringResource(R.string.ui_chart_target_difference),

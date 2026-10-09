@@ -590,4 +590,8 @@
     <string name="ui_chart_estimated_intervals">Les limites des étapes de cet ancien enregistrement sont reconstituées à partir des objectifs du programme.</string>
     <string name="ui_chart_target">Objectif</string>
     <string name="ui_chart_target_difference">Moyenne moins objectif</string>
+    <string name="ui_average_heart_rate">Fréquence cardiaque moyenne</string>
+    <string name="ui_minimum_heart_rate">Fréquence cardiaque minimale</string>
+    <string name="ui_maximum_heart_rate">Fréquence cardiaque maximale</string>
+    <string name="ui_chart_heart_statistics">moy. %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 </resources>

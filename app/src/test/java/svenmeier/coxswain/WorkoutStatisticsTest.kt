@@ -48,4 +48,30 @@ class WorkoutStatisticsTest {
         assertEquals(listOf(30f, 60f), result.samples.map { it.first })
         assertEquals(60, result.workSeconds)
     }
+    @Test fun heartRateIncludesRecoveryAndDeduplicatesReadings() {
+        val workout = Workout().apply { duration.set(11) }
+        val result = WorkoutStatistics(workout, listOf(
+            sample(1, 1, 1, 100).apply { pulse.set(180) },
+            sample(1, 1, 1, 100).apply { pulse.set(100) },
+            sample(11, 20, 4, 0, true).apply { pulse.set(120) }))
+        assertEquals(118, result.pulse.average)
+        assertEquals(100, result.pulse.minimum)
+        assertEquals(120, result.pulse.maximum)
+    }
+    @Test fun missingHeartRateIsNotAZeroOrBackfilledAcrossSensorGaps() {
+        val result = WorkoutStatistics(Workout().apply { duration.set(100) }, listOf(
+            sample(1, 1, 1, 100).apply { pulse.set(120) },
+            sample(50, 100, 20, 100).apply { pulse.set(0) },
+            sample(100, 200, 40, 100).apply { pulse.set(160) }))
+        assertEquals(140, result.pulse.average)
+        assertEquals(120, result.pulse.minimum)
+        assertEquals(160, result.pulse.maximum)
+    }
+    @Test fun absentHeartRateHasNoStatistics() {
+        val result = WorkoutStatistics(Workout().apply { duration.set(60) }, listOf(
+            sample(10, 10, 4, 100).apply { pulse.set(null) }, sample(60, 200, 24, 100)))
+        assertNull(result.pulse.average)
+        assertNull(result.pulse.minimum)
+        assertNull(result.pulse.maximum)
+    }
 }

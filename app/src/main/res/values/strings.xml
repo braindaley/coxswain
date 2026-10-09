@@ -674,4 +674,8 @@
     <string name="ui_chart_estimated_intervals">Step boundaries are reconstructed from program targets for this older recording.</string>
     <string name="ui_chart_target">Target</string>
     <string name="ui_chart_target_difference">Average minus target</string>
+    <string name="ui_average_heart_rate">Average heart rate</string>
+    <string name="ui_minimum_heart_rate">Minimum heart rate</string>
+    <string name="ui_maximum_heart_rate">Maximum heart rate</string>
+    <string name="ui_chart_heart_statistics">avg %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 </resources>
