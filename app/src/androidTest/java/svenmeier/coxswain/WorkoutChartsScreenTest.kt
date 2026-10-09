@@ -31,8 +31,8 @@ import java.util.Locale
 class WorkoutChartsScreenTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun clockChartsStartupControlAndIntervalBreakdownAreReachable() = checkCharts(false)
-    @Test fun darkChartsSupportLargerTextAndTheSameInteractions() = checkCharts(true)
+    @Test fun clockChartsAreReadOnlyAndIntervalBreakdownIsReachable() = checkCharts(false)
+    @Test fun darkChartsSupportLargerTextWithoutExtraControls() = checkCharts(true)
 
     private fun checkCharts(dark: Boolean) {
         val start = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).parse("2026-10-08 06:00")!!.time
@@ -67,11 +67,12 @@ class WorkoutChartsScreenTest {
             }
             }
         }
-        compose.onNodeWithText("Include first strokes in chart scale").performScrollTo().performClick()
+        compose.onNodeWithText("Include first strokes in chart scale").assertDoesNotExist()
+        compose.onNodeWithText("Inspect your row").assertDoesNotExist()
         compose.onNodeWithText("Programmed effort").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Split time by clock time", substring = true)
             .performScrollTo().performTouchInput { click(center) }
-        compose.onNodeWithText("elapsed", substring = true).assertExists()
+        compose.onNodeWithText("elapsed", substring = true).assertDoesNotExist()
         compose.onNodeWithContentDescription("Split time by clock time", substring = true).performScrollTo()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         FileOutputStream(File(context.cacheDir, if (dark) "charts-dark.png" else "charts-light.png")).use {
@@ -79,7 +80,7 @@ class WorkoutChartsScreenTest {
         }
         compose.onNodeWithText("Interval breakdown").performScrollTo().assertIsDisplayed()
         compose.onAllNodesWithText("Recover").onLast().performScrollTo().assertIsDisplayed()
-        compose.onAllNodesWithText("Peak").onLast().performScrollTo().performClick()
-        compose.onNodeWithText("elapsed", substring = true).assertExists()
+        compose.onAllNodesWithText("Peak").onLast().performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Inspect your row").assertDoesNotExist()
     }
 }

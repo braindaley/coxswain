@@ -5,7 +5,6 @@ import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Snapshot
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutDefinition
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -67,11 +66,8 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     }.sortedBy { it.start }.mapIndexed { index, phase ->
         phase.copy(end = phaseStarts.getOrNull(index + 1) ?: statistics.duration.toFloat())
     }
-    // A short, explicitly labelled initial stroke window. Later interval accelerations are retained.
-    val startupEnd = points.firstOrNull { it.snapshot.strokes.get() >= 6 || it.elapsed >= 30f }?.elapsed
-        ?: points.lastOrNull()?.elapsed ?: 0f
-    val hasStartup = points.any { it.snapshot.strokes.get() > 0 } &&
-        points.any { it.elapsed < startupEnd && it.snapshot.strokes.get() < 6 }
+    // Only the initial work step is eligible. Never smooth or filter later interval transitions.
+    val startupEnd = findStartupEnd()
     private val firstValid = ResultMeasure.entries.associateWith { measure ->
         points.firstOrNull { (measure.value(it.snapshot) ?: 0f) > 0f }?.elapsed
     }
@@ -149,10 +145,6 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
             ((elapsed - beforeElapsed) / (b.elapsed - beforeElapsed).coerceAtLeast(.001f))).toLong()
     }
     fun clockFraction(clock: Long): Float = ((clock - start).toDouble() / span).toFloat().coerceIn(0f, 1f)
-    fun nearest(fraction: Float): ResultPoint? {
-        val clock = start + (span * fraction.coerceIn(0f, 1f)).toLong()
-        return points.minByOrNull { abs(it.clock - clock) }
-    }
     fun phase(point: ResultPoint): ResultPhase? = phaseByIndex[point.interval]
     fun isRest(point: ResultPoint) = (phase(point)?.difficulty ?: point.snapshot.difficulty.get()) == Difficulty.REST
 
@@ -160,18 +152,41 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         val raw = measure.value(point.snapshot) ?: return null
         if (raw < 0f) return null
         // Startup zeros mean the monitor hasn't produced this measure yet. Later true zeros remain.
-        if (raw <= 0f && point.elapsed <= startupEnd && point.elapsed < (firstValid[measure] ?: Float.MAX_VALUE)) return null
+        if (raw <= 0f && point.elapsed < (firstValid[measure] ?: Float.MAX_VALUE)) return null
         return raw
     }
-    fun scale(measure: ResultMeasure, includeStartup: Boolean): ResultScale {
+    fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
+        if (point.elapsed < startupEnd) null else value(point, measure)
+
+    private fun findStartupEnd(): Float {
+        val first = phases.firstOrNull { it.difficulty != Difficulty.REST } ?: return 0f
+        // Bound the exclusion to one minute and at most a quarter of the first step, so short
+        // efforts still have a visible trace. Sparse historical samples are not thrown away.
+        val limit = first.start + minOf(60f, (first.end - first.start) / 4f)
+        val initial = points.filter { it.interval == first.index && it.elapsed < limit }
+        if (initial.isEmpty() || initial.none { it.snapshot.speed.get() > 0 }) return 0f
+        val hasStrokeCounts = initial.any { it.snapshot.strokes.get() > 0 }
+        initial.forEach { point ->
+            val window = initial.filter { it.elapsed in (point.elapsed - 10f)..point.elapsed }
+            if (window.first().elapsed > point.elapsed - 8f) return@forEach
+            if (hasStrokeCounts && point.snapshot.strokes.get() < 6) return@forEach
+            if (window.zipWithNext().any { (a, b) -> b.elapsed - a.elapsed > 2f }) return@forEach
+            val pace = window.mapNotNull { ResultMeasure.SPLIT.value(it.snapshot) }
+            if (pace.size != window.size) return@forEach
+            val median = pace.sorted()[pace.size / 2]
+            if (pace.maxOrNull()!! - pace.minOrNull()!! <= median * .03f) return point.elapsed
+        }
+        return limit
+    }
+
+    fun scale(measure: ResultMeasure): ResultScale {
         val work = points.filter { !isRest(it) }
-        val settled = work.filter { includeStartup || !hasStartup || it.elapsed >= startupEnd }
         val average = when (measure) {
             ResultMeasure.SPLIT -> statistics.averageSplit
             ResultMeasure.POWER -> statistics.averagePower
             ResultMeasure.RATE -> statistics.averageRate
         }?.toFloat()
-        val values = (settled.ifEmpty { work }.mapNotNull { value(it, measure) } +
+        val values = (work.mapNotNull { plottedValue(it, measure) } +
             phases.filter { it.difficulty != Difficulty.REST }.mapNotNull { measure.target(it.segment) } + listOfNotNull(average))
         val low = values.minOrNull() ?: 0f
         val high = values.maxOrNull() ?: 1f

@@ -660,11 +660,6 @@
     <string name="ui_bluetooth_enable_needed">Turn on Bluetooth to connect the rower.</string>
     <string name="ui_chart_started_finished">Started %1$s · Finished %2$s</string>
     <string name="ui_chart_estimated_clock">Clock times are estimated for this older recording.</string>
-    <string name="ui_chart_include_startup">Include first strokes in chart scale</string>
-    <string name="ui_chart_startup_note">First strokes are faint and may be off scale. Select a time to see the recorded value.</string>
-    <string name="ui_chart_inspect">Inspect your row</string>
-    <string name="ui_chart_selected_time">%1$s · %2$s elapsed</string>
-    <string name="ui_chart_inspect_hint">Tap a chart or move the slider to compare metrics at the same time.</string>
     <string name="ui_chart_interval_name">Interval %1$d</string>
     <string name="ui_chart_light">Light</string>
     <string name="ui_chart_moderate">Moderate</string>
@@ -674,7 +669,7 @@
     <string name="ui_chart_program_effort">Programmed effort</string>
     <string name="ui_chart_effort_note">Colors show the effort prescribed for each step. Rest is shaded.</string>
     <string name="ui_chart_reference_legend">Dotted: workout average · Dashed: interval target</string>
-    <string name="ui_chart_accessibility">%1$s by clock time. %2$s. Use Inspect your row to read individual samples.</string>
+    <string name="ui_chart_accessibility">%1$s by clock time. %2$s.</string>
     <string name="ui_chart_intervals">Interval breakdown</string>
     <string name="ui_chart_estimated_intervals">Step boundaries are reconstructed from program targets for this older recording.</string>
     <string name="ui_chart_target">Target</string>

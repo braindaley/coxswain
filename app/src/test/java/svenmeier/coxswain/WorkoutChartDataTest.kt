@@ -27,10 +27,10 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
-    @Test fun startupOutlierDoesNotCompressMainPaceAndRawScaleRetainsIt() {
+    @Test fun startupOutlierIsNotPlottedOrUsedToScaleTheChart() {
         val result = chart(row(), sample(4, speed = 175, strokes = 2), sample(16, speed = 330, strokes = 6), sample(60, speed = 335))
-        assertTrue(result.scale(ResultMeasure.SPLIT, false).high < 200f)
-        assertTrue(result.scale(ResultMeasure.SPLIT, true).high > 285f)
+        assertTrue(result.scale(ResultMeasure.SPLIT).high < 200f)
+        assertNull(result.plottedValue(result.points.first(), ResultMeasure.SPLIT))
         assertEquals(50000f / 175f, result.value(result.points.first(), ResultMeasure.SPLIT)!!, .001f)
         assertEquals(60, result.statistics.duration)
         assertEquals(200, result.statistics.workMeters)
@@ -40,11 +40,11 @@ class WorkoutChartDataTest {
         assertNull(result.value(result.points.first(), ResultMeasure.SPLIT))
         assertNull(result.value(result.points.first(), ResultMeasure.POWER))
         assertEquals(0f, result.value(result.points.last(), ResultMeasure.POWER)!!, .001f)
-        assertEquals(0f, result.scale(ResultMeasure.POWER, false).low, .001f)
+        assertEquals(0f, result.scale(ResultMeasure.POWER).low, .001f)
     }
     @Test fun highEffortLaterInPyramidRemainsOnScale() {
         val result = chart(row(), sample(4, power = 10, strokes = 2), sample(16), sample(30, power = 600), sample(60))
-        assertTrue(result.scale(ResultMeasure.POWER, false).high > 600)
+        assertTrue(result.scale(ResultMeasure.POWER).high > 600)
         assertEquals(600f, result.value(result.points[2], ResultMeasure.POWER)!!, .001f)
     }
     @Test fun clockAxisIncludesPauseAndSeparatesTheTrace() {
@@ -56,7 +56,7 @@ class WorkoutChartDataTest {
         assertEquals(start + 50_000, result.clockAt(20f))
         assertEquals(1, result.pauseRanges.size)
         assertTrue(result.breaksBefore(1))
-        assertEquals(20f, result.nearest(50f / 90f)!!.elapsed, .001f)
+        assertEquals(50f / 90f, result.clockFraction(start + 50_000), .001f)
     }
     @Test fun legacyClockTimelineIsLabelledEstimatedAndReachesFinish() {
         val workout = row().apply { completed.set(start.get() + 90_000) }
@@ -81,7 +81,7 @@ class WorkoutChartDataTest {
         assertEquals("Peak", result.phases.last().segment!!.name.get())
         assertFalse(result.phases.any { it.estimated })
         assertTrue(result.breaksBefore(1))
-        assertTrue(result.scale(ResultMeasure.POWER, false).high > 200)
+        assertTrue(result.scale(ResultMeasure.POWER).high > 200)
     }
     @Test fun legacyTimedStepsReconstructEvenWhenDifficultyNeverChanges() {
         val program = Program.minutes("Pyramid", 1, Difficulty.HARD).apply {
@@ -114,12 +114,51 @@ class WorkoutChartDataTest {
         assertEquals(110, result.intervalResult(result.phases[2]).meters)
         assertEquals(200, result.intervalResult(result.phases[2]).power)
     }
+
+    @Test fun monitorRampAfterSixStrokesIsHiddenUntilPaceSettles() {
+        val workout = row(duration = 600).apply { distance.set(2000) }
+        val samples = (1..120).map { t ->
+            // Reproduce the saved row's prolonged acceleration: still slow well after stroke six.
+            sample(t, speed = if (t < 40) 175 + t * 4 else 335, strokes = t / 2)
+        }
+        val result = WorkoutChartData(workout, WorkoutStatistics(workout, samples))
+        assertTrue(result.startupEnd >= 40f)
+        assertTrue(result.startupEnd <= 60f)
+        result.points.filter { it.elapsed < result.startupEnd }.forEach {
+            ResultMeasure.entries.forEach { measure -> assertNull(result.plottedValue(it, measure)) }
+        }
+        assertTrue(result.scale(ResultMeasure.SPLIT).high < 160f)
+        assertEquals(samples.size, result.points.size)
+        assertEquals(600, result.statistics.duration)
+    }
+    @Test fun laterSlowIntervalAndPeakArePreserved() {
+        val program = Program.minutes("Pyramid", 2, Difficulty.MEDIUM).apply {
+            addSegment(Segment(Difficulty.HARD).setDuration(120))
+        }
+        val samples = (1..240).map { t -> sample(t,
+            speed = if (t < 15 || t in 121..135) 175 else 335,
+            power = if (t == 130) 600 else 100,
+            index = if (t <= 120) 0 else 1, stepStart = if (t <= 120) 0 else 120) }
+        val result = WorkoutChartData(row(240, program), WorkoutStatistics(row(240, program), samples))
+        assertEquals(50000f / 175, result.plottedValue(result.points[124], ResultMeasure.SPLIT)!!, .001f)
+        assertEquals(600f, result.plottedValue(result.points[129], ResultMeasure.POWER)!!, .001f)
+        assertTrue(result.scale(ResultMeasure.SPLIT).high > 285f)
+    }
+    @Test fun veryShortFirstIntervalIsNotEntirelyFiltered() {
+        val program = Program.minutes("Short intervals", 1, Difficulty.HARD).apply {
+            getSegment(0).setDuration(8); addSegment(Segment(Difficulty.HARD).setDuration(8))
+        }
+        val samples = (1..16).map { t -> sample(t, index = if (t <= 8) 0 else 1, stepStart = if (t <= 8) 0 else 8) }
+        val result = WorkoutChartData(row(16, program), WorkoutStatistics(row(16, program), samples))
+        assertTrue(result.startupEnd <= 2f)
+        assertNotNull(result.plottedValue(result.points[7], ResultMeasure.SPLIT))
+        assertNotNull(result.plottedValue(result.points[8], ResultMeasure.SPLIT))
+    }
     @Test fun missingDefinitionAndEmptyRecordingsAreSafe() {
         val workout = row().apply { programDefinition.set("broken") }
         val result = chart(workout)
         assertTrue(result.points.isEmpty())
         assertTrue(result.phases.isEmpty())
-        assertNull(result.nearest(.5f))
-        assertTrue(result.scale(ResultMeasure.SPLIT, false).high > result.scale(ResultMeasure.SPLIT, false).low)
+        assertTrue(result.scale(ResultMeasure.SPLIT).high > result.scale(ResultMeasure.SPLIT).low)
     }
 }
