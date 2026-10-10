@@ -50,6 +50,31 @@ internal fun resultLevelGuides(heart: HeartRateZones? = null, output: OutputZone
     return emptyList()
 }
 
+/** Monotone Hermite interpolation. The slope limiter and final clamp prevent invented peaks. */
+internal class ResultCurve(val from: Float, val to: Float, before: Float? = null, after: Float? = null,
+                          beforeSpan: Float = 1f, span: Float = 1f, afterSpan: Float = 1f) {
+    private val delta = to - from
+    private var startSlope = delta
+    private var endSlope = delta
+    init {
+        require(span > 0f && beforeSpan > 0f && afterSpan > 0f)
+        if (before != null) startSlope = if ((from - before) * delta <= 0f) 0f
+            else ((from - before) / beforeSpan * span + delta / span * beforeSpan) / (beforeSpan + span) * span
+        if (after != null) endSlope = if ((after - to) * delta <= 0f) 0f
+            else (delta / span * afterSpan + (after - to) / afterSpan * span) / (span + afterSpan) * span
+        if (delta == 0f) { startSlope = 0f; endSlope = 0f }
+        else {
+            val magnitude = kotlin.math.sqrt((startSlope / delta) * (startSlope / delta) + (endSlope / delta) * (endSlope / delta))
+            if (magnitude > 3f) { startSlope *= 3f / magnitude; endSlope *= 3f / magnitude }
+        }
+    }
+    fun value(fraction: Float): Float {
+        val t = fraction.coerceIn(0f, 1f); val t2 = t * t; val t3 = t2 * t
+        return ((2*t3-3*t2+1)*from + (t3-2*t2+t)*startSlope + (-2*t3+3*t2)*to + (t3-t2)*endSlope)
+            .coerceIn(minOf(from,to), maxOf(from,to))
+    }
+}
+
 internal data class IntervalResult(val seconds: Int, val meters: Int, val split: Int?,
                                    val power: Int?, val rate: Int?, val pulse: Int?)
 

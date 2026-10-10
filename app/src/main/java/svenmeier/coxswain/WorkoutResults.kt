@@ -272,24 +272,55 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                     val previous = displayValues.getOrNull(index-1)
                                     if (before != null && previous != null && (includesRest || !charts.isRest(before)) &&
                                         !charts.breaksBefore(index,measure) && (!includesRest || point.elapsed-before.elapsed <= 5f)) {
-                                        val pieces = if (includesRest && zones != null) zones.pieces(previous,value)
-                                            else if (outputZones != null && previous>0f && value>0f) outputZones.pieces(previous,value) else null
-                                        if (pieces != null) pieces.forEach { (a,b,zone) ->
-                                            val x0 = x(before.clock); val x1 = x(point.clock)
-                                            drawLine(zoneColors[zone],Offset(x0+(x1-x0)*a,y(previous+(value-previous)*a)),
-                                                Offset(x0+(x1-x0)*b,y(previous+(value-previous)*b)),1.5.dp.toPx(),cap = StrokeCap.Round)
-                                        } else drawLine(color,Offset(x(before.clock),y(previous)),Offset(x(point.clock),y(value)),
-                                            1.5.dp.toPx(),cap = StrokeCap.Round)
+                                        fun connected(left: Int, right: Int): Boolean {
+                                            val a = charts.points.getOrNull(left) ?: return false
+                                            val b = charts.points.getOrNull(right) ?: return false
+                                            return displayValues.getOrNull(left) != null && displayValues.getOrNull(right) != null &&
+                                                (includesRest || (!charts.isRest(a) && !charts.isRest(b))) &&
+                                                a.interval == b.interval && !charts.breaksBefore(right,measure) &&
+                                                b.clock > a.clock && (!includesRest || b.elapsed-a.elapsed <= 5f)
+                                        }
+                                        val leftValue = if (connected(index-2,index-1)) displayValues[index-2] else null
+                                        val rightValue = if (connected(index,index+1)) displayValues[index+1] else null
+                                        val curve = ResultCurve(previous,value,leftValue,rightValue,
+                                            beforeSpan = if (leftValue != null) (before.clock-charts.points[index-2].clock).toFloat() else 1f,
+                                            span = (point.clock-before.clock).coerceAtLeast(1L).toFloat(),
+                                            afterSpan = if (rightValue != null) (charts.points[index+1].clock-point.clock).toFloat() else 1f)
+                                        val x0 = x(before.clock); val x1 = x(point.clock)
+                                        val steps = kotlin.math.ceil((x1-x0)/2.dp.toPx()).toInt().coerceIn(4,32)
+                                        for (step in 0 until steps) {
+                                            val f0 = step.toFloat()/steps; val f1 = (step+1).toFloat()/steps
+                                            val v0 = curve.value(f0); val v1 = curve.value(f1)
+                                            val pieces = if (includesRest && zones != null) zones.pieces(v0,v1)
+                                                else if (outputZones != null && v0>0f && v1>0f) outputZones.pieces(v0,v1) else null
+                                            if (pieces != null) pieces.forEach { (a,b,zone) ->
+                                                drawLine(zoneColors[zone],
+                                                    Offset(x0+(x1-x0)*(f0+(f1-f0)*a),y(v0+(v1-v0)*a)),
+                                                    Offset(x0+(x1-x0)*(f0+(f1-f0)*b),y(v0+(v1-v0)*b)),
+                                                    1.5.dp.toPx(),cap = StrokeCap.Round)
+                                            } else drawLine(color,Offset(x0+(x1-x0)*f0,y(v0)),Offset(x0+(x1-x0)*f1,y(v1)),
+                                                1.5.dp.toPx(),cap = StrokeCap.Round)
+                                        }
                                     } else drawCircle(color,1.dp.toPx(),Offset(x(point.clock),y(value)))
                                 }
                             }
                         }
                     }
                 }
-                Column(Modifier.width(52.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
-                    Text(label(if (measure == ResultMeasure.SPLIT) scale.low else scale.high),fontSize = 12.sp,color = referenceColor)
-                    Text(label((scale.low+scale.high)/2),fontSize = 12.sp,color = referenceColor)
-                    Text(label(if (measure == ResultMeasure.SPLIT) scale.high else scale.low),fontSize = 12.sp,color = referenceColor)
+                val axisValues = if (levelGuides.isNotEmpty()) levelGuides else
+                    listOf(scale.low,(scale.low+scale.high)/2,scale.high)
+                androidx.compose.ui.layout.Layout(
+                    content = { axisValues.forEach { value -> Text(label(value),fontSize = 12.sp,color = referenceColor) } },
+                    modifier = Modifier.width(52.dp).fillMaxHeight()
+                ) { measurables, constraints ->
+                    val labels = measurables.map { it.measure(constraints.copy(minHeight = 0)) }
+                    layout(constraints.maxWidth,constraints.maxHeight) {
+                        labels.forEachIndexed { index, text ->
+                            val center = 6.dp.toPx() + (constraints.maxHeight-12.dp.toPx()) *
+                                scale.fraction(axisValues[index],measure == ResultMeasure.SPLIT)
+                            text.placeRelative(0,(center-text.height/2).roundToInt().coerceIn(0,(constraints.maxHeight-text.height).coerceAtLeast(0)))
+                        }
+                    }
                 }
             }
             Row(Modifier.fillMaxWidth().padding(end = 60.dp), horizontalArrangement = Arrangement.SpaceBetween) {

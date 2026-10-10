@@ -43,3 +43,9 @@ Four-guide validation: debug and instrumentation builds passed, all 21 WorkoutCh
 The side-by-side phone screenshots showed that 260 dp plots still produced tall cards and the dash effect made guides look faint. Titles and info icons now sit above each card, matching the reference hierarchy. Plot height is 190 dp; cards use a lighter #EEF3F9 background, 28 dp corners and 20/24 dp padding. Guides are explicit opaque circles at 5 dp spacing, rather than dashed paths. The trace median now uses readings within two seconds on either side, confined to continuous same-interval data. It retains boundary readings, zeros, sensor gaps and sustained effort changes; all statistics, zone totals and stored readings remain unchanged.
 
 Reference refinement validation: production and isolated debug/instrumentation builds passed, all 22 chart-data tests and five emulator UI tests passed. Light/dark screenshots were inspected, including larger text and explicit four-color guide dots.
+
+## Bounded curves and aligned axis values
+
+Continuous reading pairs now use monotone Hermite interpolation with limited slopes and endpoint clamping. This rounds the trace without generating values outside each displayed reading pair. Missing readings, phase boundaries and pause breaks retain their existing separation; no saved data or metrics change. Zone color changes are calculated along the rendered curve at the actual thresholds. Configured charts place right-axis values at their four guide positions, using the same fraction and six-dp plot inset. Unconfigured metrics retain min/mid/max labels.
+
+Curve/axis validation: production and isolated debug/instrumentation builds passed. All 23 chart-data tests, including curve endpoint, monotonicity, plateau and no-overshoot checks, passed; all five emulator chart UI tests passed. Light/dark screenshots with normal/larger text were reviewed and guide values align with their dots.

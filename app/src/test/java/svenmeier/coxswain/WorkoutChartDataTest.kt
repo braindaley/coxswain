@@ -27,6 +27,17 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun curveStaysWithinEachReadingPairAndRetainsEndpointsAndPlateaus() {
+        for ((from,to,before,after) in listOf(listOf(100f,120f,10f,400f),listOf(120f,100f,400f,10f),
+            listOf(100f,100f,10f,400f),listOf(100f,120f,140f,80f))) {
+            val curve = ResultCurve(from,to,before,after,.2f,2f,10f)
+            val values = (0..100).map { curve.value(it/100f) }
+            assertEquals(from,values.first(),.001f); assertEquals(to,values.last(),.001f)
+            assertTrue(values.all { it in minOf(from,to)..maxOf(from,to) })
+            assertTrue(values.zipWithNext().all { (a,b) -> if (from<=to) b>=a-.001f else b<=a+.001f })
+        }
+    }
+
     @Test fun allFourLevelGuidesFitEvenWhenRecordedValuesOccupyOneLevel() {
         val result = chart(row(), sample(20), sample(30), sample(60))
         val power = resultLevelGuides(output = OutputZones(100, 150, 200))
