@@ -122,7 +122,7 @@ class WorkoutChartsScreenTest {
             compose.onNodeWithContentDescription("About Heart rate").performScrollTo().performClick()
             compose.onNodeWithText("Moderate: 106–128 BPM").assertIsDisplayed()
             compose.onNodeWithText("Done").performClick()
-            compose.onAllNodesWithText("160").onFirst().assertExists()
+            compose.onNodeWithText("Avg", substring = false).assertDoesNotExist()
             compose.onNodeWithContentDescription("Heart rate by clock time", substring = true)
                 .performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("BPM", substring = false).assertExists()

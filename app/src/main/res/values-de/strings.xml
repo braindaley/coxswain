@@ -629,10 +629,6 @@
     <string name="ui_chart_current_heart_zones">Diese Einheit hat keine gespeicherten Herzfrequenzgrenzen. Farben und Zonenzeiten nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
     <string name="ui_chart_current_output_zones">Diese Einheit hat keine gespeicherten Leistungsgrenzen. Farben nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
 
-    <string name="chart_avg">Ø</string>
-    <string name="chart_min">Min</string>
-    <string name="chart_max">Max</string>
-    <string name="chart_best">Beste</string>
     <string name="chart_info">Über %1$s</string>
     <string name="chart_info_help">Linienfarben folgen den Stufen dieser Messgröße. Gepunktete Linien zeigen Stufengrenzen oder den Durchschnitt, wenn keine Stufen eingestellt sind. Dezente Bänder markieren Erholung oder Pausen; untere Striche markieren Intervallwechsel.</string>
     <string name="chart_filtered_help">Die Linie verwendet einen kurzen Medianfilter innerhalb jedes Intervalls. Statistiken basieren auf den aufgezeichneten Messwerten.</string>

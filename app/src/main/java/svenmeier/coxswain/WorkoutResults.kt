@@ -83,23 +83,16 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
-            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput, metrics = listOf(
-                stringResource(R.string.chart_avg) to (summary.averageSplit?.let(::formatAxisTime) ?: "—"),
-                stringResource(R.string.chart_best) to (summary.bestSplit?.let(::formatAxisTime) ?: "—")))
+            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput)
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat, summary.averagePower?.toFloat(),
-            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput, metrics = listOf(
-                stringResource(R.string.chart_avg) to "$avgPower", stringResource(R.string.chart_max) to "$maxPower"))
+            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
-            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes), metrics = listOf(
-                stringResource(R.string.chart_avg) to "$avgRate", stringResource(R.string.chart_min) to (rates.minOrNull()?.toString() ?: "—"),
-                stringResource(R.string.chart_max) to (rates.maxOrNull()?.toString() ?: "—")))
+            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
         if (summary.pulse.average != null) {
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
             charts, clockFormat, summary.pulse.average?.toFloat(), stringResource(R.string.ui_chart_heart_statistics,
                 summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!), zones,
-                currentHeart = profiles.currentHeart, zoneTimes = zoneTimes, metrics = listOf(
-                    stringResource(R.string.chart_avg) to "${summary.pulse.average}", stringResource(R.string.chart_min) to "${summary.pulse.minimum}",
-                    stringResource(R.string.chart_max) to "${summary.pulse.maximum}"))
+                currentHeart = profiles.currentHeart, zoneTimes = zoneTimes)
         }
         if (charts.phases.size > 1) IntervalResults(charts, preciseFormat)
     }
@@ -217,7 +210,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                         clockFormat: SimpleDateFormat, average: Float?, statistics: String,
                         zones: HeartRateZones? = null, outputZones: OutputZones? = null,
                         currentOutput: Boolean = false, currentHeart: Boolean = false,
-                        zoneTimes: HeartRateZoneTimes? = null, metrics: List<Pair<String, String>> = emptyList()) {
+                        zoneTimes: HeartRateZoneTimes? = null) {
     val scale = remember(charts, measure) { charts.scale(measure) }
     val displayValues = remember(charts, measure) { charts.displayValues(measure) }
     val zoneColors = heartZoneColors()
@@ -240,14 +233,6 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                 }
                 IconButton(onClick = { showInfo = true }) {
                     Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.chart_info, title), tint = referenceColor)
-                }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                metrics.forEach { (name, value) ->
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(name, style = MaterialTheme.typography.bodySmall, color = referenceColor)
-                    }
                 }
             }
             Row(Modifier.fillMaxWidth().height(260.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -319,6 +304,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     }
     if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
         text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(statistics)
             Text(stringResource(R.string.chart_info_help))
             Text(stringResource(R.string.chart_filtered_help))
             Text(stringResource(R.string.ui_chart_started_finished,
