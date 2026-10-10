@@ -727,7 +727,7 @@
     <string name="chart_min">Min</string>
     <string name="chart_max">Max</string>
     <string name="chart_best">Best</string>
-    <string name="chart_current_levels">Current levels</string>
     <string name="chart_info">About %1$s</string>
     <string name="chart_info_help">Line colors follow this metric’s levels. Dotted guides show level boundaries, or the average when no levels are set. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
+    <string name="chart_filtered_help">The line uses a short median filter to reduce visual noise within each interval. Statistics use the recorded readings.</string>
 </resources>

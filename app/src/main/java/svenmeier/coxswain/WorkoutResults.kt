@@ -82,8 +82,6 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_best_split), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
-        Text(stringResource(R.string.ui_chart_started_finished, preciseFormat.format(Date(charts.start)), preciseFormat.format(Date(charts.end))),
-            style = MaterialTheme.typography.bodyMedium)
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
             stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput, metrics = listOf(
                 stringResource(R.string.chart_avg) to (summary.averageSplit?.let(::formatAxisTime) ?: "—"),
@@ -221,6 +219,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                         currentOutput: Boolean = false, currentHeart: Boolean = false,
                         zoneTimes: HeartRateZoneTimes? = null, metrics: List<Pair<String, String>> = emptyList()) {
     val scale = remember(charts, measure) { charts.scale(measure) }
+    val displayValues = remember(charts, measure) { charts.displayValues(measure) }
     val zoneColors = heartZoneColors()
     val primaryColor = MaterialTheme.colorScheme.primary
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -233,14 +232,12 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     fun label(value: Float) = if (measure == ResultMeasure.SPLIT) formatAxisTime(value.roundToInt()) else value.roundToInt().toString()
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(unit, style = MaterialTheme.typography.bodySmall, color = referenceColor)
                 }
-                if (currentOutput || currentHeart) Text(stringResource(R.string.chart_current_levels),
-                    style = MaterialTheme.typography.labelSmall, color = referenceColor)
                 IconButton(onClick = { showInfo = true }) {
                     Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.chart_info, title), tint = referenceColor)
                 }
@@ -253,7 +250,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth().height(280.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth().height(260.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
                         color = referenceColor, modifier = Modifier.align(Alignment.Center))
@@ -284,13 +281,13 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                     1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
                             }
                             charts.points.forEachIndexed { index,point ->
-                                val value = charts.plottedValue(point,measure)
+                                val value = displayValues[index]
                                 val before = charts.points.getOrNull(index-1)
                                 if (value != null && (includesRest || !charts.isRest(point))) {
                                     val color = if (measure == ResultMeasure.RATE) referenceColor
                                         else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
                                         else outputZones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
-                                    val previous = before?.let { charts.plottedValue(it,measure) }
+                                    val previous = displayValues.getOrNull(index-1)
                                     if (before != null && previous != null && (includesRest || !charts.isRest(before)) &&
                                         !charts.breaksBefore(index,measure) && (!includesRest || point.elapsed-before.elapsed <= 5f)) {
                                         val pieces = if (includesRest && zones != null) zones.pieces(previous,value)
@@ -298,10 +295,10 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                         if (pieces != null) pieces.forEach { (a,b,zone) ->
                                             val x0 = x(before.clock); val x1 = x(point.clock)
                                             drawLine(zoneColors[zone],Offset(x0+(x1-x0)*a,y(previous+(value-previous)*a)),
-                                                Offset(x0+(x1-x0)*b,y(previous+(value-previous)*b)),2.5.dp.toPx(),cap = StrokeCap.Round)
+                                                Offset(x0+(x1-x0)*b,y(previous+(value-previous)*b)),1.5.dp.toPx(),cap = StrokeCap.Round)
                                         } else drawLine(color,Offset(x(before.clock),y(previous)),Offset(x(point.clock),y(value)),
-                                            2.5.dp.toPx(),cap = StrokeCap.Round)
-                                    } else drawCircle(color,1.5.dp.toPx(),Offset(x(point.clock),y(value)))
+                                            1.5.dp.toPx(),cap = StrokeCap.Round)
+                                    } else drawCircle(color,1.dp.toPx(),Offset(x(point.clock),y(value)))
                                 }
                             }
                         }
@@ -323,6 +320,9 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
         text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.chart_info_help))
+            Text(stringResource(R.string.chart_filtered_help))
+            Text(stringResource(R.string.ui_chart_started_finished,
+                clockFormat.format(Date(charts.start)), clockFormat.format(Date(charts.end))))
             if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock))
             if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones))
             if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))

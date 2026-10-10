@@ -27,6 +27,40 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun displayMedianReducesIsolatedNoiseWithoutChangingMeasurementsOrSustainedEffort() {
+        val samples = listOf(100, 100, 180, 100, 100, 200, 200, 200).mapIndexed { index, watts ->
+            sample(20 + index, power = watts)
+        }
+        val result = chart(row(), *samples.toTypedArray())
+        val trace = result.displayValues(ResultMeasure.POWER)
+        assertEquals(100f, trace[2]!!, .001f)
+        assertEquals(180f, result.plottedValue(result.points[2], ResultMeasure.POWER)!!, .001f)
+        assertEquals(listOf(200f, 200f, 200f), trace.takeLast(3))
+        assertTrue(result.scale(ResultMeasure.POWER).high > 200f)
+    }
+
+    @Test fun displayMedianPreservesIntervalEdgesZerosAndMissingHeartReadings() {
+        val program = Program.minutes("Steps", 1, Difficulty.MEDIUM).apply {
+            getSegment(0).setDuration(30)
+            addSegment(Segment(Difficulty.HARD).setDuration(30))
+        }
+        val result = chart(row(program = program), sample(29, power = 100, index = 0),
+            sample(30, power = 200, index = 0), sample(31, power = 100, index = 1, stepStart = 30),
+            sample(32, power = 0, index = 1, stepStart = 30), sample(33, power = 100, index = 1, stepStart = 30))
+        assertEquals(listOf(100f, 200f, 100f, 0f, 100f), result.displayValues(ResultMeasure.POWER))
+        val heart = chart(row(), sample(20).apply { pulse.set(120) }, sample(21).apply { pulse.set(null) },
+            sample(22).apply { pulse.set(160) })
+        assertEquals(listOf(120f, null, 160f), heart.displayValues(ResultMeasure.PULSE))
+    }
+
+    @Test fun displayMedianDoesNotBridgeSparseSamplesOrPauseGaps() {
+        val result = chart(row(), sample(20, power = 100), sample(21, power = 180),
+            sample(22, power = 100).apply { recordedAt.set(start + 32_000) })
+        assertEquals(listOf(100f, 180f, 100f), result.displayValues(ResultMeasure.POWER))
+        val sparse = chart(row(), sample(20, power = 100), sample(30, power = 180), sample(40, power = 100))
+        assertEquals(listOf(100f, 180f, 100f), sparse.displayValues(ResultMeasure.POWER))
+    }
+
     @Test fun startupOutlierIsNotPlottedOrUsedToScaleTheChart() {
         val result = chart(row(), sample(4, speed = 175, strokes = 2), sample(16, speed = 330, strokes = 6), sample(60, speed = 335))
         assertTrue(result.scale(ResultMeasure.SPLIT).high < 200f)

@@ -68,7 +68,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     }.sortedBy { it.start }.mapIndexed { index, phase ->
         phase.copy(end = phaseStarts.getOrNull(index + 1) ?: statistics.duration.toFloat())
     }
-    // Only the initial work step is eligible. Never smooth or filter later interval transitions.
+    // Only the initial work step is eligible for startup exclusion.
     val startupEnd = findStartupEnd()
     private val firstValid = ResultMeasure.entries.associateWith { measure ->
         points.firstOrNull { (measure.value(it.snapshot) ?: 0f) > 0f }?.elapsed
@@ -160,6 +160,24 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
         if (measure != ResultMeasure.PULSE && point.elapsed < startupEnd) null else value(point, measure)
 
+    /** Three-reading median for presentation only; never cross steps, zeros or sensor gaps. */
+    fun displayValues(measure: ResultMeasure): List<Float?> {
+        val values = points.map { plottedValue(it, measure) }
+        return values.mapIndexed { index, value ->
+            val before = points.getOrNull(index - 1)
+            val after = points.getOrNull(index + 1)
+            val point = points[index]
+            val previous = values.getOrNull(index - 1)
+            val next = values.getOrNull(index + 1)
+            if (value == null || value <= 0f || previous == null || previous <= 0f || next == null || next <= 0f ||
+                before == null || after == null || before.interval != point.interval || after.interval != point.interval ||
+                isRest(before) != isRest(point) || isRest(after) != isRest(point) ||
+                point.elapsed - before.elapsed !in 0.001f..2.5f || after.elapsed - point.elapsed !in 0.001f..2.5f ||
+                point.clock - before.clock !in 1L..3000L || after.clock - point.clock !in 1L..3000L) value
+            else listOf(previous, value, next).sorted()[1]
+        }
+    }
+
     private fun findStartupEnd(): Float {
         val first = phases.firstOrNull { it.difficulty != Difficulty.REST } ?: return 0f
         // Bound the exclusion to one minute and at most a quarter of the first step, so short
@@ -194,7 +212,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
                 .mapNotNull { measure.target(it.segment) } + listOfNotNull(average))
         val low = values.minOrNull() ?: 0f
         val high = values.maxOrNull() ?: 1f
-        val padding = max((high - low) * .12f, if (measure == ResultMeasure.SPLIT) 2f else 3f)
+        val padding = max((high - low) * .2f, if (measure == ResultMeasure.SPLIT) 4f else 3f)
         return ResultScale((low - padding).coerceAtLeast(0f), high + padding)
     }
     fun breaksBefore(index: Int, measure: ResultMeasure = ResultMeasure.SPLIT): Boolean {

@@ -46,7 +46,7 @@ class WorkoutChartsScreenTest {
             .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode()).commit()
         try {
             checkCharts(false, true, false)
-            compose.onAllNodesWithText("Current levels").onFirst().performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("Current levels").assertDoesNotExist()
             compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
             compose.onNodeWithText("This workout has no saved output thresholds.", substring = true).assertIsDisplayed()
             compose.onNodeWithText("Done").performClick()

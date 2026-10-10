@@ -643,7 +643,7 @@
     <string name="chart_min">Min</string>
     <string name="chart_max">Max</string>
     <string name="chart_best">Meilleur</string>
-    <string name="chart_current_levels">Niveaux actuels</string>
     <string name="chart_info">À propos de %1$s</string>
     <string name="chart_info_help">Les couleurs suivent les niveaux de cette mesure. Les repères pointillés indiquent les seuils, ou la moyenne sans niveaux définis. Les bandes discrètes indiquent repos ou pauses ; les traits inférieurs marquent les changements d’intervalle.</string>
+    <string name="chart_filtered_help">La courbe utilise un court filtre médian dans chaque intervalle. Les statistiques utilisent les mesures enregistrées.</string>
 </resources>
