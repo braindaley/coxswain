@@ -231,6 +231,9 @@
         android:title="@string/preference_hardware_title"
         >
 
+        <Preference android:key="heart_rate_zones" android:title="@string/hr_zones_title"
+            android:summary="@string/hr_zones_summary" />
+
         <ListPreference
             android:key="@string/preference_hardware_heart_sensor"
             android:title="@string/preference_hardware_heart_sensor_title"

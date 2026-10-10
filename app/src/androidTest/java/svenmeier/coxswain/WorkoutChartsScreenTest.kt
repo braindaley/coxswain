@@ -45,6 +45,7 @@ class WorkoutChartsScreenTest {
             addSegment(Segment(Difficulty.HARD).setDuration(60).setPower(200).apply { name.set("Peak") })
         }
         val workout = Workout().apply {
+            if (withHeartRate) heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
             this.start.set(start); duration.set(150); completed.set(start + 150_000)
             distance.set(500); strokes.set(60); programDefinition.set(WorkoutDefinition.freeze(program))
         }
@@ -83,6 +84,8 @@ class WorkoutChartsScreenTest {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
         }
         if (withHeartRate) {
+            compose.onNodeWithText("Time in heart-rate zones").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("106–128 BPM").assertExists()
             compose.onNodeWithText("Maximum heart rate").performScrollTo().assertIsDisplayed()
             compose.onAllNodesWithText("160 BPM").onFirst().assertExists()
             compose.onNodeWithContentDescription("Heart rate by clock time", substring = true)

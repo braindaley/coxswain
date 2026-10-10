@@ -9,3 +9,5 @@ Unlike rowing pace, valid initial heart-rate observations remain visible. The he
 Labels can wrap without crowding values at larger font sizes. English, German, and French labels are included. Sensor collection, stored measurements, race scoring, and the history list columns are unchanged.
 
 Validation: 127 unit tests pass; debug and instrumentation APK builds succeed; lint has no errors outside the existing baseline. Four isolated emulator UI tests pass, covering presence and absence of heart-rate data in light and dark mode, including 1.3× text. The heart-rate graph screenshot was inspected to confirm recovery plotting and missing-reading gaps.
+
+October 10 follow-up: [Personal heart-rate zones](personal-heart-rate-zones-2026-10-10.md) adds optional frozen thresholds and measured-zone line colors.

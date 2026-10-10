@@ -20,7 +20,7 @@ import propoid.db.version.Upgrade;
  */
 class GymVersioning extends DefaultVersioning {
 
-	static final int DATABASE_VERSION = 7;
+	static final int DATABASE_VERSION = 8;
 
 	GymVersioning() {
 		add(new WrongIndices());
@@ -30,7 +30,16 @@ class GymVersioning extends DefaultVersioning {
 		add(new PetePlanIdentity());
 		add(new RecordingAndProgramIdentity());
 		add(new RecordingIntervals());
+        add(new HeartZones());
 	}
+
+    private static class HeartZones implements Upgrade {
+        @Override public void apply(SQLiteDatabase database) {
+            if (!Column.exists("Workout", database)) return;
+            for (Column column : Column.get("Workout", database)) if (column.name.equals("heartRateZones")) return;
+            database.execSQL("ALTER TABLE Workout ADD COLUMN heartRateZones TEXT");
+        }
+    }
 
     private static class RecordingIntervals implements Upgrade {
         @Override public void apply(SQLiteDatabase database) {

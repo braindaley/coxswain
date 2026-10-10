@@ -833,6 +833,7 @@ public class Gym {
         if (current == null) {
             current = program == null ? new Workout(null) : program.newWorkout();
             current.freeze(program, sessionType);
+            current.heartRateZones.set(HeartRateZones.freeze(context));
             if (planEnrollment != null) {
                 current.planEnrollment.set(planEnrollment);
                 current.planWeek.set(planWeek);
@@ -1077,6 +1078,7 @@ public class Gym {
                 item.put("programName", value.programName.get());
                 item.put("programDefinition", value.programDefinition.get());
                 item.put("pausedDuration", value.pausedDuration.get());
+                item.put("heartRateZones", value.heartRateZones.get());
                 item.put("completed", value.completed.get());
                 item.put("goalType", value.goalType.get().name());
                 item.put("goalTarget", value.goalTarget.get());
@@ -1189,6 +1191,7 @@ public class Gym {
                                 }
                             }
                             value.pausedDuration.set(item.optInt("pausedDuration"));
+                            value.heartRateZones.set(item.optString("heartRateZones", null));
                             value.completed.set(item.optLong("completed"));
                             value.goalType.set(svenmeier.coxswain.gym.PerformanceGoal.valueOf(item.optString("goalType", "NONE")));
                             value.goalTarget.set(item.optInt("goalTarget"));
@@ -1286,6 +1289,9 @@ public class Gym {
                     throw new IllegalArgumentException("Invalid preference value");
             }
         }
+        if (preferences != null && preferences.has(HeartRateZones.KEY) &&
+                HeartRateZones.decode(preferences.getString(HeartRateZones.KEY)) == null)
+            throw new IllegalArgumentException("Invalid heart rate profile");
         if (root.has("liveRowMetrics")) {
             String[] bindings = root.getString("liveRowMetrics").split(",", -1);
             if (bindings.length != 6) throw new IllegalArgumentException("Invalid live row layout");
@@ -1321,6 +1327,9 @@ public class Gym {
             PerformanceGoal.valueOf(row.optString("goalType", "NONE"));
             RaceOutcome.valueOf(row.optString("raceOutcome", "NONE"));
             WorkoutDefinition.thaw(row.optString("programDefinition", null));
+            if (row.has("heartRateZones") && !row.isNull("heartRateZones") &&
+                    HeartRateZones.decode(row.getString("heartRateZones")) == null)
+                throw new IllegalArgumentException("Invalid workout heart rate zones");
             for (String field : new String[]{"duration", "distance", "strokes", "energy"})
                 if (row.getInt(field) < 0) throw new IllegalArgumentException("Negative workout total");
             JSONArray samples = row.getJSONArray("snapshots");

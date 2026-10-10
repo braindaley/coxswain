@@ -594,4 +594,29 @@
     <string name="ui_minimum_heart_rate">Fréquence cardiaque minimale</string>
     <string name="ui_maximum_heart_rate">Fréquence cardiaque maximale</string>
     <string name="ui_chart_heart_statistics">moy. %1$d BPM · min %2$d BPM · max %3$d BPM</string>
+
+    <string name="hr_zones_title">Zones de fréquence cardiaque</string>
+    <string name="hr_zones_summary">Seuils personnels pour la fréquence cardiaque enregistrée</string>
+    <string name="hr_zones_explanation" formatted="false">Calculez les zones à 40 %, 60 % et 85 % de votre réserve cardiaque (maximum moins repos), ajoutée à la fréquence au repos, ou saisissez vos seuils. Ces zones décrivent la fréquence mesurée, pas l’effort programmé.</string>
+    <string name="hr_calculate">Calculer</string>
+    <string name="hr_custom">Personnaliser</string>
+    <string name="hr_resting">Fréquence au repos (BPM)</string>
+    <string name="hr_maximum">Fréquence maximale (BPM)</string>
+    <string name="hr_age">Âge</string>
+    <string name="hr_estimate">Estimer le maximum selon l’âge</string>
+    <string name="hr_estimate_help">Utilise 220 − âge. Il s’agit d’une estimation ; un maximum personnel connu est plus précis.</string>
+    <string name="hr_estimated_max">Maximum estimé : %1$d BPM</string>
+    <string name="hr_moderate_from">Modéré à partir de (BPM)</string>
+    <string name="hr_vigorous_from">Intense à partir de (BPM)</string>
+    <string name="hr_peak_from">Pic à partir de (BPM)</string>
+    <string name="hr_custom_help">Saisissez des seuils inférieurs croissants. Léger inclut les mesures valides sous Modéré.</string>
+    <string name="hr_invalid_custom">Saisissez trois seuils BPM croissants entre 2 et 400.</string>
+    <string name="hr_invalid_reserve">Saisissez une fréquence au repos positive inférieure au maximum. Pour une estimation, indiquez un âge de 1 à 120 ans.</string>
+    <string name="hr_frozen_help">Les modifications concernent les nouvelles séances. Chaque enregistrement conserve ses seuils de départ.</string>
+    <string name="hr_save">Enregistrer les zones</string>
+    <string name="hr_disable">Désactiver les zones pour les nouvelles séances</string>
+    <string name="hr_zone_time">Temps dans les zones cardiaques</string>
+    <string name="hr_zone_coverage">%1$s de fréquence cardiaque enregistrée, récupération incluse. Mesures manquantes et pauses exclues.</string>
+    <string name="hr_zone_legacy">Les seuils personnels n’ont pas été enregistrés pour cette séance.</string>
+    <string name="hr_zone_line_help">Les couleurs de la courbe indiquent vos zones cardiaques mesurées. Les bandes d’intervalle indiquent l’effort programmé.</string>
 </resources>

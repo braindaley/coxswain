@@ -114,9 +114,29 @@ public class GymSchemaFixtureTest {
                 "goalTarget", "raceReference", "raceOutcome", "raceMargin",
                 "planEnrollment", "planWeek", "planAttempt", "planSession", "planGoalKind",
                 "planGoalValue", "planGoalSourceStart", "planActiveSeconds",
-                "planActiveDistance", "planActiveStrokes");
+                "planActiveDistance", "planActiveStrokes", "heartRateZones");
         assertColumns("Snapshot", "_id", "_type", "workout", "difficulty", "distance",
                 "strokes", "energy", "speed", "pulse", "strokeRate", "strokeRatio", "power", "duration", "recordedAt", "intervalIndex", "intervalStart");
+    }
+
+    @Test
+    public void versionSevenAddsNullableZonesWithoutReclassifyingHistory() {
+        repository.query(new Workout()).count();
+        SQLiteDatabase database = repository.getDatabase();
+        java.util.List<Column> oldColumns = Column.get("Workout", database).stream()
+                .filter(column -> !column.name.equals("heartRateZones")).collect(Collectors.toList());
+        String names = oldColumns.stream().map(column -> "\"" + column.name + "\"").collect(Collectors.joining(","));
+        database.execSQL("ALTER TABLE Workout RENAME TO WorkoutV8");
+        database.execSQL("CREATE TABLE Workout (" + oldColumns.stream().map(Column::ddl).collect(Collectors.joining(",")) + ")");
+        database.execSQL("INSERT INTO Workout (" + names + ") SELECT " + names + " FROM WorkoutV8");
+        database.execSQL("DROP TABLE WorkoutV8");
+        database.setVersion(7);
+        repository.close();
+        repository = new Repository(context, DATABASE, new GymVersioning());
+        Workout historical = repository.query(new Workout()).list().get(0);
+        org.junit.Assert.assertNull(historical.heartRateZones.get());
+        assertEquals(Integer.valueOf(2000), historical.distance.get());
+        assertEquals(8, repository.getDatabase().getVersion());
     }
 
     private void assertColumns(String table, String... expected) {

@@ -35,6 +35,8 @@ import svenmeier.coxswain.gym.WorkoutDefinition
 @Composable
 fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     val summary = remember(workout, snapshots) { WorkoutStatistics(workout, snapshots) }
+    val zones = remember(workout) { HeartRateZones.decode(workout.heartRateZones.get()) }
+    val zoneTimes = remember(summary, zones) { zones?.let { HeartRateZoneTimes(it, summary.samples) } }
     val charts = remember(summary) { WorkoutChartData(workout, summary) }
     val context = LocalContext.current
     val clockFormat = remember(context, charts.span) {
@@ -79,9 +81,14 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
             stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"))
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
             stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
-        if (summary.pulse.average != null) ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
+        if (summary.pulse.average != null) {
+            if (zones != null && zoneTimes != null) HeartZoneSummary(zones, zoneTimes)
+            else Text(stringResource(R.string.hr_zone_legacy), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
             charts, clockFormat, summary.pulse.average?.toFloat(), stringResource(R.string.ui_chart_heart_statistics,
-                summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!))
+                summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!), zones)
+        }
         if (charts.phases.size > 1) IntervalResults(charts, preciseFormat)
     }
 }
@@ -171,10 +178,41 @@ private fun ProgramEffortLegend(charts: WorkoutChartData) {
 }
 
 @Composable
+private fun heartZoneColors(): List<Color> {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
+    return listOf(MaterialTheme.colorScheme.primary,
+        if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
+        if (dark) Color(0xFFFFCB74) else Color(0xFF986600), MaterialTheme.colorScheme.error)
+}
+
+@Composable
+private fun HeartZoneSummary(zones: HeartRateZones, times: HeartRateZoneTimes) {
+    val colors = heartZoneColors()
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.hr_zone_time), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.hr_zone_coverage, formatAxisTime(times.total.roundToInt())),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        (0..3).forEach { zone ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ResultMetricRow(stringResource(heartZoneName(zone)),
+                    "${formatAxisTime(times.seconds[zone].roundToInt())} · ${times.percent(zone).roundToInt()}%")
+                Text(zones.bounds(zone), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LinearProgressIndicator(progress = { times.percent(zone) / 100f },
+                    modifier = Modifier.fillMaxWidth().height(6.dp), color = colors[zone],
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+            }
+        }
+    }
+}
+
+@Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
-                        clockFormat: SimpleDateFormat, average: Float?, statistics: String) {
+                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null) {
     val scale = remember(charts, measure) { charts.scale(measure) }
     val colors = effortColors()
+    val zoneColors = heartZoneColors()
+    val pulseColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
     val includesRest = measure == ResultMeasure.PULSE
@@ -188,6 +226,8 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(R.string.ui_chart_reference_legend), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (includesRest && zones != null) Text(stringResource(R.string.hr_zone_line_help),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth().height(256.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.width(66.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End) {
@@ -231,10 +271,16 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                             val value = charts.plottedValue(point, measure)
                             val before = charts.points.getOrNull(index - 1)
                             if (value != null && (includesRest || !charts.isRest(point))) {
-                                val color = colors.getValue(charts.phase(point)?.difficulty ?: Difficulty.NONE)
+                                val color = if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
+                                    else colors.getValue(charts.phase(point)?.difficulty ?: Difficulty.NONE)
                                 val previous = before?.let { charts.plottedValue(it, measure) }
-                                if (before != null && previous != null && (includesRest || !charts.isRest(before)) && !charts.breaksBefore(index, measure)) {
-                                    drawLine(color, Offset(x(before.clock), y(previous)),
+                                if (before != null && previous != null && (includesRest || !charts.isRest(before)) && !charts.breaksBefore(index, measure) &&
+                                    (!includesRest || point.elapsed - before.elapsed <= 5f)) {
+                                    if (includesRest && zones != null) zones.pieces(previous, value).forEach { (a, b, zone) ->
+                                        val x0 = x(before.clock); val x1 = x(point.clock)
+                                        drawLine(zoneColors[zone], Offset(x0 + (x1 - x0) * a, y(previous + (value - previous) * a)),
+                                            Offset(x0 + (x1 - x0) * b, y(previous + (value - previous) * b)), 2.dp.toPx())
+                                    } else drawLine(color, Offset(x(before.clock), y(previous)),
                                         Offset(x(point.clock), y(value)), 2.dp.toPx())
                                 } else drawCircle(color, 2.dp.toPx(), Offset(x(point.clock), y(value)))
                             }

@@ -584,4 +584,29 @@
     <string name="ui_minimum_heart_rate">Minimale Herzfrequenz</string>
     <string name="ui_maximum_heart_rate">Maximale Herzfrequenz</string>
     <string name="ui_chart_heart_statistics">Ø %1$d BPM · min %2$d BPM · max %3$d BPM</string>
+
+    <string name="hr_zones_title">Herzfrequenzzonen</string>
+    <string name="hr_zones_summary">Persönliche Grenzen für die aufgezeichnete Herzfrequenz</string>
+    <string name="hr_zones_explanation" formatted="false">Berechne die Zonen bei 40 %, 60 % und 85 % deiner Herzfrequenzreserve (Maximum minus Ruhepuls), zum Ruhepuls addiert, oder gib eigene Grenzen ein. Sie beschreiben die gemessene Herzfrequenz, nicht die geplante Belastung.</string>
+    <string name="hr_calculate">Berechnen</string>
+    <string name="hr_custom">Eigene</string>
+    <string name="hr_resting">Ruhepuls (BPM)</string>
+    <string name="hr_maximum">Maximale Herzfrequenz (BPM)</string>
+    <string name="hr_age">Alter</string>
+    <string name="hr_estimate">Maximum anhand des Alters schätzen</string>
+    <string name="hr_estimate_help">Verwendet 220 − Alter. Dies ist eine Schätzung; ein bekannter persönlicher Maximalwert ist genauer.</string>
+    <string name="hr_estimated_max">Geschätztes Maximum: %1$d BPM</string>
+    <string name="hr_moderate_from">Moderat beginnt bei (BPM)</string>
+    <string name="hr_vigorous_from">Intensiv beginnt bei (BPM)</string>
+    <string name="hr_peak_from">Spitze beginnt bei (BPM)</string>
+    <string name="hr_custom_help">Gib aufsteigende Untergrenzen ein. Leicht umfasst gültige Werte unter Moderat.</string>
+    <string name="hr_invalid_custom">Gib drei aufsteigende BPM-Grenzen zwischen 2 und 400 ein.</string>
+    <string name="hr_invalid_reserve">Gib einen positiven Ruhepuls unter dem Maximum ein. Für eine Schätzung gib ein Alter von 1 bis 120 ein.</string>
+    <string name="hr_frozen_help">Änderungen gelten für neue Einheiten. Jede Aufzeichnung behält ihre ursprünglichen Grenzen.</string>
+    <string name="hr_save">Zonen speichern</string>
+    <string name="hr_disable">Zonen für neue Einheiten ausschalten</string>
+    <string name="hr_zone_time">Zeit in Herzfrequenzzonen</string>
+    <string name="hr_zone_coverage">%1$s aufgezeichnete Herzfrequenzzeit einschließlich Erholung. Fehlende Werte und Pausen sind ausgeschlossen.</string>
+    <string name="hr_zone_legacy">Für diese Einheit wurden keine persönlichen Zonengrenzen gespeichert.</string>
+    <string name="hr_zone_line_help">Linienfarben zeigen deine gemessenen Herzfrequenzzonen. Intervallbänder zeigen die geplante Belastung.</string>
 </resources>

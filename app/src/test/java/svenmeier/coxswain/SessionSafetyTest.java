@@ -83,4 +83,25 @@ public class SessionSafetyTest {
   java.util.List<Snapshot> restoredSamples=new java.util.ArrayList<>(gym.getSnapshots(restored).list());
   assertTrue(restoredSamples.stream().anyMatch(s -> s.intervalIndex.get()==2 && s.intervalStart.get()==10));
  }
+ @Test public void heartZonesFreezeAtRecordingStartAndSurviveBackup() {
+  android.content.SharedPreferences prefs=androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+  String original=new HeartRateZones(100,130,160,null,null,null).encode();
+  prefs.edit().putString(HeartRateZones.KEY,original).commit();
+  gym.select(Program.meters("HR recording",100,Difficulty.MEDIUM));
+  gym.onMeasured(m(5,50));
+  assertEquals(original,gym.current.heartRateZones.get());
+  prefs.edit().putString(HeartRateZones.KEY,new HeartRateZones(110,140,170,null,null,null).encode()).commit();
+  gym.onMeasured(m(10,100));Workout row=gym.complete();
+  String backup=gym.createBackup();gym.delete(row);gym.restoreBackup(backup);
+  assertEquals(original,gym.getAllWorkouts().list().get(0).heartRateZones.get());
+  assertEquals(110,HeartRateZones.decode(prefs.getString(HeartRateZones.KEY,null)).getModerate());
+ }
+ @Test public void invalidHeartZonesCannotReplaceHistoryDuringRestore() throws Exception {
+  gym.select(Program.meters("Keep history",100,Difficulty.MEDIUM));gym.onMeasured(m(10,100));gym.complete();
+  org.json.JSONObject backup=new org.json.JSONObject(gym.createBackup());
+  backup.getJSONArray("workouts").getJSONObject(0).put("heartRateZones","{}");
+  assertThrows(IllegalArgumentException.class,()->gym.restoreBackup(backup.toString()));
+  assertEquals(1,gym.getAllWorkouts().count());
+ }
+
 }

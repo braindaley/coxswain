@@ -678,4 +678,29 @@
     <string name="ui_minimum_heart_rate">Minimum heart rate</string>
     <string name="ui_maximum_heart_rate">Maximum heart rate</string>
     <string name="ui_chart_heart_statistics">avg %1$d BPM · min %2$d BPM · max %3$d BPM</string>
+
+    <string name="hr_zones_title">Heart-rate zones</string>
+    <string name="hr_zones_summary">Personal thresholds for recorded heart rate</string>
+    <string name="hr_zones_explanation" formatted="false">Calculate zones at 40%, 60%, and 85% of your heart-rate reserve (maximum minus resting), added to resting heart rate, or enter your own boundaries. These zones describe measured heart rate, not the programmed effort.</string>
+    <string name="hr_calculate">Calculate</string>
+    <string name="hr_custom">Custom</string>
+    <string name="hr_resting">Resting heart rate (BPM)</string>
+    <string name="hr_maximum">Maximum heart rate (BPM)</string>
+    <string name="hr_age">Age</string>
+    <string name="hr_estimate">Estimate maximum from age</string>
+    <string name="hr_estimate_help">Uses 220 − age. This is an estimate; a known personal maximum is more specific.</string>
+    <string name="hr_estimated_max">Estimated maximum: %1$d BPM</string>
+    <string name="hr_moderate_from">Moderate starts at (BPM)</string>
+    <string name="hr_vigorous_from">Vigorous starts at (BPM)</string>
+    <string name="hr_peak_from">Peak starts at (BPM)</string>
+    <string name="hr_custom_help">Enter increasing lower boundaries. Light includes valid readings below Moderate.</string>
+    <string name="hr_invalid_custom">Enter three increasing BPM boundaries between 2 and 400.</string>
+    <string name="hr_invalid_reserve">Enter a positive resting heart rate below your maximum. For an estimate, enter an age from 1 to 120.</string>
+    <string name="hr_frozen_help">Changes apply to new workouts. Each recording keeps the thresholds it started with.</string>
+    <string name="hr_save">Save zones</string>
+    <string name="hr_disable">Turn off zones for new workouts</string>
+    <string name="hr_zone_time">Time in heart-rate zones</string>
+    <string name="hr_zone_coverage">%1$s of recorded heart-rate time, including recovery. Missing readings and pauses are excluded.</string>
+    <string name="hr_zone_legacy">Personal zone thresholds were not saved for this workout.</string>
+    <string name="hr_zone_line_help">Line colors show your measured heart-rate zones. Interval bands show programmed effort.</string>
 </resources>
