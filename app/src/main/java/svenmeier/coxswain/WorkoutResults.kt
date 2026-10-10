@@ -185,17 +185,31 @@ private fun heartZoneColors(): List<Color> {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null) {
     val colors = heartZoneColors()
-    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        (0..3).forEach { zone ->
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    if (times != null) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            (0..3).forEach { zone ->
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(stringResource(heartZoneName(zone)), style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Box(Modifier.size(6.dp).background(colors[zone], androidx.compose.foundation.shape.CircleShape))
+                        Text(formatAxisTime(times.seconds[zone].roundToInt()),
+                            style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+        }
+    } else {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            (0..3).forEach { zone ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(8.dp).background(colors[zone], androidx.compose.foundation.shape.CircleShape))
                     Text(stringResource(heartZoneName(zone)), style = MaterialTheme.typography.bodySmall)
                 }
-                if (times != null) Text("${formatAxisTime(times.seconds[zone].roundToInt())} · ${times.percent(zone).roundToInt()}%",
-                    Modifier.padding(start = 14.dp), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -314,7 +328,11 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
             if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones))
             if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))
             if (zones != null) {
-                (0..3).forEach { Text("${stringResource(heartZoneName(it))}: ${zones.bounds(it)}") }
+                (0..3).forEach { zone ->
+                    Text("${stringResource(heartZoneName(zone))}: ${zones.bounds(zone)}")
+                    if (zoneTimes != null) Text("${formatAxisTime(zoneTimes.seconds[zone].roundToInt())} · ${zoneTimes.percent(zone).roundToInt()}%",
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 if (zoneTimes != null) Text(stringResource(R.string.hr_zone_coverage,formatAxisTime(zoneTimes.total.roundToInt())))
             } else if (outputZones != null) {
                 val values = listOf(outputZones.moderate,outputZones.vigorous,outputZones.peak)
