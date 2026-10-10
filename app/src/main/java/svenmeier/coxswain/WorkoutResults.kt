@@ -82,15 +82,15 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_best_split), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
-        ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
+        ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat,
             stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput)
-        ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat, summary.averagePower?.toFloat(),
+        ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat,
             stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
-        ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
+        ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat,
             stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
         if (summary.pulse.average != null) {
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
-            charts, clockFormat, summary.pulse.average?.toFloat(), stringResource(R.string.ui_chart_heart_statistics,
+            charts, clockFormat, stringResource(R.string.ui_chart_heart_statistics,
                 summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!), zones,
                 currentHeart = profiles.currentHeart, zoneTimes = zoneTimes)
         }
@@ -207,11 +207,12 @@ private fun heartZoneColors(): List<Color> {
 
 @Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
-                        clockFormat: SimpleDateFormat, average: Float?, statistics: String,
+                        clockFormat: SimpleDateFormat, statistics: String,
                         zones: HeartRateZones? = null, outputZones: OutputZones? = null,
                         currentOutput: Boolean = false, currentHeart: Boolean = false,
                         zoneTimes: HeartRateZoneTimes? = null) {
-    val scale = remember(charts, measure) { charts.scale(measure) }
+    val levelGuides = remember(zones, outputZones) { resultLevelGuides(zones, outputZones) }
+    val scale = remember(charts, measure, levelGuides) { charts.scale(measure, levelGuides) }
     val displayValues = remember(charts, measure) { charts.displayValues(measure) }
     val zoneColors = heartZoneColors()
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -255,14 +256,9 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                 drawRect(gridColor.copy(alpha = .25f), Offset(x(start),0f),
                                     androidx.compose.ui.geometry.Size(x(end)-x(start),size.height))
                             }
-                            val boundaries = zones?.let { listOf(it.moderate,it.vigorous,it.peak) }
-                                ?: outputZones?.let { listOf(it.moderate,it.vigorous,it.peak) }
-                            if (boundaries != null) boundaries.forEachIndexed { index,boundary ->
-                                if (boundary.toFloat() in scale.low..scale.high) drawLine(zoneColors[index+1].copy(alpha = .55f),
-                                    Offset(0f,y(boundary.toFloat())),Offset(size.width,y(boundary.toFloat())),
-                                    1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
-                            } else average?.takeIf { it in scale.low..scale.high }?.let {
-                                drawLine(referenceColor.copy(alpha = .4f),Offset(0f,y(it)),Offset(size.width,y(it)),
+                            levelGuides.forEachIndexed { zone, guide ->
+                                drawLine(zoneColors[zone].copy(alpha = .65f),
+                                    Offset(0f,y(guide)),Offset(size.width,y(guide)),
                                     1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
                             }
                             charts.points.forEachIndexed { index,point ->

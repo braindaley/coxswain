@@ -2,7 +2,7 @@
 
 The Google Health reference prioritizes a large trace, a quiet card background, short axes, and a small legend. The previous Coxswain presentation repeated explanatory paragraphs, threshold lists, statistics and large zone bars around every graph. Its full-height interval borders, top color strips, square segment joins and dense grid competed with the measured trace.
 
-Workout Complete and Workout Details now share rounded chart cards with a 260 dp plot beneath the title. Avg/Best and Avg/Min/Max numbers are available in the info dialog. Units sit below the title. Numeric axes move to the right; start/end clock labels remain below. Lines use round caps and the presentation-only filtering described below; saved samples are unchanged. Rest/pause shading is faint and interval changes are short bottom ticks. Colored dotted level guides replace the grid and programmed-effort strips; unclassified metrics retain a quiet average guide. Stroke rate remains neutral.
+Workout Complete and Workout Details now share rounded chart cards with a 260 dp plot beneath the title. Avg/Best and Avg/Min/Max numbers are available in the info dialog. Units sit below the title. Numeric axes move to the right; start/end clock labels remain below. Lines use round caps and the presentation-only filtering described below; saved samples are unchanged. Rest/pause shading is faint and interval changes are short bottom ticks. Colored dotted level guides replace the grid and programmed-effort strips; unclassified metrics have no level guides. Stroke rate remains neutral.
 
 The legend uses small colored dots and names. Heart-rate zone time fits underneath each name in four equal columns; percentages are available in the info dialog, replacing the separate large time-in-zone section and repeated HR summary rows. Main-view explanations and numeric boundary lists move into each card’s info dialog. The info dialog identifies legacy recordings using current settings and retains the full source explanation, thresholds and valid-time denominator. The initial-anomaly filter, real interval transitions, unavailable-reading gaps, measured colors, frozen-profile precedence, underlying totals and recorded data are unchanged. Existing interval-result cards retain numerical goals and differences.
 
@@ -31,3 +31,9 @@ Validation for this follow-up: debug and instrumentation builds passed; all 19 W
 ## Remove duplicate card metrics
 
 Avg/Best and Avg/Min/Max rows are removed between each chart title and plot. The chart info dialog retains the metric summary, which remains available to screen readers through the chart description. Main workout summaries and the compact heart-rate zone-time strip remain in place.
+
+## Four level guides
+
+Configured heart-rate, power and pace charts now always display four color-matched dotted guides. The scale includes the guide values so guides cannot disappear when a recording stays within one level. Moderate, Vigorous and Peak use their actual starting thresholds. Light has no lower threshold; its reference uses resting BPM when available, otherwise one threshold spacing into Light (clamped at zero for increasing measures). Pace reverses this direction correctly. The info dialog explains this distinction. Neutral/unconfigured metrics no longer show an average dotted guide that might be confused with a level.
+
+Four-guide validation: debug and instrumentation builds passed, all 21 WorkoutChartDataTest cases and all five emulator chart UI tests passed. The heart-rate screenshot was inspected and shows all four color-matched guides.

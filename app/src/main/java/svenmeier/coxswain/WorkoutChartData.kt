@@ -35,6 +35,21 @@ internal data class ResultScale(val low: Float, val high: Float) {
         return if (fasterUp) f else 1f - f
     }
 }
+/** Light has no lower threshold; its guide is a reference inside that open-ended level. */
+internal fun resultLevelGuides(heart: HeartRateZones? = null, output: OutputZones? = null): List<Float> {
+    if (heart != null) {
+        val light = heart.resting?.takeIf { it < heart.moderate }
+            ?: (heart.moderate - (heart.vigorous - heart.moderate)).coerceAtLeast(0)
+        return listOf(light, heart.moderate, heart.vigorous, heart.peak).map { it.toFloat() }
+    }
+    if (output != null) {
+        val light = if (output.fasterIsLower) output.moderate + (output.moderate - output.vigorous)
+            else (output.moderate - (output.vigorous - output.moderate)).coerceAtLeast(0)
+        return listOf(light, output.moderate, output.vigorous, output.peak).map { it.toFloat() }
+    }
+    return emptyList()
+}
+
 internal data class IntervalResult(val seconds: Int, val meters: Int, val split: Int?,
                                    val power: Int?, val rate: Int?, val pulse: Int?)
 
@@ -199,7 +214,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         return limit
     }
 
-    fun scale(measure: ResultMeasure): ResultScale {
+    fun scale(measure: ResultMeasure, levelGuides: List<Float> = emptyList()): ResultScale {
         val work = points.filter { measure == ResultMeasure.PULSE || !isRest(it) }
         val average = when (measure) {
             ResultMeasure.SPLIT -> statistics.averageSplit
@@ -209,7 +224,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         }?.toFloat()
         val values = (work.mapNotNull { plottedValue(it, measure) } +
             phases.filter { measure == ResultMeasure.PULSE || it.difficulty != Difficulty.REST }
-                .mapNotNull { measure.target(it.segment) } + listOfNotNull(average))
+                .mapNotNull { measure.target(it.segment) } + listOfNotNull(average) + levelGuides)
         val low = values.minOrNull() ?: 0f
         val high = values.maxOrNull() ?: 1f
         val padding = max((high - low) * .2f, if (measure == ResultMeasure.SPLIT) 4f else 3f)

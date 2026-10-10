@@ -640,6 +640,6 @@
     <string name="ui_chart_current_output_zones">Cette séance n’a pas de seuils de performance enregistrés. Les couleurs utilisent vos réglages actuels ; les données enregistrées restent inchangées.</string>
 
     <string name="chart_info">À propos de %1$s</string>
-    <string name="chart_info_help">Les couleurs suivent les niveaux de cette mesure. Les repères pointillés indiquent les seuils, ou la moyenne sans niveaux définis. Les bandes discrètes indiquent repos ou pauses ; les traits inférieurs marquent les changements d’intervalle.</string>
+    <string name="chart_info_help">Les lignes pointillées indiquent Léger, Modéré, Vigoureux et Pic. Les trois niveaux supérieurs marquent leurs seuils; le repère Léger se situe dans cette plage. Les bandes pâles indiquent repos ou pauses; les traits en bas marquent les changements d’intervalle.</string>
     <string name="chart_filtered_help">La courbe utilise un court filtre médian dans chaque intervalle. Les statistiques utilisent les mesures enregistrées.</string>
 </resources>

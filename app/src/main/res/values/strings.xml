@@ -724,6 +724,6 @@
     <string name="ui_chart_current_output_zones">This workout has no saved output thresholds. Colors use your current settings; the recorded data is unchanged.</string>
 
     <string name="chart_info">About %1$s</string>
-    <string name="chart_info_help">Line colors follow this metric’s levels. Dotted guides show level boundaries, or the average when no levels are set. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
+    <string name="chart_info_help">Colored dotted guides show Light, Moderate, Vigorous and Peak. Moderate, Vigorous and Peak mark their starting thresholds; the Light guide is a reference within the Light range. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
     <string name="chart_filtered_help">The line uses a short median filter to reduce visual noise within each interval. Statistics use the recorded readings.</string>
 </resources>

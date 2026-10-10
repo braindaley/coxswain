@@ -27,6 +27,26 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun allFourLevelGuidesFitEvenWhenRecordedValuesOccupyOneLevel() {
+        val result = chart(row(), sample(20), sample(30), sample(60))
+        val power = resultLevelGuides(output = OutputZones(100, 150, 200))
+        assertEquals(listOf(50f, 100f, 150f, 200f), power)
+        val powerScale = result.scale(ResultMeasure.POWER, power)
+        assertTrue(power.all { it > powerScale.low && it < powerScale.high })
+        val pace = resultLevelGuides(output = OutputZones(180, 150, 120, true))
+        assertEquals(listOf(210f, 180f, 150f, 120f), pace)
+        val paceScale = result.scale(ResultMeasure.SPLIT, pace)
+        assertTrue(pace.all { it > paceScale.low && it < paceScale.high })
+        assertTrue(paceScale.fraction(pace[0], true) > paceScale.fraction(pace[3], true))
+    }
+
+    @Test fun heartLightGuideUsesRestingReferenceAndUnconfiguredMetricsHaveNoZoneGuides() {
+        val heart = HeartRateZones.reserve(60, 180)
+        assertEquals(listOf(60f, 108f, 132f, 162f), resultLevelGuides(heart = heart))
+        assertEquals(listOf(77f, 100f, 123f, 150f), resultLevelGuides(heart = HeartRateZones(100, 123, 150)))
+        assertTrue(resultLevelGuides().isEmpty())
+    }
+
     @Test fun displayMedianReducesIsolatedNoiseWithoutChangingMeasurementsOrSustainedEffort() {
         val samples = listOf(100, 100, 180, 100, 100, 200, 200, 200).mapIndexed { index, watts ->
             sample(20 + index, power = watts)
