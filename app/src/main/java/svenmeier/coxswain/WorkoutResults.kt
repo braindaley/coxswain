@@ -36,6 +36,7 @@ import svenmeier.coxswain.gym.WorkoutDefinition
 fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     val summary = remember(workout, snapshots) { WorkoutStatistics(workout, snapshots) }
     val zones = remember(workout) { HeartRateZones.decode(workout.heartRateZones.get()) }
+    val outputs = remember(workout) { PerformanceZones.decode(workout.performanceZones.get()) }
     val zoneTimes = remember(summary, zones) { zones?.let { HeartRateZoneTimes(it, summary.samples) } }
     val charts = remember(summary) { WorkoutChartData(workout, summary) }
     val context = LocalContext.current
@@ -76,9 +77,9 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (charts.phases.size > 1) ProgramEffortLegend(charts)
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
-            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)))
+            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace)
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat, summary.averagePower?.toFloat(),
-            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"))
+            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power)
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
             stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
         if (summary.pulse.average != null) {
@@ -154,8 +155,8 @@ private fun effortColors(): Map<Difficulty, Color> {
     val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
     return mapOf(Difficulty.NONE to MaterialTheme.colorScheme.primary,
         Difficulty.REST to MaterialTheme.colorScheme.onSurfaceVariant,
-        Difficulty.EASY to if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
-        Difficulty.MEDIUM to MaterialTheme.colorScheme.primary,
+        Difficulty.EASY to MaterialTheme.colorScheme.primary,
+        Difficulty.MEDIUM to if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
         Difficulty.HARD to if (dark) Color(0xFFFFCB74) else Color(0xFF986600),
         Difficulty.PEAK to MaterialTheme.colorScheme.error)
 }
@@ -206,9 +207,26 @@ private fun HeartZoneSummary(zones: HeartRateZones, times: HeartRateZoneTimes) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun OutputZoneLegend(zones: OutputZones) {
+    val colors = heartZoneColors()
+    Text(stringResource(R.string.output_zones_legend), style = MaterialTheme.typography.bodySmall)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        (0..3).forEach { zone ->
+            val threshold = when (zone) { 0, 1 -> zones.moderate; 2 -> zones.vigorous; else -> zones.peak }
+            val value = if (zones.fasterIsLower) "${formatZoneSplit(threshold)} /500 m" else "$threshold W"
+            val relation = if (zones.fasterIsLower) { if (zone == 0) ">" else "≤" } else { if (zone == 0) "<" else "≥" }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(Modifier.size(10.dp).background(colors[zone], RoundedCornerShape(2.dp)))
+                Text("${stringResource(heartZoneName(zone))} $relation $value", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
-                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null) {
+                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null, outputZones: OutputZones? = null) {
     val scale = remember(charts, measure) { charts.scale(measure) }
     val colors = effortColors()
     val zoneColors = heartZoneColors()
@@ -225,6 +243,10 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
         Text(if (hasSamples) statistics else stringResource(R.string.ui_no_samples),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(R.string.ui_chart_reference_legend), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (outputZones != null) OutputZoneLegend(outputZones)
+        else if (measure == ResultMeasure.POWER || measure == ResultMeasure.SPLIT) Text(
+            stringResource(R.string.output_zones_legacy), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (includesRest && zones != null) Text(stringResource(R.string.hr_zone_line_help),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -271,12 +293,17 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                             val value = charts.plottedValue(point, measure)
                             val before = charts.points.getOrNull(index - 1)
                             if (value != null && (includesRest || !charts.isRest(point))) {
-                                val color = if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
-                                    else colors.getValue(charts.phase(point)?.difficulty ?: Difficulty.NONE)
+                                val color = if (measure == ResultMeasure.RATE) referenceColor
+                                    else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
+                                    else outputZones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
                                 val previous = before?.let { charts.plottedValue(it, measure) }
                                 if (before != null && previous != null && (includesRest || !charts.isRest(before)) && !charts.breaksBefore(index, measure) &&
                                     (!includesRest || point.elapsed - before.elapsed <= 5f)) {
                                     if (includesRest && zones != null) zones.pieces(previous, value).forEach { (a, b, zone) ->
+                                        val x0 = x(before.clock); val x1 = x(point.clock)
+                                        drawLine(zoneColors[zone], Offset(x0 + (x1 - x0) * a, y(previous + (value - previous) * a)),
+                                            Offset(x0 + (x1 - x0) * b, y(previous + (value - previous) * b)), 2.dp.toPx())
+                                    } else if (outputZones != null && previous > 0f && value > 0f) outputZones.pieces(previous, value).forEach { (a, b, zone) ->
                                         val x0 = x(before.clock); val x1 = x(point.clock)
                                         drawLine(zoneColors[zone], Offset(x0 + (x1 - x0) * a, y(previous + (value - previous) * a)),
                                             Offset(x0 + (x1 - x0) * b, y(previous + (value - previous) * b)), 2.dp.toPx())

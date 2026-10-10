@@ -149,6 +149,7 @@
             android:exported="false" />
         <activity android:name=".WorkoutDetailsActivity" android:exported="false" />
         <activity android:name=".RaceYourBestActivity" android:exported="false" />
+        <activity android:name=".PerformanceZonesActivity" android:exported="false" />
         <activity android:name=".HeartRateZonesActivity" android:exported="false" />
         <activity android:name=".google.HealthConnectManageActivity" android:exported="false" />
         <activity

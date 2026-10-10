@@ -627,4 +627,21 @@
     <string name="hr_history_values">Suggestions de l’historique : minimum initial %1$d BPM · pic soutenu %2$d BPM</string>
     <string name="hr_history_help">Les champs vides sont remplis à partir des séances terminées. Le minimum utilise les 30 premières secondes ; les deux valeurs doivent durer au moins cinq secondes. La fréquence initiale estime le repos, et le pic enregistré n’est pas un maximum testé. Vous pouvez modifier ces valeurs avant d’enregistrer.</string>
     <string name="hr_use_history">Utiliser les suggestions de l’historique</string>
+
+    <string name="output_zones_title">Niveaux de puissance et d’allure</string>
+    <string name="output_zones_summary">Seuils personnels suggérés depuis les séances terminées</string>
+    <string name="output_zones_help">Ces niveaux de performance relatifs ne sont pas des zones cardiaques. Les suggestions utilisent les 25e, 50e et 85e percentiles de puissance et de vitesse des 20 dernières séances terminées, hors repos et anomalies initiales. Vérifiez ou modifiez les seuils, puis enregistrez-les.</string>
+    <string name="output_zones_failed">Impossible de lire l’historique. Vous pouvez saisir les seuils ci-dessous.</string>
+    <string name="output_zones_unavailable">Pas assez de mesures variées et horodatées pour suggérer des niveaux distincts. Vous pouvez saisir vos seuils.</string>
+    <string name="output_zones_invalid">Saisissez trois seuils de puissance croissants ou trois temps intermédiaires décroissants. Laissez les trois champs vides pour désactiver une mesure.</string>
+    <string name="output_power_help">Une puissance plus élevée correspond à un niveau supérieur.</string>
+    <string name="output_pace_help">Une allure plus rapide correspond à un niveau supérieur. Saisissez m:ss par 500 m (ou des secondes).</string>
+    <string name="output_power_moderate">Modéré à partir de (W)</string>
+    <string name="output_power_vigorous">Intense à partir de (W)</string>
+    <string name="output_power_peak">Pic à partir de (W)</string>
+    <string name="output_pace_moderate">Modéré à partir de (m:ss /500 m)</string>
+    <string name="output_pace_vigorous">Intense à partir de (m:ss /500 m)</string>
+    <string name="output_pace_peak">Pic à partir de (m:ss /500 m)</string>
+    <string name="output_zones_legend">Niveaux relatifs ; chaque niveau commence à son seuil.</string>
+    <string name="output_zones_legacy">Les seuils personnels n’ont pas été enregistrés pour cette mesure.</string>
 </resources>

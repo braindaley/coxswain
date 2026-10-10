@@ -45,7 +45,10 @@ class WorkoutChartsScreenTest {
             addSegment(Segment(Difficulty.HARD).setDuration(60).setPower(200).apply { name.set("Peak") })
         }
         val workout = Workout().apply {
-            if (withHeartRate) heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
+            if (withHeartRate) {
+                heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
+                performanceZones.set(PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode())
+            }
             this.start.set(start); duration.set(150); completed.set(start + 150_000)
             distance.set(500); strokes.set(60); programDefinition.set(WorkoutDefinition.freeze(program))
         }

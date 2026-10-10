@@ -62,6 +62,9 @@ public class Workout extends Propoid {
     /** Personal HR thresholds frozen when this recording begins; absent on legacy rows. */
     public final Property<String> heartRateZones = property();
 
+    /** Frozen relative power and pace thresholds; independent of HR. */
+    public final Property<String> performanceZones = property();
+
     public final Property<WorkoutStatus> status = property();
 
     /** seconds excluded from active workout time */

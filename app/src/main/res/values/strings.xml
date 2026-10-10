@@ -711,4 +711,21 @@
     <string name="hr_history_values">History suggestions: starting low %1$d BPM · sustained peak %2$d BPM</string>
     <string name="hr_history_help">Blank fields are filled from completed rows. The low uses the first 30 seconds; both values must persist for at least five seconds. Starting heart rate is an estimate of resting heart rate, and recorded peak is not a tested maximum. You can edit either value before saving.</string>
     <string name="hr_use_history">Use history suggestions</string>
+
+    <string name="output_zones_title">Power and pace levels</string>
+    <string name="output_zones_summary">Personal output thresholds, suggested from completed rows</string>
+    <string name="output_zones_help">These are relative performance levels, not heart-rate zones. Suggestions use the 25th, 50th and 85th percentiles of output in your most recent 20 completed rows, excluding rest and initial sensor anomalies. Review or edit them, then save for new workouts.</string>
+    <string name="output_zones_failed">Could not read rowing history. You can enter thresholds below.</string>
+    <string name="output_zones_unavailable">Not enough varied, timed output data to suggest distinct levels. You can enter your own thresholds.</string>
+    <string name="output_zones_invalid">Enter three increasing power thresholds or three decreasing split times. Leave all three fields blank to disable a metric.</string>
+    <string name="output_power_help">Higher watts enter higher levels.</string>
+    <string name="output_pace_help">Faster splits enter higher levels. Enter m:ss per 500 m (or seconds).</string>
+    <string name="output_power_moderate">Moderate starts at (W)</string>
+    <string name="output_power_vigorous">Vigorous starts at (W)</string>
+    <string name="output_power_peak">Peak starts at (W)</string>
+    <string name="output_pace_moderate">Moderate starts at (m:ss /500 m)</string>
+    <string name="output_pace_vigorous">Vigorous starts at (m:ss /500 m)</string>
+    <string name="output_pace_peak">Peak starts at (m:ss /500 m)</string>
+    <string name="output_zones_legend">Relative output levels; each level starts at its threshold.</string>
+    <string name="output_zones_legacy">Personal output thresholds were not saved for this metric.</string>
 </resources>

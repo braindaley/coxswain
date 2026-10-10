@@ -617,4 +617,21 @@
     <string name="hr_history_values">Vorschläge aus dem Verlauf: Anfangstief %1$d BPM · anhaltende Spitze %2$d BPM</string>
     <string name="hr_history_help">Leere Felder werden aus abgeschlossenen Einheiten ausgefüllt. Der Tiefwert nutzt die ersten 30 Sekunden; beide Werte müssen mindestens fünf Sekunden anhalten. Der Anfangspuls schätzt den Ruhepuls, und die aufgezeichnete Spitze ist kein getestetes Maximum. Du kannst beide Werte vor dem Speichern ändern.</string>
     <string name="hr_use_history">Vorschläge aus dem Verlauf verwenden</string>
+
+    <string name="output_zones_title">Leistungs- und Tempostufen</string>
+    <string name="output_zones_summary">Persönliche Leistungsgrenzen aus abgeschlossenen Einheiten</string>
+    <string name="output_zones_help">Dies sind relative Leistungsstufen, keine Herzfrequenzzonen. Vorschläge nutzen das 25., 50. und 85. Perzentil der Leistung deiner letzten 20 abgeschlossenen Einheiten, ohne Erholung und anfängliche Sensorfehler. Prüfe oder ändere sie und speichere sie für neue Einheiten.</string>
+    <string name="output_zones_failed">Ruderverlauf konnte nicht gelesen werden. Gib Grenzen unten ein.</string>
+    <string name="output_zones_unavailable">Nicht genügend unterschiedliche zeitlich erfasste Leistungswerte für verschiedene Stufen. Du kannst eigene Grenzen eingeben.</string>
+    <string name="output_zones_invalid">Gib drei aufsteigende Leistungsgrenzen oder drei absteigende Zwischenzeiten ein. Lass alle drei Felder leer, um eine Messgröße zu deaktivieren.</string>
+    <string name="output_power_help">Mehr Watt bedeuten höhere Stufen.</string>
+    <string name="output_pace_help">Schnellere Zwischenzeiten bedeuten höhere Stufen. Gib m:ss pro 500 m (oder Sekunden) ein.</string>
+    <string name="output_power_moderate">Moderat beginnt bei (W)</string>
+    <string name="output_power_vigorous">Intensiv beginnt bei (W)</string>
+    <string name="output_power_peak">Spitze beginnt bei (W)</string>
+    <string name="output_pace_moderate">Moderat beginnt bei (m:ss /500 m)</string>
+    <string name="output_pace_vigorous">Intensiv beginnt bei (m:ss /500 m)</string>
+    <string name="output_pace_peak">Spitze beginnt bei (m:ss /500 m)</string>
+    <string name="output_zones_legend">Relative Leistungsstufen; jede Stufe beginnt an ihrer Grenze.</string>
+    <string name="output_zones_legacy">Für diese Messgröße wurden keine persönlichen Leistungsgrenzen gespeichert.</string>
 </resources>

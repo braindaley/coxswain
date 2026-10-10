@@ -104,4 +104,15 @@ public class SessionSafetyTest {
   assertEquals(1,gym.getAllWorkouts().count());
  }
 
+ @Test public void performanceThresholdsFreezeAndSurviveBackup() {
+  android.content.SharedPreferences prefs=androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+  String profile=new PerformanceZones(new OutputZones(100,150,200,false),new OutputZones(180,150,120,true)).encode();
+  prefs.edit().putString(PerformanceZones.KEY,profile).commit();
+  gym.select(Program.meters("Output recording",100,Difficulty.MEDIUM));gym.onMeasured(m(5,50));
+  prefs.edit().remove(PerformanceZones.KEY).commit();
+  gym.onMeasured(m(10,100));Workout row=gym.complete();assertEquals(profile,row.performanceZones.get());
+  String backup=gym.createBackup();gym.delete(row);gym.restoreBackup(backup);
+  assertEquals(profile,gym.getAllWorkouts().list().get(0).performanceZones.get());
+ }
+
 }

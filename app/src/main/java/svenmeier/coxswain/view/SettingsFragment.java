@@ -104,6 +104,11 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             }
         });
 
+        findPreference("performance_zones").setOnPreferenceClickListener(preference -> {
+            startActivity(new Intent(requireContext(), svenmeier.coxswain.PerformanceZonesActivity.class));
+            return true;
+        });
+
         findPreference("heart_rate_zones").setOnPreferenceClickListener(preference -> {
             startActivity(new Intent(requireContext(), svenmeier.coxswain.HeartRateZonesActivity.class));
             return true;
