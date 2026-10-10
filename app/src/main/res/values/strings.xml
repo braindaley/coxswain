@@ -198,7 +198,6 @@
     <string name="ui_total_strokes">Total strokes</string>
     <string name="ui_stroke_rate_range">Stroke rate range</string>
     <string name="ui_split_time">Split time</string>
-    <string name="ui_no_samples">No samples</string>
     <string name="ui_no_recorded_samples">No recorded samples</string>
     <string name="ui_chart_average_best">avg %1$s  •  best %2$s</string>
     <string name="ui_chart_average_max">avg %1$s  •  max %2$s</string>
@@ -666,17 +665,12 @@
     <string name="ui_chart_vigorous">Vigorous</string>
     <string name="ui_chart_peak">Peak</string>
     <string name="ui_chart_row">Row</string>
-    <string name="ui_chart_program_effort">Programmed effort</string>
-    <string name="ui_chart_effort_note">Colors show the effort prescribed for each step. Rest is shaded.</string>
-    <string name="ui_chart_reference_legend">Dotted: workout average · Dashed: interval target</string>
     <string name="ui_chart_accessibility">%1$s by clock time. %2$s.</string>
     <string name="ui_chart_intervals">Interval breakdown</string>
     <string name="ui_chart_estimated_intervals">Step boundaries are reconstructed from program targets for this older recording.</string>
     <string name="ui_chart_target">Target</string>
     <string name="ui_chart_target_difference">Average minus target</string>
     <string name="ui_average_heart_rate">Average heart rate</string>
-    <string name="ui_minimum_heart_rate">Minimum heart rate</string>
-    <string name="ui_maximum_heart_rate">Maximum heart rate</string>
     <string name="ui_chart_heart_statistics">avg %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 
     <string name="hr_zones_title">Heart-rate zones</string>
@@ -699,10 +693,8 @@
     <string name="hr_frozen_help">Changes apply to new workouts. Each recording keeps the thresholds it started with.</string>
     <string name="hr_save">Save zones</string>
     <string name="hr_disable">Turn off zones for new workouts</string>
-    <string name="hr_zone_time">Time in heart-rate zones</string>
     <string name="hr_zone_coverage">%1$s of recorded heart-rate time, including recovery. Missing readings and pauses are excluded.</string>
     <string name="hr_zone_legacy">Personal zone thresholds were not saved for this workout.</string>
-    <string name="hr_zone_line_help">Line colors show your measured heart-rate zones. Interval bands show programmed effort.</string>
 
 
     <string name="hr_peak_loading">Checking completed rows…</string>
@@ -726,9 +718,16 @@
     <string name="output_pace_moderate">Moderate starts at (m:ss /500 m)</string>
     <string name="output_pace_vigorous">Vigorous starts at (m:ss /500 m)</string>
     <string name="output_pace_peak">Peak starts at (m:ss /500 m)</string>
-    <string name="output_zones_legend">Relative output levels; each level starts at its threshold.</string>
     <string name="output_zones_legacy">Personal output thresholds were not saved for this metric.</string>
 
     <string name="ui_chart_current_heart_zones">This workout has no saved heart-rate thresholds. Colors and zone times use your current settings; the recorded data is unchanged.</string>
     <string name="ui_chart_current_output_zones">This workout has no saved output thresholds. Colors use your current settings; the recorded data is unchanged.</string>
+
+    <string name="chart_avg">Avg</string>
+    <string name="chart_min">Min</string>
+    <string name="chart_max">Max</string>
+    <string name="chart_best">Best</string>
+    <string name="chart_current_levels">Current levels</string>
+    <string name="chart_info">About %1$s</string>
+    <string name="chart_info_help">Line colors follow this metric’s levels. Dotted guides show level boundaries, or the average when no levels are set. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
 </resources>

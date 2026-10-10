@@ -46,13 +46,18 @@ class WorkoutChartsScreenTest {
             .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode()).commit()
         try {
             checkCharts(false, true, false)
-            compose.onAllNodesWithText("This workout has no saved output thresholds.", substring = true).onFirst().performScrollTo().assertIsDisplayed()
+            compose.onAllNodesWithText("Current levels").onFirst().performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
+            compose.onNodeWithText("This workout has no saved output thresholds.", substring = true).assertIsDisplayed()
+            compose.onNodeWithText("Done").performClick()
             compose.onNodeWithContentDescription("Power by clock time", substring = true).performScrollTo().assertIsDisplayed()
             FileOutputStream(File(context.cacheDir, "legacy-output-colors.png")).use {
                 compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it)
             }
             prefs.edit().putString(PerformanceZones.KEY, PerformanceZones(OutputZones(250,300,350),null).encode()).commit()
-            compose.onNodeWithText("Peak ≥ 350 W").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
+            compose.onNodeWithText("Peak: 350 W").assertIsDisplayed()
+            compose.onNodeWithText("Done").performClick()
         } finally {
             prefs.edit().apply {
                 if (beforeHeart == null) remove(HeartRateZones.KEY) else putString(HeartRateZones.KEY,beforeHeart)
@@ -101,7 +106,9 @@ class WorkoutChartsScreenTest {
         }
         compose.onNodeWithText("Include first strokes in chart scale").assertDoesNotExist()
         compose.onNodeWithText("Inspect your row").assertDoesNotExist()
-        compose.onNodeWithText("Programmed effort").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Programmed effort").assertDoesNotExist()
+        compose.onNodeWithText("Dotted: workout average", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Line colors show", substring = true).assertDoesNotExist()
         compose.onNodeWithContentDescription("Split time by clock time", substring = true)
             .performScrollTo().performTouchInput { click(center) }
         compose.onNodeWithText("elapsed", substring = true).assertDoesNotExist()
@@ -111,10 +118,11 @@ class WorkoutChartsScreenTest {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
         }
         if (withHeartRate) {
-            compose.onNodeWithText("Time in heart-rate zones").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("106–128 BPM").assertExists()
-            compose.onNodeWithText("Maximum heart rate").performScrollTo().assertIsDisplayed()
-            compose.onAllNodesWithText("160 BPM").onFirst().assertExists()
+            compose.onNodeWithText("Time in heart-rate zones").assertDoesNotExist()
+            compose.onNodeWithContentDescription("About Heart rate").performScrollTo().performClick()
+            compose.onNodeWithText("Moderate: 106–128 BPM").assertIsDisplayed()
+            compose.onNodeWithText("Done").performClick()
+            compose.onAllNodesWithText("160").onFirst().assertExists()
             compose.onNodeWithContentDescription("Heart rate by clock time", substring = true)
                 .performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("BPM", substring = false).assertExists()

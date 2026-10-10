@@ -1,6 +1,7 @@
 package svenmeier.coxswain
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
@@ -78,33 +82,26 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_best_split), if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!))
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
-        if (summary.pulse.average != null) {
-            ResultMetricRow(stringResource(R.string.ui_average_heart_rate), "${summary.pulse.average} BPM")
-            ResultMetricRow(stringResource(R.string.ui_minimum_heart_rate), "${summary.pulse.minimum} BPM")
-            ResultMetricRow(stringResource(R.string.ui_maximum_heart_rate), "${summary.pulse.maximum} BPM")
-        }
         Text(stringResource(R.string.ui_chart_started_finished, preciseFormat.format(Date(charts.start)), preciseFormat.format(Date(charts.end))),
             style = MaterialTheme.typography.bodyMedium)
-        if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (charts.phases.size > 1) ProgramEffortLegend(charts)
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
-            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput)
+            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput, metrics = listOf(
+                stringResource(R.string.chart_avg) to (summary.averageSplit?.let(::formatAxisTime) ?: "—"),
+                stringResource(R.string.chart_best) to (summary.bestSplit?.let(::formatAxisTime) ?: "—")))
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat, summary.averagePower?.toFloat(),
-            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
+            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput, metrics = listOf(
+                stringResource(R.string.chart_avg) to "$avgPower", stringResource(R.string.chart_max) to "$maxPower"))
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
-            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
+            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes), metrics = listOf(
+                stringResource(R.string.chart_avg) to "$avgRate", stringResource(R.string.chart_min) to (rates.minOrNull()?.toString() ?: "—"),
+                stringResource(R.string.chart_max) to (rates.maxOrNull()?.toString() ?: "—")))
         if (summary.pulse.average != null) {
-            if (zones != null && zoneTimes != null) {
-                if (profiles.currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                HeartZoneSummary(zones, zoneTimes)
-            }
-            else Text(stringResource(R.string.hr_zone_legacy), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
             charts, clockFormat, summary.pulse.average?.toFloat(), stringResource(R.string.ui_chart_heart_statistics,
-                summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!), zones)
+                summary.pulse.average!!, summary.pulse.minimum!!, summary.pulse.maximum!!), zones,
+                currentHeart = profiles.currentHeart, zoneTimes = zoneTimes, metrics = listOf(
+                    stringResource(R.string.chart_avg) to "${summary.pulse.average}", stringResource(R.string.chart_min) to "${summary.pulse.minimum}",
+                    stringResource(R.string.chart_max) to "${summary.pulse.maximum}"))
         }
         if (charts.phases.size > 1) IntervalResults(charts, preciseFormat)
     }
@@ -177,23 +174,6 @@ private fun effortColors(): Map<Difficulty, Color> {
         Difficulty.PEAK to MaterialTheme.colorScheme.error)
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProgramEffortLegend(charts: WorkoutChartData) {
-    val colors = effortColors()
-    Text(stringResource(R.string.ui_chart_program_effort), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        charts.phases.map { it.difficulty }.distinct().forEach { difficulty ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.size(10.dp).background(colors.getValue(difficulty), RoundedCornerShape(2.dp)))
-                Text(effortName(difficulty), style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-    Text(stringResource(R.string.ui_chart_effort_note), style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
 @Composable
 private fun heartZoneColors(): List<Color> {
     val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
@@ -202,39 +182,20 @@ private fun heartZoneColors(): List<Color> {
         if (dark) Color(0xFFFFCB74) else Color(0xFF986600), MaterialTheme.colorScheme.error)
 }
 
-@Composable
-private fun HeartZoneSummary(zones: HeartRateZones, times: HeartRateZoneTimes) {
-    val colors = heartZoneColors()
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.hr_zone_time), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(stringResource(R.string.hr_zone_coverage, formatAxisTime(times.total.roundToInt())),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        (0..3).forEach { zone ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                ResultMetricRow(stringResource(heartZoneName(zone)),
-                    "${formatAxisTime(times.seconds[zone].roundToInt())} · ${times.percent(zone).roundToInt()}%")
-                Text(zones.bounds(zone), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                LinearProgressIndicator(progress = { times.percent(zone) / 100f },
-                    modifier = Modifier.fillMaxWidth().height(6.dp), color = colors[zone],
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun OutputZoneLegend(zones: OutputZones) {
+@Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null) {
     val colors = heartZoneColors()
-    Text(stringResource(R.string.output_zones_legend), style = MaterialTheme.typography.bodySmall)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         (0..3).forEach { zone ->
-            val threshold = when (zone) { 0, 1 -> zones.moderate; 2 -> zones.vigorous; else -> zones.peak }
-            val value = if (zones.fasterIsLower) "${formatZoneSplit(threshold)} /500 m" else "$threshold W"
-            val relation = if (zones.fasterIsLower) { if (zone == 0) ">" else "≤" } else { if (zone == 0) "<" else "≥" }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.size(10.dp).background(colors[zone], RoundedCornerShape(2.dp)))
-                Text("${stringResource(heartZoneName(zone))} $relation $value", style = MaterialTheme.typography.bodySmall)
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(Modifier.size(8.dp).background(colors[zone], androidx.compose.foundation.shape.CircleShape))
+                    Text(stringResource(heartZoneName(zone)), style = MaterialTheme.typography.bodySmall)
+                }
+                if (times != null) Text("${formatAxisTime(times.seconds[zone].roundToInt())} · ${times.percent(zone).roundToInt()}%",
+                    Modifier.padding(start = 14.dp), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -242,110 +203,124 @@ private fun HeartZoneSummary(zones: HeartRateZones, times: HeartRateZoneTimes) {
 
 @Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
-                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null, outputZones: OutputZones? = null, currentOutput: Boolean = false) {
+                        clockFormat: SimpleDateFormat, average: Float?, statistics: String,
+                        zones: HeartRateZones? = null, outputZones: OutputZones? = null,
+                        currentOutput: Boolean = false, currentHeart: Boolean = false,
+                        zoneTimes: HeartRateZoneTimes? = null, metrics: List<Pair<String, String>> = emptyList()) {
     val scale = remember(charts, measure) { charts.scale(measure) }
-    val colors = effortColors()
     val zoneColors = heartZoneColors()
-    val pulseColor = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val primaryColor = MaterialTheme.colorScheme.primary
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
     val includesRest = measure == ResultMeasure.PULSE
     val hasSamples = charts.points.any { (includesRest || !charts.isRest(it)) && (charts.plottedValue(it, measure) ?: 0f) > 0f }
     val unit = when (measure) { ResultMeasure.SPLIT -> "/500 m"; ResultMeasure.POWER -> "W"; ResultMeasure.RATE -> "SPM"; ResultMeasure.PULSE -> "BPM" }
     val chartDescription = stringResource(R.string.ui_chart_accessibility, title, statistics)
+    var showInfo by remember { mutableStateOf(false) }
     fun label(value: Float) = if (measure == ResultMeasure.SPLIT) formatAxisTime(value.roundToInt()) else value.roundToInt().toString()
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(if (hasSamples) statistics else stringResource(R.string.ui_no_samples),
-            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(stringResource(R.string.ui_chart_reference_legend), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (outputZones != null) {
-            if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones),
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutputZoneLegend(outputZones)
-        }
-        else if (measure == ResultMeasure.POWER || measure == ResultMeasure.SPLIT) Text(
-            stringResource(R.string.output_zones_legacy), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (includesRest && zones != null) Text(stringResource(R.string.hr_zone_line_help),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth().height(256.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Column(Modifier.width(66.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.End) {
-                Text(label(if (measure == ResultMeasure.SPLIT) scale.low else scale.high), fontSize = 12.sp)
-                Text(label((scale.low + scale.high) / 2f), fontSize = 12.sp)
-                Text(label(if (measure == ResultMeasure.SPLIT) scale.high else scale.low), fontSize = 12.sp)
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(unit, style = MaterialTheme.typography.bodySmall, color = referenceColor)
+                }
+                if (currentOutput || currentHeart) Text(stringResource(R.string.chart_current_levels),
+                    style = MaterialTheme.typography.labelSmall, color = referenceColor)
+                IconButton(onClick = { showInfo = true }) {
+                    Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.chart_info, title), tint = referenceColor)
+                }
             }
-            Box(Modifier.weight(1f).fillMaxHeight().background(MaterialTheme.colorScheme.surfaceContainerLow,
-                RoundedCornerShape(8.dp))) {
-                if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.Center))
-                else Canvas(Modifier.fillMaxSize().semantics { contentDescription = chartDescription }) {
-                    fun x(clock: Long) = size.width * charts.clockFraction(clock)
-                    fun y(value: Float) = 4.dp.toPx() + (size.height - 8.dp.toPx()) * scale.fraction(value, measure == ResultMeasure.SPLIT)
-                    clipRect {
-                        charts.phases.forEach { phase ->
-                            val left = x(charts.clockAt(phase.start)); val right = x(charts.clockAt(phase.end))
-                            val color = colors.getValue(phase.difficulty)
-                            drawRect(color.copy(alpha = if (phase.difficulty == Difficulty.REST) .12f else .07f),
-                                Offset(left, 0f), androidx.compose.ui.geometry.Size((right - left).coerceAtLeast(0f), size.height))
-                            drawRect(color, Offset(left, 0f), androidx.compose.ui.geometry.Size((right - left).coerceAtLeast(0f), 5.dp.toPx()))
-                            if (phase.start > 0f) drawLine(gridColor, Offset(left, 0f), Offset(left, size.height), 1.dp.toPx())
-                            measure.target(phase.segment)?.let { target ->
-                                drawLine(referenceColor, Offset(left, y(target)), Offset(right, y(target)),
-                                    1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(9.dp.toPx(), 5.dp.toPx())))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                metrics.forEach { (name, value) ->
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(name, style = MaterialTheme.typography.bodySmall, color = referenceColor)
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth().height(280.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
+                        color = referenceColor, modifier = Modifier.align(Alignment.Center))
+                    else Canvas(Modifier.fillMaxSize().semantics { contentDescription = chartDescription }) {
+                        fun x(clock: Long) = size.width * charts.clockFraction(clock)
+                        fun y(value: Float) = 6.dp.toPx() + (size.height - 12.dp.toPx()) * scale.fraction(value, measure == ResultMeasure.SPLIT)
+                        val dotted = PathEffect.dashPathEffect(floatArrayOf(1.dp.toPx(), 5.dp.toPx()))
+                        clipRect {
+                            charts.phases.forEach { phase ->
+                                val left = x(charts.clockAt(phase.start)); val right = x(charts.clockAt(phase.end))
+                                if (phase.difficulty == Difficulty.REST) drawRect(referenceColor.copy(alpha = .06f),
+                                    Offset(left, 0f), androidx.compose.ui.geometry.Size((right - left).coerceAtLeast(0f),size.height))
+                                if (phase.start > 0f) drawLine(gridColor.copy(alpha = .6f), Offset(left,size.height - 7.dp.toPx()),
+                                    Offset(left,size.height),1.dp.toPx())
                             }
-                        }
-                        charts.pauseRanges.forEach { (start, end) ->
-                            drawRect(gridColor.copy(alpha = .5f), Offset(x(start), 0f),
-                                androidx.compose.ui.geometry.Size(x(end) - x(start), size.height))
-                        }
-                        listOf(0f, .5f, 1f).forEach { fraction ->
-                            drawLine(gridColor, Offset(0f, y(scale.low + (scale.high - scale.low) * fraction)),
-                                Offset(size.width, y(scale.low + (scale.high - scale.low) * fraction)), 1.dp.toPx())
-                        }
-                        average?.takeIf { it in scale.low..scale.high }?.let {
-                            drawLine(referenceColor, Offset(0f, y(it)), Offset(size.width, y(it)), 1.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 4.dp.toPx())))
-                        }
-                        charts.points.forEachIndexed { index, point ->
-                            val value = charts.plottedValue(point, measure)
-                            val before = charts.points.getOrNull(index - 1)
-                            if (value != null && (includesRest || !charts.isRest(point))) {
-                                val color = if (measure == ResultMeasure.RATE) referenceColor
-                                    else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
-                                    else outputZones?.zone(value)?.let { zoneColors[it] } ?: pulseColor
-                                val previous = before?.let { charts.plottedValue(it, measure) }
-                                if (before != null && previous != null && (includesRest || !charts.isRest(before)) && !charts.breaksBefore(index, measure) &&
-                                    (!includesRest || point.elapsed - before.elapsed <= 5f)) {
-                                    if (includesRest && zones != null) zones.pieces(previous, value).forEach { (a, b, zone) ->
-                                        val x0 = x(before.clock); val x1 = x(point.clock)
-                                        drawLine(zoneColors[zone], Offset(x0 + (x1 - x0) * a, y(previous + (value - previous) * a)),
-                                            Offset(x0 + (x1 - x0) * b, y(previous + (value - previous) * b)), 2.dp.toPx())
-                                    } else if (outputZones != null && previous > 0f && value > 0f) outputZones.pieces(previous, value).forEach { (a, b, zone) ->
-                                        val x0 = x(before.clock); val x1 = x(point.clock)
-                                        drawLine(zoneColors[zone], Offset(x0 + (x1 - x0) * a, y(previous + (value - previous) * a)),
-                                            Offset(x0 + (x1 - x0) * b, y(previous + (value - previous) * b)), 2.dp.toPx())
-                                    } else drawLine(color, Offset(x(before.clock), y(previous)),
-                                        Offset(x(point.clock), y(value)), 2.dp.toPx())
-                                } else drawCircle(color, 2.dp.toPx(), Offset(x(point.clock), y(value)))
+                            charts.pauseRanges.forEach { (start,end) ->
+                                drawRect(gridColor.copy(alpha = .25f), Offset(x(start),0f),
+                                    androidx.compose.ui.geometry.Size(x(end)-x(start),size.height))
+                            }
+                            val boundaries = zones?.let { listOf(it.moderate,it.vigorous,it.peak) }
+                                ?: outputZones?.let { listOf(it.moderate,it.vigorous,it.peak) }
+                            if (boundaries != null) boundaries.forEachIndexed { index,boundary ->
+                                if (boundary.toFloat() in scale.low..scale.high) drawLine(zoneColors[index+1].copy(alpha = .55f),
+                                    Offset(0f,y(boundary.toFloat())),Offset(size.width,y(boundary.toFloat())),
+                                    1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
+                            } else average?.takeIf { it in scale.low..scale.high }?.let {
+                                drawLine(referenceColor.copy(alpha = .4f),Offset(0f,y(it)),Offset(size.width,y(it)),
+                                    1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
+                            }
+                            charts.points.forEachIndexed { index,point ->
+                                val value = charts.plottedValue(point,measure)
+                                val before = charts.points.getOrNull(index-1)
+                                if (value != null && (includesRest || !charts.isRest(point))) {
+                                    val color = if (measure == ResultMeasure.RATE) referenceColor
+                                        else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
+                                        else outputZones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
+                                    val previous = before?.let { charts.plottedValue(it,measure) }
+                                    if (before != null && previous != null && (includesRest || !charts.isRest(before)) &&
+                                        !charts.breaksBefore(index,measure) && (!includesRest || point.elapsed-before.elapsed <= 5f)) {
+                                        val pieces = if (includesRest && zones != null) zones.pieces(previous,value)
+                                            else if (outputZones != null && previous>0f && value>0f) outputZones.pieces(previous,value) else null
+                                        if (pieces != null) pieces.forEach { (a,b,zone) ->
+                                            val x0 = x(before.clock); val x1 = x(point.clock)
+                                            drawLine(zoneColors[zone],Offset(x0+(x1-x0)*a,y(previous+(value-previous)*a)),
+                                                Offset(x0+(x1-x0)*b,y(previous+(value-previous)*b)),2.5.dp.toPx(),cap = StrokeCap.Round)
+                                        } else drawLine(color,Offset(x(before.clock),y(previous)),Offset(x(point.clock),y(value)),
+                                            2.5.dp.toPx(),cap = StrokeCap.Round)
+                                    } else drawCircle(color,1.5.dp.toPx(),Offset(x(point.clock),y(value)))
+                                }
                             }
                         }
                     }
                 }
+                Column(Modifier.width(52.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
+                    Text(label(if (measure == ResultMeasure.SPLIT) scale.low else scale.high),fontSize = 12.sp,color = referenceColor)
+                    Text(label((scale.low+scale.high)/2),fontSize = 12.sp,color = referenceColor)
+                    Text(label(if (measure == ResultMeasure.SPLIT) scale.high else scale.low),fontSize = 12.sp,color = referenceColor)
+                }
             }
-        }
-        BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 74.dp)) {
-            val showMiddle = maxWidth >= 300.dp
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(clockFormat.format(Date(charts.start)), fontSize = 12.sp)
-                if (showMiddle) Text(clockFormat.format(Date(charts.start + charts.span / 2)), fontSize = 12.sp)
-                Text(clockFormat.format(Date(charts.end)), fontSize = 12.sp)
+            Row(Modifier.fillMaxWidth().padding(end = 60.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(clockFormat.format(Date(charts.start)),fontSize = 12.sp,color = referenceColor)
+                Text(clockFormat.format(Date(charts.end)),fontSize = 12.sp,color = referenceColor)
             }
+            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null)
         }
-        Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+    if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
+        text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.chart_info_help))
+            if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock))
+            if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones))
+            if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))
+            if (zones != null) {
+                (0..3).forEach { Text("${stringResource(heartZoneName(it))}: ${zones.bounds(it)}") }
+                if (zoneTimes != null) Text(stringResource(R.string.hr_zone_coverage,formatAxisTime(zoneTimes.total.roundToInt())))
+            } else if (outputZones != null) {
+                val values = listOf(outputZones.moderate,outputZones.vigorous,outputZones.peak)
+                (1..3).forEach { zone -> Text("${stringResource(heartZoneName(zone))}: ${if (measure == ResultMeasure.SPLIT) formatZoneSplit(values[zone-1]) else values[zone-1].toString()} $unit") }
+            } else if (measure != ResultMeasure.RATE) Text(stringResource(if (includesRest) R.string.hr_zone_legacy else R.string.output_zones_legacy))
+        } },confirmButton = { TextButton(onClick = { showInfo = false }) { Text(stringResource(R.string.ui_done)) } })
 }
 
 @Composable

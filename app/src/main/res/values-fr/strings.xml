@@ -189,7 +189,6 @@
     <string name="ui_total_strokes">Nombre total de coups</string>
     <string name="ui_stroke_rate_range">Plage de cadence</string>
     <string name="ui_split_time">Temps aux 500 m</string>
-    <string name="ui_no_samples">Aucune mesure</string>
     <string name="ui_no_recorded_samples">Aucune mesure enregistrée</string>
     <string name="ui_chart_average_best">moy. %1$s  •  meilleur %2$s</string>
     <string name="ui_chart_average_max">moy. %1$s  •  max. %2$s</string>
@@ -582,17 +581,12 @@
     <string name="ui_chart_vigorous">Intense</string>
     <string name="ui_chart_peak">Maximum</string>
     <string name="ui_chart_row">Rame</string>
-    <string name="ui_chart_program_effort">Intensité programmée</string>
-    <string name="ui_chart_effort_note">Les couleurs indiquent l’intensité prévue pour chaque étape. Les repos sont ombrés.</string>
-    <string name="ui_chart_reference_legend">Pointillés courts : moyenne · Tirets : objectif de l’intervalle</string>
     <string name="ui_chart_accessibility">%1$s selon l’heure. %2$s.</string>
     <string name="ui_chart_intervals">Détail des intervalles</string>
     <string name="ui_chart_estimated_intervals">Les limites des étapes de cet ancien enregistrement sont reconstituées à partir des objectifs du programme.</string>
     <string name="ui_chart_target">Objectif</string>
     <string name="ui_chart_target_difference">Moyenne moins objectif</string>
     <string name="ui_average_heart_rate">Fréquence cardiaque moyenne</string>
-    <string name="ui_minimum_heart_rate">Fréquence cardiaque minimale</string>
-    <string name="ui_maximum_heart_rate">Fréquence cardiaque maximale</string>
     <string name="ui_chart_heart_statistics">moy. %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 
     <string name="hr_zones_title">Zones de fréquence cardiaque</string>
@@ -615,10 +609,8 @@
     <string name="hr_frozen_help">Les modifications concernent les nouvelles séances. Chaque enregistrement conserve ses seuils de départ.</string>
     <string name="hr_save">Enregistrer les zones</string>
     <string name="hr_disable">Désactiver les zones pour les nouvelles séances</string>
-    <string name="hr_zone_time">Temps dans les zones cardiaques</string>
     <string name="hr_zone_coverage">%1$s de fréquence cardiaque enregistrée, récupération incluse. Mesures manquantes et pauses exclues.</string>
     <string name="hr_zone_legacy">Les seuils personnels n’ont pas été enregistrés pour cette séance.</string>
-    <string name="hr_zone_line_help">Les couleurs de la courbe indiquent vos zones cardiaques mesurées. Les bandes d’intervalle indiquent l’effort programmé.</string>
 
 
     <string name="hr_peak_loading">Vérification des séances terminées…</string>
@@ -642,9 +634,16 @@
     <string name="output_pace_moderate">Modéré à partir de (m:ss /500 m)</string>
     <string name="output_pace_vigorous">Intense à partir de (m:ss /500 m)</string>
     <string name="output_pace_peak">Pic à partir de (m:ss /500 m)</string>
-    <string name="output_zones_legend">Niveaux relatifs ; chaque niveau commence à son seuil.</string>
     <string name="output_zones_legacy">Les seuils personnels n’ont pas été enregistrés pour cette mesure.</string>
 
     <string name="ui_chart_current_heart_zones">Cette séance n’a pas de seuils cardiaques enregistrés. Les couleurs et temps par zone utilisent vos réglages actuels ; les données enregistrées restent inchangées.</string>
     <string name="ui_chart_current_output_zones">Cette séance n’a pas de seuils de performance enregistrés. Les couleurs utilisent vos réglages actuels ; les données enregistrées restent inchangées.</string>
+
+    <string name="chart_avg">Moy.</string>
+    <string name="chart_min">Min</string>
+    <string name="chart_max">Max</string>
+    <string name="chart_best">Meilleur</string>
+    <string name="chart_current_levels">Niveaux actuels</string>
+    <string name="chart_info">À propos de %1$s</string>
+    <string name="chart_info_help">Les couleurs suivent les niveaux de cette mesure. Les repères pointillés indiquent les seuils, ou la moyenne sans niveaux définis. Les bandes discrètes indiquent repos ou pauses ; les traits inférieurs marquent les changements d’intervalle.</string>
 </resources>

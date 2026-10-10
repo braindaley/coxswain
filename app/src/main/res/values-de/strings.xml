@@ -182,7 +182,6 @@
     <string name="ui_total_strokes">Schläge gesamt</string>
     <string name="ui_stroke_rate_range">Schlagfrequenzbereich</string>
     <string name="ui_split_time">Splitzeit</string>
-    <string name="ui_no_samples">Keine Messwerte</string>
     <string name="ui_no_recorded_samples">Keine aufgezeichneten Messwerte</string>
     <string name="ui_chart_average_best">Ø %1$s  •  Bestwert %2$s</string>
     <string name="ui_chart_average_max">Ø %1$s  •  Max. %2$s</string>
@@ -572,17 +571,12 @@
     <string name="ui_chart_vigorous">Intensiv</string>
     <string name="ui_chart_peak">Spitze</string>
     <string name="ui_chart_row">Rudern</string>
-    <string name="ui_chart_program_effort">Vorgegebene Belastung</string>
-    <string name="ui_chart_effort_note">Die Farben zeigen die vorgegebene Belastung jedes Schritts. Ruhephasen sind schattiert.</string>
-    <string name="ui_chart_reference_legend">Gepunktet: Trainingsdurchschnitt · Gestrichelt: Intervallziel</string>
     <string name="ui_chart_accessibility">%1$s nach Uhrzeit. %2$s.</string>
     <string name="ui_chart_intervals">Intervallübersicht</string>
     <string name="ui_chart_estimated_intervals">Die Schrittgrenzen dieser älteren Aufzeichnung werden aus den Programmzielen rekonstruiert.</string>
     <string name="ui_chart_target">Ziel</string>
     <string name="ui_chart_target_difference">Durchschnitt minus Ziel</string>
     <string name="ui_average_heart_rate">Durchschnittliche Herzfrequenz</string>
-    <string name="ui_minimum_heart_rate">Minimale Herzfrequenz</string>
-    <string name="ui_maximum_heart_rate">Maximale Herzfrequenz</string>
     <string name="ui_chart_heart_statistics">Ø %1$d BPM · min %2$d BPM · max %3$d BPM</string>
 
     <string name="hr_zones_title">Herzfrequenzzonen</string>
@@ -605,10 +599,8 @@
     <string name="hr_frozen_help">Änderungen gelten für neue Einheiten. Jede Aufzeichnung behält ihre ursprünglichen Grenzen.</string>
     <string name="hr_save">Zonen speichern</string>
     <string name="hr_disable">Zonen für neue Einheiten ausschalten</string>
-    <string name="hr_zone_time">Zeit in Herzfrequenzzonen</string>
     <string name="hr_zone_coverage">%1$s aufgezeichnete Herzfrequenzzeit einschließlich Erholung. Fehlende Werte und Pausen sind ausgeschlossen.</string>
     <string name="hr_zone_legacy">Für diese Einheit wurden keine persönlichen Zonengrenzen gespeichert.</string>
-    <string name="hr_zone_line_help">Linienfarben zeigen deine gemessenen Herzfrequenzzonen. Intervallbänder zeigen die geplante Belastung.</string>
 
 
     <string name="hr_peak_loading">Abgeschlossene Einheiten werden geprüft…</string>
@@ -632,9 +624,16 @@
     <string name="output_pace_moderate">Moderat beginnt bei (m:ss /500 m)</string>
     <string name="output_pace_vigorous">Intensiv beginnt bei (m:ss /500 m)</string>
     <string name="output_pace_peak">Spitze beginnt bei (m:ss /500 m)</string>
-    <string name="output_zones_legend">Relative Leistungsstufen; jede Stufe beginnt an ihrer Grenze.</string>
     <string name="output_zones_legacy">Für diese Messgröße wurden keine persönlichen Leistungsgrenzen gespeichert.</string>
 
     <string name="ui_chart_current_heart_zones">Diese Einheit hat keine gespeicherten Herzfrequenzgrenzen. Farben und Zonenzeiten nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
     <string name="ui_chart_current_output_zones">Diese Einheit hat keine gespeicherten Leistungsgrenzen. Farben nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
+
+    <string name="chart_avg">Ø</string>
+    <string name="chart_min">Min</string>
+    <string name="chart_max">Max</string>
+    <string name="chart_best">Beste</string>
+    <string name="chart_current_levels">Aktuelle Stufen</string>
+    <string name="chart_info">Über %1$s</string>
+    <string name="chart_info_help">Linienfarben folgen den Stufen dieser Messgröße. Gepunktete Linien zeigen Stufengrenzen oder den Durchschnitt, wenn keine Stufen eingestellt sind. Dezente Bänder markieren Erholung oder Pausen; untere Striche markieren Intervallwechsel.</string>
 </resources>
