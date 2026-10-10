@@ -49,3 +49,7 @@ Reference refinement validation: production and isolated debug/instrumentation b
 Continuous reading pairs now use monotone Hermite interpolation with limited slopes and endpoint clamping. This rounds the trace without generating values outside each displayed reading pair. Missing readings, phase boundaries and pause breaks retain their existing separation; no saved data or metrics change. Zone color changes are calculated along the rendered curve at the actual thresholds. Configured charts place right-axis values at their four guide positions, using the same fraction and six-dp plot inset. Unconfigured metrics retain min/mid/max labels.
 
 Curve/axis validation: production and isolated debug/instrumentation builds passed. All 23 chart-data tests, including curve endpoint, monotonicity, plateau and no-overshoot checks, passed; all five emulator chart UI tests passed. Light/dark screenshots with normal/larger text were reviewed and guide values align with their dots.
+
+## Final trace weight
+
+The user requested a slightly thicker line after reviewing the reference again. Curved trace strokes are now 2 dp, increased from 1.5 dp; guide dots and all filtering, interpolation and axis behavior are unchanged.

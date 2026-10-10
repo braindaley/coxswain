@@ -297,9 +297,9 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                                 drawLine(zoneColors[zone],
                                                     Offset(x0+(x1-x0)*(f0+(f1-f0)*a),y(v0+(v1-v0)*a)),
                                                     Offset(x0+(x1-x0)*(f0+(f1-f0)*b),y(v0+(v1-v0)*b)),
-                                                    1.5.dp.toPx(),cap = StrokeCap.Round)
+                                                    2.dp.toPx(),cap = StrokeCap.Round)
                                             } else drawLine(color,Offset(x0+(x1-x0)*f0,y(v0)),Offset(x0+(x1-x0)*f1,y(v1)),
-                                                1.5.dp.toPx(),cap = StrokeCap.Round)
+                                                2.dp.toPx(),cap = StrokeCap.Round)
                                         }
                                     } else drawCircle(color,1.dp.toPx(),Offset(x(point.clock),y(value)))
                                 }
