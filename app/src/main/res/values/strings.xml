@@ -725,5 +725,5 @@
 
     <string name="chart_info">About %1$s</string>
     <string name="chart_info_help">Colored dotted guides show Light, Moderate, Vigorous and Peak. Moderate, Vigorous and Peak mark their starting thresholds; the Light guide is a reference within the Light range. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
-    <string name="chart_filtered_help">The line uses a short median filter to reduce visual noise within each interval. Statistics use the recorded readings.</string>
+    <string name="chart_filtered_help">The displayed line uses short five-second averages and a bounded curve within each interval. Statistics use the original recorded readings.</string>
 </resources>

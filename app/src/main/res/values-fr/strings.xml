@@ -641,5 +641,5 @@
 
     <string name="chart_info">À propos de %1$s</string>
     <string name="chart_info_help">Les lignes pointillées indiquent Léger, Modéré, Vigoureux et Pic. Les trois niveaux supérieurs marquent leurs seuils; le repère Léger se situe dans cette plage. Les bandes pâles indiquent repos ou pauses; les traits en bas marquent les changements d’intervalle.</string>
-    <string name="chart_filtered_help">La courbe utilise un court filtre médian dans chaque intervalle. Les statistiques utilisent les mesures enregistrées.</string>
+    <string name="chart_filtered_help">La courbe utilise des moyennes courtes de cinq secondes dans chaque intervalle. Les statistiques utilisent les mesures originales.</string>
 </resources>

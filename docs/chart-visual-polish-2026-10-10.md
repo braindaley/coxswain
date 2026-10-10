@@ -53,3 +53,9 @@ Curve/axis validation: production and isolated debug/instrumentation builds pass
 ## Final trace weight
 
 The user requested a slightly thicker line after reviewing the reference again. Curved trace strokes are now 2 dp, increased from 1.5 dp; guide dots and all filtering, interpolation and axis behavior are unchanged.
+
+## Five-second display sampling
+
+Per-reading interpolation still left visible jaggedness in the phone screenshot. The chart now averages filtered readings into five-second display bins before bounded interpolation. Each continuous same-interval run keeps its first and last readings, and zeros, missing readings and pauses split runs. Heart-rate gaps longer than five seconds remain separate; sparse legacy output readings retain their existing connected trace without averaging different time bins. Interval progress, history metrics, zones and saved readings are unchanged. The info dialog describes the short display averages.
+
+Display-sampling validation: production and isolated builds passed, all 26 chart-data tests and five chart UI tests passed. New tests cover dense oscillating noise, preserved interval edges and sustained output, missing heart readings, zero output and sparse legacy recordings.

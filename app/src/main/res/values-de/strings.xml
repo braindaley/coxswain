@@ -631,5 +631,5 @@
 
     <string name="chart_info">Über %1$s</string>
     <string name="chart_info_help">Die farbigen Punktlinien zeigen Leicht, Moderat, Intensiv und Spitzenbereich. Die drei höheren Linien markieren die Startschwellen; die Linie für Leicht liegt innerhalb dieses Bereichs. Blasse Flächen markieren Erholung oder Pausen; kurze Striche unten markieren Intervallwechsel.</string>
-    <string name="chart_filtered_help">Die Linie verwendet einen kurzen Medianfilter innerhalb jedes Intervalls. Statistiken basieren auf den aufgezeichneten Messwerten.</string>
+    <string name="chart_filtered_help">Die dargestellte Linie verwendet kurze Fünf-Sekunden-Mittelwerte innerhalb jedes Intervalls. Statistiken basieren auf den ursprünglichen Messwerten.</string>
 </resources>

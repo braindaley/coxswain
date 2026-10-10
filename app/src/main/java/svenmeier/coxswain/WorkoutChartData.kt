@@ -26,6 +26,8 @@ internal enum class ResultMeasure {
 
 internal data class ResultPoint(val elapsed: Float, val clock: Long, val snapshot: Snapshot,
                                 val interval: Int, val intervalStart: Float)
+internal data class ResultTracePoint(val elapsed: Float, val clock: Long, val value: Float, val interval: Int,
+                                    val run: Int)
 internal data class ResultPhase(val index: Int, val start: Float, val end: Float,
                                 val segment: Segment?, val difficulty: Difficulty,
                                 val estimated: Boolean)
@@ -236,6 +238,42 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
                 if (sorted.size % 2 == 0) (sorted[middle - 1] + sorted[middle]) / 2f else sorted[middle]
             }
         }
+    }
+
+    /** Display-only five-second bins; phase edges, zero readings and gaps split each run. */
+    fun displayTrace(measure: ResultMeasure): List<ResultTracePoint> {
+        val filtered = displayValues(measure)
+        val result = mutableListOf<ResultTracePoint>()
+        val run = mutableListOf<Int>()
+        var runId = 0
+        fun flush() {
+            if (run.isEmpty()) return
+            val first = run.first(); val last = run.last()
+            fun append(index: Int, value: Float = filtered[index]!!) {
+                val p = points[index]
+                result.add(ResultTracePoint(p.elapsed,p.clock,value,p.interval,runId))
+            }
+            append(first)
+            run.drop(1).dropLast(1).groupBy { (points[it].clock-points[first].clock)/5000L }.values.forEach { bin ->
+                append(bin[bin.size/2],bin.map { filtered[it]!!.toDouble() }.average().toFloat())
+            }
+            if (last != first) append(last)
+            run.clear(); runId++
+        }
+        points.forEachIndexed { index, point ->
+            val value = filtered[index]
+            if (value == null || (measure != ResultMeasure.PULSE && isRest(point))) flush()
+            else {
+                val previous = run.lastOrNull()
+                if (previous != null && (point.interval != points[previous].interval || breaksBefore(index,measure) ||
+                        (measure == ResultMeasure.PULSE && point.elapsed-points[previous].elapsed > 5f) || point.clock <= points[previous].clock ||
+                        value <= 0f || filtered[previous]!! <= 0f)) flush()
+                run.add(index)
+                if (value <= 0f) flush()
+            }
+        }
+        flush()
+        return result
     }
 
     private fun findStartupEnd(): Float {

@@ -212,7 +212,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                         zoneTimes: HeartRateZoneTimes? = null) {
     val levelGuides = remember(zones, outputZones) { resultLevelGuides(zones, outputZones) }
     val scale = remember(charts, measure, levelGuides) { charts.scale(measure, levelGuides) }
-    val displayValues = remember(charts, measure) { charts.displayValues(measure) }
+    val trace = remember(charts, measure) { charts.displayTrace(measure) }
     val zoneColors = heartZoneColors()
     val primaryColor = MaterialTheme.colorScheme.primary
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -262,47 +262,36 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                 for (dot in 0..count) drawCircle(zoneColors[zone], .75.dp.toPx(),
                                     Offset(size.width * dot / count, y(guide)))
                             }
-                            charts.points.forEachIndexed { index,point ->
-                                val value = displayValues[index]
-                                val before = charts.points.getOrNull(index-1)
-                                if (value != null && (includesRest || !charts.isRest(point))) {
-                                    val color = if (measure == ResultMeasure.RATE) referenceColor
-                                        else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
-                                        else outputZones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
-                                    val previous = displayValues.getOrNull(index-1)
-                                    if (before != null && previous != null && (includesRest || !charts.isRest(before)) &&
-                                        !charts.breaksBefore(index,measure) && (!includesRest || point.elapsed-before.elapsed <= 5f)) {
-                                        fun connected(left: Int, right: Int): Boolean {
-                                            val a = charts.points.getOrNull(left) ?: return false
-                                            val b = charts.points.getOrNull(right) ?: return false
-                                            return displayValues.getOrNull(left) != null && displayValues.getOrNull(right) != null &&
-                                                (includesRest || (!charts.isRest(a) && !charts.isRest(b))) &&
-                                                a.interval == b.interval && !charts.breaksBefore(right,measure) &&
-                                                b.clock > a.clock && (!includesRest || b.elapsed-a.elapsed <= 5f)
-                                        }
-                                        val leftValue = if (connected(index-2,index-1)) displayValues[index-2] else null
-                                        val rightValue = if (connected(index,index+1)) displayValues[index+1] else null
-                                        val curve = ResultCurve(previous,value,leftValue,rightValue,
-                                            beforeSpan = if (leftValue != null) (before.clock-charts.points[index-2].clock).toFloat() else 1f,
-                                            span = (point.clock-before.clock).coerceAtLeast(1L).toFloat(),
-                                            afterSpan = if (rightValue != null) (charts.points[index+1].clock-point.clock).toFloat() else 1f)
-                                        val x0 = x(before.clock); val x1 = x(point.clock)
-                                        val steps = kotlin.math.ceil((x1-x0)/2.dp.toPx()).toInt().coerceIn(4,32)
-                                        for (step in 0 until steps) {
-                                            val f0 = step.toFloat()/steps; val f1 = (step+1).toFloat()/steps
-                                            val v0 = curve.value(f0); val v1 = curve.value(f1)
-                                            val pieces = if (includesRest && zones != null) zones.pieces(v0,v1)
-                                                else if (outputZones != null && v0>0f && v1>0f) outputZones.pieces(v0,v1) else null
-                                            if (pieces != null) pieces.forEach { (a,b,zone) ->
-                                                drawLine(zoneColors[zone],
-                                                    Offset(x0+(x1-x0)*(f0+(f1-f0)*a),y(v0+(v1-v0)*a)),
-                                                    Offset(x0+(x1-x0)*(f0+(f1-f0)*b),y(v0+(v1-v0)*b)),
-                                                    2.dp.toPx(),cap = StrokeCap.Round)
-                                            } else drawLine(color,Offset(x0+(x1-x0)*f0,y(v0)),Offset(x0+(x1-x0)*f1,y(v1)),
+                            trace.forEachIndexed { index,point ->
+                                val value = point.value
+                                val before = trace.getOrNull(index-1)
+                                val color = if (measure == ResultMeasure.RATE) referenceColor
+                                    else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
+                                    else outputZones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
+                                if (before != null && before.run == point.run) {
+                                    val previous = before.value
+                                    val left = trace.getOrNull(index-2)?.takeIf { it.run == point.run }
+                                    val right = trace.getOrNull(index+1)?.takeIf { it.run == point.run }
+                                    val curve = ResultCurve(previous,value,left?.value,right?.value,
+                                        beforeSpan = left?.let { (before.clock-it.clock).toFloat() } ?: 1f,
+                                        span = (point.clock-before.clock).toFloat(),
+                                        afterSpan = right?.let { (it.clock-point.clock).toFloat() } ?: 1f)
+                                    val x0 = x(before.clock); val x1 = x(point.clock)
+                                    val steps = kotlin.math.ceil((x1-x0)/1.dp.toPx()).toInt().coerceIn(4,32)
+                                    for (step in 0 until steps) {
+                                        val f0 = step.toFloat()/steps; val f1 = (step+1).toFloat()/steps
+                                        val v0 = curve.value(f0); val v1 = curve.value(f1)
+                                        val pieces = if (includesRest && zones != null) zones.pieces(v0,v1)
+                                            else if (outputZones != null && v0>0f && v1>0f) outputZones.pieces(v0,v1) else null
+                                        if (pieces != null) pieces.forEach { (a,b,zone) ->
+                                            drawLine(zoneColors[zone],
+                                                Offset(x0+(x1-x0)*(f0+(f1-f0)*a),y(v0+(v1-v0)*a)),
+                                                Offset(x0+(x1-x0)*(f0+(f1-f0)*b),y(v0+(v1-v0)*b)),
                                                 2.dp.toPx(),cap = StrokeCap.Round)
-                                        }
-                                    } else drawCircle(color,1.dp.toPx(),Offset(x(point.clock),y(value)))
-                                }
+                                        } else drawLine(color,Offset(x0+(x1-x0)*f0,y(v0)),Offset(x0+(x1-x0)*f1,y(v1)),
+                                            2.dp.toPx(),cap = StrokeCap.Round)
+                                    }
+                                } else drawCircle(color,1.dp.toPx(),Offset(x(point.clock),y(value)))
                             }
                         }
                     }

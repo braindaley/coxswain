@@ -27,6 +27,42 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun displayBinsReduceDenseNoiseButKeepIntervalEdgesAndSustainedOutput() {
+        val program = Program.minutes("Steps", 1, Difficulty.MEDIUM).apply {
+            getSegment(0).setDuration(30); addSegment(Segment(Difficulty.HARD).setDuration(30))
+        }
+        val samples = (20..60).map { second -> sample(second,
+            power = if (second <= 30) if (second % 2 == 0) 100 else 140 else 200,
+            index = if (second <= 30) 0 else 1, stepStart = if (second <= 30) 0 else 30) }
+        val result = chart(row(program = program), *samples.toTypedArray())
+        val trace = result.displayTrace(ResultMeasure.POWER)
+        assertTrue(trace.size < samples.size / 2)
+        assertEquals(20f,trace.first().elapsed,.001f)
+        assertTrue(trace.any { it.elapsed == 30f && it.interval == 0 })
+        assertTrue(trace.any { it.elapsed == 31f && it.interval == 1 })
+        assertTrue(trace.filter { it.interval == 1 }.all { it.value == 200f })
+        assertTrue(trace.filter { it.interval == 0 && it.elapsed > 20f && it.elapsed < 30f }.all { it.value in 110f..130f })
+        assertEquals(140,samples[1].power.get().toInt())
+    }
+
+    @Test fun legacySparseOutputRetainsItsKnotsAndExistingConnectedTrace() {
+        val result = chart(row(),sample(20,power=100).apply { recordedAt.set(null) },
+            sample(40,power=200).apply { recordedAt.set(null) },sample(60,power=150).apply { recordedAt.set(null) })
+        val trace = result.displayTrace(ResultMeasure.POWER)
+        assertEquals(listOf(100f,200f,150f),trace.map { it.value })
+        assertEquals(1,trace.map { it.run }.distinct().size)
+    }
+
+    @Test fun displayBinsNeverConnectAcrossMissingReadingsZeroOutputOrPause() {
+        val heart = chart(row(),sample(20).apply { pulse.set(120) },sample(21).apply { pulse.set(null) },
+            sample(22).apply { pulse.set(160) }).displayTrace(ResultMeasure.PULSE)
+        assertEquals(2,heart.size); assertNotEquals(heart[0].run,heart[1].run)
+        val power = chart(row(),sample(20,power=100),sample(21,power=0),sample(22,power=200))
+            .displayTrace(ResultMeasure.POWER)
+        assertEquals(3,power.map { it.run }.distinct().size)
+        assertEquals(0f,power[1].value,.001f)
+    }
+
     @Test fun curveStaysWithinEachReadingPairAndRetainsEndpointsAndPlateaus() {
         for ((from,to,before,after) in listOf(listOf(100f,120f,10f,400f),listOf(120f,100f,400f,10f),
             listOf(100f,100f,10f,400f),listOf(100f,120f,140f,80f))) {
