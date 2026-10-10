@@ -16,13 +16,40 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import svenmeier.coxswain.compose.CoxswainTheme
 
 class HeartRateZonesActivity : ComponentActivity() {
+    private var recordedRange by mutableStateOf(RecordedHeartRateRange())
+    private var peakLoading by mutableStateOf(true)
+    private var peakFailed by mutableStateOf(false)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val initial = HeartRateZones.decode(prefs.getString(HeartRateZones.KEY, null))
+        lifecycleScope.launch {
+            try {
+                recordedRange = withContext(Dispatchers.IO) {
+                    val gym = Gym.instance(this@HeartRateZonesActivity)
+                    var low: Int? = null
+                    var peak: Int? = null
+                    for (workout in ArrayList(gym.allWorkouts.list())) {
+                        if (workout.status.get() != svenmeier.coxswain.gym.WorkoutStatus.COMPLETED) continue
+                        val range = recordedHeartRateRange(workout, gym.getSnapshots(workout).list())
+                        range.startingLow?.let { low = minOf(low ?: it, it) }
+                        range.peak?.let { peak = maxOf(peak ?: it, it) }
+                    }
+                    RecordedHeartRateRange(low, peak)
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                peakFailed = true
+            } finally { peakLoading = false }
+        }
         setContent {
             CoxswainTheme {
                 HeartRateZonesSettings(initial, onBack = { finish() }, onSave = { zones ->
@@ -30,7 +57,7 @@ class HeartRateZonesActivity : ComponentActivity() {
                         if (zones == null) remove(HeartRateZones.KEY) else putString(HeartRateZones.KEY, zones.encode())
                     }
                     finish()
-                })
+                }, recordedRange = recordedRange, peakLoading = peakLoading, peakFailed = peakFailed)
             }
         }
     }
@@ -38,7 +65,8 @@ class HeartRateZonesActivity : ComponentActivity() {
 
 @Composable
 internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit,
-                                     onSave: (HeartRateZones?) -> Unit) {
+                                     onSave: (HeartRateZones?) -> Unit, recordedRange: RecordedHeartRateRange = RecordedHeartRateRange(),
+                                     peakLoading: Boolean = false, peakFailed: Boolean = false) {
     var custom by rememberSaveable { mutableStateOf(initial != null && initial.resting == null) }
     var estimate by rememberSaveable { mutableStateOf(initial?.age != null) }
     var resting by rememberSaveable { mutableStateOf(initial?.resting?.toString() ?: "") }
@@ -47,6 +75,14 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
     var moderate by rememberSaveable { mutableStateOf(initial?.moderate?.toString() ?: "") }
     var vigorous by rememberSaveable { mutableStateOf(initial?.vigorous?.toString() ?: "") }
     var peak by rememberSaveable { mutableStateOf(initial?.peak?.toString() ?: "") }
+    var restingEdited by rememberSaveable { mutableStateOf(false) }
+    var maximumEdited by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(recordedRange) {
+        if (initial == null) {
+            if (!restingEdited && resting.isBlank()) recordedRange.startingLow?.let { resting = it.toString() }
+            if (!maximumEdited && maximum.isBlank()) recordedRange.peak?.let { maximum = it.toString() }
+        }
+    }
     val profile = runCatching {
         if (custom) HeartRateZones(moderate.toInt(), vigorous.toInt(), peak.toInt())
         else HeartRateZones.reserve(resting.toInt(), if (estimate) 220 - age.toInt() else maximum.toInt(),
@@ -69,7 +105,24 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
                 HeartNumber(stringResource(R.string.hr_vigorous_from), vigorous) { vigorous = it }
                 HeartNumber(stringResource(R.string.hr_peak_from), peak) { peak = it }
             } else {
-                HeartNumber(stringResource(R.string.hr_resting), resting) { resting = it }
+                HeartNumber(stringResource(R.string.hr_resting), resting) { restingEdited = true; resting = it }
+                Text(stringResource(when {
+                    peakLoading -> R.string.hr_peak_loading
+                    peakFailed -> R.string.hr_peak_failed
+                    recordedRange.startingLow == null || recordedRange.peak == null -> R.string.hr_peak_unavailable
+                    else -> R.string.hr_history_values
+                }, recordedRange.startingLow ?: 0, recordedRange.peak ?: 0),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (recordedRange.startingLow != null && recordedRange.peak != null) {
+                    Text(stringResource(R.string.hr_history_help), style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = {
+                        resting = recordedRange.startingLow.toString()
+                        maximum = recordedRange.peak.toString()
+                        estimate = false
+                        restingEdited = true
+                        maximumEdited = true
+                    }) { Text(stringResource(R.string.hr_use_history)) }
+                }
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Switch(checked = estimate, onCheckedChange = { estimate = it })
                     Text(stringResource(R.string.hr_estimate), Modifier.padding(start = 8.dp))
@@ -77,7 +130,7 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
                 if (estimate) {
                     HeartNumber(stringResource(R.string.hr_age), age) { age = it }
                     Text(stringResource(R.string.hr_estimate_help), style = MaterialTheme.typography.bodySmall)
-                } else HeartNumber(stringResource(R.string.hr_maximum), maximum) { maximum = it }
+                } else HeartNumber(stringResource(R.string.hr_maximum), maximum) { maximumEdited = true; maximum = it }
             }
             if (profile != null) {
                 Card(Modifier.fillMaxWidth()) {

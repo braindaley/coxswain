@@ -703,4 +703,12 @@
     <string name="hr_zone_coverage">%1$s of recorded heart-rate time, including recovery. Missing readings and pauses are excluded.</string>
     <string name="hr_zone_legacy">Personal zone thresholds were not saved for this workout.</string>
     <string name="hr_zone_line_help">Line colors show your measured heart-rate zones. Interval bands show programmed effort.</string>
+
+
+    <string name="hr_peak_loading">Checking completed rows…</string>
+    <string name="hr_peak_failed">Could not read heart-rate history. You can still enter values.</string>
+    <string name="hr_peak_unavailable">Not enough timed heart-rate data in completed rows to fill both values.</string>
+    <string name="hr_history_values">History suggestions: starting low %1$d BPM · sustained peak %2$d BPM</string>
+    <string name="hr_history_help">Blank fields are filled from completed rows. The low uses the first 30 seconds; both values must persist for at least five seconds. Starting heart rate is an estimate of resting heart rate, and recorded peak is not a tested maximum. You can edit either value before saving.</string>
+    <string name="hr_use_history">Use history suggestions</string>
 </resources>

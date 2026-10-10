@@ -1,6 +1,8 @@
 package svenmeier.coxswain
 
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -41,4 +43,19 @@ class HeartRateZoneSettingsTest {
         compose.onNodeWithText("Turn off zones for new workouts").performScrollTo().performClick()
         compose.runOnIdle { assertNull(saved); assertEquals(2, calls) }
     }
+    @Test fun historyAutofillsEmptyFieldsAndKeepsUserOverrides() {
+        var history by androidx.compose.runtime.mutableStateOf(RecordedHeartRateRange(70, 180))
+        var saved: HeartRateZones? = null
+        compose.setContent { CoxswainTheme { Surface {
+            HeartRateZonesSettings(null, {}, { saved = it }, recordedRange = history)
+        } } }
+        compose.onNodeWithText("Resting heart rate (BPM)").assertTextContains("70")
+        compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().assertTextContains("180")
+        compose.onNodeWithText("Resting heart rate (BPM)").performScrollTo().performTextReplacement("60")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.runOnIdle { history = RecordedHeartRateRange(65, 185) }
+        compose.onNodeWithText("Save zones").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(HeartRateZones.reserve(60, 180), saved) }
+    }
+
 }

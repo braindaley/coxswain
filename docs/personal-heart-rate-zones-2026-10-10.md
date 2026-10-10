@@ -13,3 +13,11 @@ No HR section appears when a workout has no positive HR measurements. Rows witho
 Research basis: Google Health documents personalized reserve-based boundaries at https://support.google.com/googlehealth/answer/14237938?hl=en. These app estimates describe recorded exercise data; they are not a prescribed training target.
 
 Validation: 136 unit tests pass, including exact reserve boundaries, zone crossings, missing/sparse readings, recovery, frozen settings, version-seven migration and backup validation. Debug and instrumentation APK builds pass. Eight emulator checks pass across settings, light/dark charts and Android SQLite migration/backup; the dark HR chart screenshot was visually reviewed. Lint has no new errors outside the existing baseline.
+
+## History suggestions
+
+The zone settings automatically prefill empty resting/maximum fields from completed rows with timestamped heart-rate samples. The starting-low suggestion is the lowest sustained reading in the first 30 recorded seconds; the maximum suggestion is the highest sustained reading across completed rows. A qualifying window spans at least five seconds with three or more observations. Its highest BPM supplies the conservative low and its lowest BPM supplies the conservative peak, so a single erroneous low/high reading cannot supply a default. Missing readings, sensor gaps above five seconds, and recorded pause gaps reset the window. Untimed legacy recordings, active sessions and ended-early sessions cannot supply suggestions.
+
+Suggestions load on a background thread and never overwrite an existing saved profile or a field the user has edited. The user can apply updated history suggestions explicitly and then save. The UI identifies the starting low as a resting estimate and the peak as observed rather than a tested maximum. Previously recorded zones remain frozen.
+
+History-suggestion validation: 140 unit tests pass; three isolated emulator settings checks pass, including automatic fill and preservation of manually entered values when history changes. Debug and instrumentation APK builds and lint pass with the existing baseline.

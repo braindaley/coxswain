@@ -619,4 +619,12 @@
     <string name="hr_zone_coverage">%1$s de fréquence cardiaque enregistrée, récupération incluse. Mesures manquantes et pauses exclues.</string>
     <string name="hr_zone_legacy">Les seuils personnels n’ont pas été enregistrés pour cette séance.</string>
     <string name="hr_zone_line_help">Les couleurs de la courbe indiquent vos zones cardiaques mesurées. Les bandes d’intervalle indiquent l’effort programmé.</string>
+
+
+    <string name="hr_peak_loading">Vérification des séances terminées…</string>
+    <string name="hr_peak_failed">Impossible de lire l’historique cardiaque. Vous pouvez saisir les valeurs.</string>
+    <string name="hr_peak_unavailable">Pas assez de mesures cardiaques horodatées dans les séances terminées pour remplir les deux valeurs.</string>
+    <string name="hr_history_values">Suggestions de l’historique : minimum initial %1$d BPM · pic soutenu %2$d BPM</string>
+    <string name="hr_history_help">Les champs vides sont remplis à partir des séances terminées. Le minimum utilise les 30 premières secondes ; les deux valeurs doivent durer au moins cinq secondes. La fréquence initiale estime le repos, et le pic enregistré n’est pas un maximum testé. Vous pouvez modifier ces valeurs avant d’enregistrer.</string>
+    <string name="hr_use_history">Utiliser les suggestions de l’historique</string>
 </resources>

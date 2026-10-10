@@ -609,4 +609,12 @@
     <string name="hr_zone_coverage">%1$s aufgezeichnete Herzfrequenzzeit einschließlich Erholung. Fehlende Werte und Pausen sind ausgeschlossen.</string>
     <string name="hr_zone_legacy">Für diese Einheit wurden keine persönlichen Zonengrenzen gespeichert.</string>
     <string name="hr_zone_line_help">Linienfarben zeigen deine gemessenen Herzfrequenzzonen. Intervallbänder zeigen die geplante Belastung.</string>
+
+
+    <string name="hr_peak_loading">Abgeschlossene Einheiten werden geprüft…</string>
+    <string name="hr_peak_failed">Herzfrequenzverlauf konnte nicht gelesen werden. Du kannst Werte eingeben.</string>
+    <string name="hr_peak_unavailable">Nicht genügend zeitlich erfasste Herzfrequenzwerte in abgeschlossenen Einheiten, um beide Werte auszufüllen.</string>
+    <string name="hr_history_values">Vorschläge aus dem Verlauf: Anfangstief %1$d BPM · anhaltende Spitze %2$d BPM</string>
+    <string name="hr_history_help">Leere Felder werden aus abgeschlossenen Einheiten ausgefüllt. Der Tiefwert nutzt die ersten 30 Sekunden; beide Werte müssen mindestens fünf Sekunden anhalten. Der Anfangspuls schätzt den Ruhepuls, und die aufgezeichnete Spitze ist kein getestetes Maximum. Du kannst beide Werte vor dem Speichern ändern.</string>
+    <string name="hr_use_history">Vorschläge aus dem Verlauf verwenden</string>
 </resources>
