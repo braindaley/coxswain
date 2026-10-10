@@ -9,3 +9,7 @@ The legend uses small colored dots and names. Heart-rate zone time and percentag
 ## Validation
 
 Debug app and instrumentation APKs built successfully. Android lint has no errors and retains the 10 existing warnings (plus 2 hints). All five WorkoutChartsScreenTest checks passed on the isolated emulator: light/dark charts, larger text, heart-rate recovery, and legacy recordings responding to current thresholds. Light and dark screenshots were visually reviewed. The production phone installation and its data were untouched.
+
+## Vigorous gold follow-up
+
+Light-mode Vigorous now uses a brighter gold (#B07800) rather than the previous brown-gold (#986600), consistently for traces, legends and interval result markers. Its contrast is 3.25:1 against the chart card (#E8EEF5) and 3.53:1 against the screen (#F4F7FB). Dark-mode gold remains #FFCB74. The existing classifier assigns Vigorous between the Vigorous and Peak thresholds and splits lines at every boundary, including the reversed pace direction. Gold trace sections depend on the recorded metric reaching that range; colors are not forced into each recording.

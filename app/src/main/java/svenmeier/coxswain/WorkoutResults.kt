@@ -170,7 +170,7 @@ private fun effortColors(): Map<Difficulty, Color> {
         Difficulty.REST to MaterialTheme.colorScheme.onSurfaceVariant,
         Difficulty.EASY to MaterialTheme.colorScheme.primary,
         Difficulty.MEDIUM to if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
-        Difficulty.HARD to if (dark) Color(0xFFFFCB74) else Color(0xFF986600),
+        Difficulty.HARD to if (dark) Color(0xFFFFCB74) else Color(0xFFB07800),
         Difficulty.PEAK to MaterialTheme.colorScheme.error)
 }
 
@@ -179,7 +179,7 @@ private fun heartZoneColors(): List<Color> {
     val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
     return listOf(MaterialTheme.colorScheme.primary,
         if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
-        if (dark) Color(0xFFFFCB74) else Color(0xFF986600), MaterialTheme.colorScheme.error)
+        if (dark) Color(0xFFFFCB74) else Color(0xFFB07800), MaterialTheme.colorScheme.error)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
