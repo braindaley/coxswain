@@ -165,21 +165,20 @@ private fun effortName(difficulty: Difficulty): String = stringResource(when (di
 
 @Composable
 private fun effortColors(): Map<Difficulty, Color> {
-    val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
-    return mapOf(Difficulty.NONE to MaterialTheme.colorScheme.primary,
+    val levels = heartZoneColors()
+    return mapOf(Difficulty.NONE to levels[0],
         Difficulty.REST to MaterialTheme.colorScheme.onSurfaceVariant,
-        Difficulty.EASY to MaterialTheme.colorScheme.primary,
-        Difficulty.MEDIUM to if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
-        Difficulty.HARD to if (dark) Color(0xFFFFCB74) else Color(0xFFB07800),
-        Difficulty.PEAK to MaterialTheme.colorScheme.error)
+        Difficulty.EASY to levels[0], Difficulty.MEDIUM to levels[1],
+        Difficulty.HARD to levels[2], Difficulty.PEAK to levels[3])
 }
 
 @Composable
 private fun heartZoneColors(): List<Color> {
     val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
     return listOf(MaterialTheme.colorScheme.primary,
-        if (dark) Color(0xFF73DFA3) else Color(0xFF217B45),
-        if (dark) Color(0xFFFFCB74) else Color(0xFFB07800), MaterialTheme.colorScheme.error)
+        if (dark) Color(0xFF54CDD0) else Color(0xFF007D83),
+        if (dark) Color(0xFFFFCB74) else Color(0xFFB07800),
+        if (dark) Color(0xFF73DFA3) else Color(0xFF217B45))
 }
 
 @OptIn(ExperimentalLayoutApi::class)

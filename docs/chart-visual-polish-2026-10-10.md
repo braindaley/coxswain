@@ -17,3 +17,7 @@ Light-mode Vigorous now uses a brighter gold (#B07800) rather than the previous 
 ## Compact heart-rate time summary
 
 Heart-rate zone names and m:ss times now form one four-column strip, with a small color dot alongside each time. Percentages move into the info dialog. Names remain visible so the summary does not depend on distinguishing red from green. Output-level legends are unchanged.
+
+## User-selected color palette
+
+Light, Moderate, Vigorous and Peak now use blue, teal, gold and green respectively. The user reports difficulty distinguishing red from green and blue from purple. Graph traces, dotted guides, legends and interval markers share the same palette. Dark mode uses lighter versions; labels remain visible. Thresholds and recorded data are unchanged.
