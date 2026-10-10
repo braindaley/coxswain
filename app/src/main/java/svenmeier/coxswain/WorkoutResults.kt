@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -224,26 +223,27 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     val chartDescription = stringResource(R.string.ui_chart_accessibility, title, statistics)
     var showInfo by remember { mutableStateOf(false) }
     fun label(value: Float) = if (measure == ResultMeasure.SPLIT) formatAxisTime(value.roundToInt()) else value.roundToInt().toString()
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(unit, style = MaterialTheme.typography.bodySmall, color = referenceColor)
-                }
-                IconButton(onClick = { showInfo = true }) {
-                    Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.chart_info, title), tint = referenceColor)
-                }
-            }
-            Row(Modifier.fillMaxWidth().height(260.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(unit, style = MaterialTheme.typography.bodySmall, color = referenceColor)
+        }
+        IconButton(onClick = { showInfo = true }) {
+            Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.chart_info, title), tint = referenceColor)
+        }
+    }
+    val chartBackground = if (MaterialTheme.colorScheme.surface.luminance() < .4f)
+        MaterialTheme.colorScheme.surfaceContainerHigh else Color(0xFFEEF3F9)
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = chartBackground)) {
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(Modifier.fillMaxWidth().height(190.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
                         color = referenceColor, modifier = Modifier.align(Alignment.Center))
                     else Canvas(Modifier.fillMaxSize().semantics { contentDescription = chartDescription }) {
                         fun x(clock: Long) = size.width * charts.clockFraction(clock)
                         fun y(value: Float) = 6.dp.toPx() + (size.height - 12.dp.toPx()) * scale.fraction(value, measure == ResultMeasure.SPLIT)
-                        val dotted = PathEffect.dashPathEffect(floatArrayOf(1.dp.toPx(), 5.dp.toPx()))
                         clipRect {
                             charts.phases.forEach { phase ->
                                 val left = x(charts.clockAt(phase.start)); val right = x(charts.clockAt(phase.end))
@@ -257,9 +257,10 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                                     androidx.compose.ui.geometry.Size(x(end)-x(start),size.height))
                             }
                             levelGuides.forEachIndexed { zone, guide ->
-                                drawLine(zoneColors[zone].copy(alpha = .65f),
-                                    Offset(0f,y(guide)),Offset(size.width,y(guide)),
-                                    1.dp.toPx(),cap = StrokeCap.Round,pathEffect = dotted)
+                                val spacing = 5.dp.toPx()
+                                val count = (size.width / spacing).toInt().coerceAtLeast(1)
+                                for (dot in 0..count) drawCircle(zoneColors[zone], .75.dp.toPx(),
+                                    Offset(size.width * dot / count, y(guide)))
                             }
                             charts.points.forEachIndexed { index,point ->
                                 val value = displayValues[index]

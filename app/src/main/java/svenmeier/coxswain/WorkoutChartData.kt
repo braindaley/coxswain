@@ -175,7 +175,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
         if (measure != ResultMeasure.PULSE && point.elapsed < startupEnd) null else value(point, measure)
 
-    /** Three-reading median for presentation only; never cross steps, zeros or sensor gaps. */
+    /** Short time-window median for presentation only; never cross steps, zeros or sensor gaps. */
     fun displayValues(measure: ResultMeasure): List<Float?> {
         val values = points.map { plottedValue(it, measure) }
         return values.mapIndexed { index, value ->
@@ -189,7 +189,27 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
                 isRest(before) != isRest(point) || isRest(after) != isRest(point) ||
                 point.elapsed - before.elapsed !in 0.001f..2.5f || after.elapsed - point.elapsed !in 0.001f..2.5f ||
                 point.clock - before.clock !in 1L..3000L || after.clock - point.clock !in 1L..3000L) value
-            else listOf(previous, value, next).sorted()[1]
+            else {
+                val window = mutableListOf(value)
+                for (direction in listOf(-1, 1)) {
+                    var cursor = index + direction
+                    var last = index
+                    while (cursor in points.indices) {
+                        val candidate = points[cursor]
+                        val reading = values[cursor] ?: break
+                        if (reading <= 0f || candidate.interval != point.interval || isRest(candidate) != isRest(point) ||
+                            kotlin.math.abs(candidate.elapsed - point.elapsed) > 2f ||
+                            kotlin.math.abs(candidate.elapsed - points[last].elapsed) > 2.5f ||
+                            kotlin.math.abs(candidate.clock - points[last].clock) > 3000L) break
+                        window.add(reading)
+                        last = cursor
+                        cursor += direction
+                    }
+                }
+                val sorted = window.sorted()
+                val middle = sorted.size / 2
+                if (sorted.size % 2 == 0) (sorted[middle - 1] + sorted[middle]) / 2f else sorted[middle]
+            }
         }
     }
 

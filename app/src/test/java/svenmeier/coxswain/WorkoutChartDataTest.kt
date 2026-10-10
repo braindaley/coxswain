@@ -47,6 +47,15 @@ class WorkoutChartDataTest {
         assertTrue(resultLevelGuides().isEmpty())
     }
 
+    @Test fun timeWindowMedianRemovesBriefTwoReadingNoiseButRetainsSustainedChanges() {
+        val readings = listOf(100,100,100,180,180,100,100,100,200,200,200,200,200)
+        val result = chart(row(), *readings.mapIndexed { index, watts -> sample(20 + index, power = watts) }.toTypedArray())
+        val display = result.displayValues(ResultMeasure.POWER)
+        assertEquals(100f, display[3]!!, .001f)
+        assertEquals(100f, display[4]!!, .001f)
+        assertEquals(listOf(200f,200f,200f), display.takeLast(3))
+    }
+
     @Test fun displayMedianReducesIsolatedNoiseWithoutChangingMeasurementsOrSustainedEffort() {
         val samples = listOf(100, 100, 180, 100, 100, 200, 200, 200).mapIndexed { index, watts ->
             sample(20 + index, power = watts)
