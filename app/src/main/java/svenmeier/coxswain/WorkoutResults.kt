@@ -35,11 +35,23 @@ import svenmeier.coxswain.gym.WorkoutDefinition
 @Composable
 fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     val summary = remember(workout, snapshots) { WorkoutStatistics(workout, snapshots) }
-    val zones = remember(workout) { HeartRateZones.decode(workout.heartRateZones.get()) }
-    val outputs = remember(workout) { PerformanceZones.decode(workout.performanceZones.get()) }
+    val context = LocalContext.current
+    val preferences = remember(context) { androidx.preference.PreferenceManager.getDefaultSharedPreferences(context) }
+    var currentHeart by remember(context) { mutableStateOf(HeartRateZones.decode(HeartRateZones.freeze(context))) }
+    var currentOutput by remember(context) { mutableStateOf(PerformanceZones.decode(PerformanceZones.freeze(context))) }
+    DisposableEffect(preferences, context) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == HeartRateZones.KEY) currentHeart = HeartRateZones.decode(HeartRateZones.freeze(context))
+            if (key == PerformanceZones.KEY) currentOutput = PerformanceZones.decode(PerformanceZones.freeze(context))
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+    val profiles = WorkoutZoneProfiles.resolve(workout, currentHeart, currentOutput)
+    val zones = profiles.heart
+    val outputs = profiles.output
     val zoneTimes = remember(summary, zones) { zones?.let { HeartRateZoneTimes(it, summary.samples) } }
     val charts = remember(summary) { WorkoutChartData(workout, summary) }
-    val context = LocalContext.current
     val clockFormat = remember(context, charts.span) {
         val seconds = charts.span < 300_000L
         SimpleDateFormat(if (android.text.format.DateFormat.is24HourFormat(context)) {
@@ -77,13 +89,17 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (charts.phases.size > 1) ProgramEffortLegend(charts)
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat, summary.averageSplit?.toFloat(),
-            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace)
+            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput)
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat, summary.averagePower?.toFloat(),
-            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power)
+            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat, summary.averageRate?.toFloat(),
             stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
         if (summary.pulse.average != null) {
-            if (zones != null && zoneTimes != null) HeartZoneSummary(zones, zoneTimes)
+            if (zones != null && zoneTimes != null) {
+                if (profiles.currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                HeartZoneSummary(zones, zoneTimes)
+            }
             else Text(stringResource(R.string.hr_zone_legacy), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
@@ -226,7 +242,7 @@ private fun HeartZoneSummary(zones: HeartRateZones, times: HeartRateZoneTimes) {
 
 @Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
-                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null, outputZones: OutputZones? = null) {
+                        clockFormat: SimpleDateFormat, average: Float?, statistics: String, zones: HeartRateZones? = null, outputZones: OutputZones? = null, currentOutput: Boolean = false) {
     val scale = remember(charts, measure) { charts.scale(measure) }
     val colors = effortColors()
     val zoneColors = heartZoneColors()
@@ -244,7 +260,11 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(R.string.ui_chart_reference_legend), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (outputZones != null) OutputZoneLegend(outputZones)
+        if (outputZones != null) {
+            if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutputZoneLegend(outputZones)
+        }
         else if (measure == ResultMeasure.POWER || measure == ResultMeasure.SPLIT) Text(
             stringResource(R.string.output_zones_legacy), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)

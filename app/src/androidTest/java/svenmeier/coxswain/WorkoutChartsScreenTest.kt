@@ -37,7 +37,31 @@ class WorkoutChartsScreenTest {
     @Test fun recordedHeartRateAddsStatisticsAndGraph() = checkCharts(false, true)
     @Test fun darkHeartRateGraphIncludesRecovery() = checkCharts(true, true)
 
-    private fun checkCharts(dark: Boolean, withHeartRate: Boolean = false) {
+    @Test fun olderHistoryUsesCurrentSettingsAndRespondsToThresholdChanges() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val beforeHeart = prefs.getString(HeartRateZones.KEY, null)
+        val beforeOutput = prefs.getString(PerformanceZones.KEY, null)
+        prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.reserve(60,175).encode())
+            .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode()).commit()
+        try {
+            checkCharts(false, true, false)
+            compose.onAllNodesWithText("This workout has no saved output thresholds.", substring = true).onFirst().performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("Power by clock time", substring = true).performScrollTo().assertIsDisplayed()
+            FileOutputStream(File(context.cacheDir, "legacy-output-colors.png")).use {
+                compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it)
+            }
+            prefs.edit().putString(PerformanceZones.KEY, PerformanceZones(OutputZones(250,300,350),null).encode()).commit()
+            compose.onNodeWithText("Peak ≥ 350 W").performScrollTo().assertIsDisplayed()
+        } finally {
+            prefs.edit().apply {
+                if (beforeHeart == null) remove(HeartRateZones.KEY) else putString(HeartRateZones.KEY,beforeHeart)
+                if (beforeOutput == null) remove(PerformanceZones.KEY) else putString(PerformanceZones.KEY,beforeOutput)
+            }.commit()
+        }
+    }
+
+    private fun checkCharts(dark: Boolean, withHeartRate: Boolean = false, storedProfiles: Boolean = true) {
         val start = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).parse("2026-10-08 06:00")!!.time
         val program = Program.minutes("Pyramid", 1, Difficulty.HARD).apply {
             getSegment(0).setDuration(60).setPower(100); getSegment(0).name.set("Build")
@@ -45,7 +69,7 @@ class WorkoutChartsScreenTest {
             addSegment(Segment(Difficulty.HARD).setDuration(60).setPower(200).apply { name.set("Peak") })
         }
         val workout = Workout().apply {
-            if (withHeartRate) {
+            if (withHeartRate && storedProfiles) {
                 heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
                 performanceZones.set(PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode())
             }

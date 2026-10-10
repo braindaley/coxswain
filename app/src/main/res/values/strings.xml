@@ -728,4 +728,7 @@
     <string name="output_pace_peak">Peak starts at (m:ss /500 m)</string>
     <string name="output_zones_legend">Relative output levels; each level starts at its threshold.</string>
     <string name="output_zones_legacy">Personal output thresholds were not saved for this metric.</string>
+
+    <string name="ui_chart_current_heart_zones">This workout has no saved heart-rate thresholds. Colors and zone times use your current settings; the recorded data is unchanged.</string>
+    <string name="ui_chart_current_output_zones">This workout has no saved output thresholds. Colors use your current settings; the recorded data is unchanged.</string>
 </resources>

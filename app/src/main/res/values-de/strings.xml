@@ -634,4 +634,7 @@
     <string name="output_pace_peak">Spitze beginnt bei (m:ss /500 m)</string>
     <string name="output_zones_legend">Relative Leistungsstufen; jede Stufe beginnt an ihrer Grenze.</string>
     <string name="output_zones_legacy">Für diese Messgröße wurden keine persönlichen Leistungsgrenzen gespeichert.</string>
+
+    <string name="ui_chart_current_heart_zones">Diese Einheit hat keine gespeicherten Herzfrequenzgrenzen. Farben und Zonenzeiten nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
+    <string name="ui_chart_current_output_zones">Diese Einheit hat keine gespeicherten Leistungsgrenzen. Farben nutzen deine aktuellen Einstellungen; die aufgezeichneten Daten bleiben unverändert.</string>
 </resources>

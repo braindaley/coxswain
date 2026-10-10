@@ -644,4 +644,7 @@
     <string name="output_pace_peak">Pic à partir de (m:ss /500 m)</string>
     <string name="output_zones_legend">Niveaux relatifs ; chaque niveau commence à son seuil.</string>
     <string name="output_zones_legacy">Les seuils personnels n’ont pas été enregistrés pour cette mesure.</string>
+
+    <string name="ui_chart_current_heart_zones">Cette séance n’a pas de seuils cardiaques enregistrés. Les couleurs et temps par zone utilisent vos réglages actuels ; les données enregistrées restent inchangées.</string>
+    <string name="ui_chart_current_output_zones">Cette séance n’a pas de seuils de performance enregistrés. Les couleurs utilisent vos réglages actuels ; les données enregistrées restent inchangées.</string>
 </resources>
