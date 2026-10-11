@@ -52,7 +52,6 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
     }
     val profiles = WorkoutZoneProfiles.resolve(workout, currentHeart, currentOutput)
     val zones = profiles.heart
-    val outputs = profiles.output
     val zoneTimes = remember(summary, zones) { zones?.let { HeartRateZoneTimes(it, summary.samples) } }
     val charts = remember(summary) { WorkoutChartData(workout, summary) }
     val clockFormat = remember(context, charts.span) {
@@ -82,11 +81,11 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultMetricRow(stringResource(R.string.ui_total_strokes), "%,d".format(summary.workStrokes))
         ResultMetricRow(stringResource(R.string.ui_stroke_rate_range), if (rates.isEmpty()) "—" else "${rates.minOrNull()}–${rates.maxOrNull()} SPM")
         ResultChart(stringResource(R.string.ui_split_time), ResultMeasure.SPLIT, charts, clockFormat,
-            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)), outputZones = outputs?.pace, currentOutput = profiles.currentOutput)
+            stringResource(R.string.ui_chart_average_best, averageSplit, if (splits.isEmpty()) "—" else formatSplit(splits.minOrNull()!!)))
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat,
-            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
+            stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"))
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat,
-            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes), outputZones = outputs?.cadence, currentOutput = profiles.currentCadence || profiles.currentOutput && outputs?.cadence != null)
+            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
         if (summary.pulse.average != null) {
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
             charts, clockFormat, stringResource(R.string.ui_chart_heart_statistics,
@@ -172,7 +171,7 @@ private fun heartZoneColors(): List<Color> {
 }
 
 private fun chartLevelName(zone: Int, cadence: Boolean) = if (!cadence) heartZoneName(zone) else when (zone) {
-    0 -> R.string.cadence_low; 1 -> R.string.cadence_steady; 2 -> R.string.cadence_high; else -> R.string.cadence_fast
+    0 -> R.string.row_output_low; 1 -> R.string.row_output_medium; 2 -> R.string.row_output_high; else -> R.string.row_output_highest
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -211,9 +210,9 @@ private fun chartLevelName(zone: Int, cadence: Boolean) = if (!cadence) heartZon
 @Composable
 private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutChartData,
                         clockFormat: SimpleDateFormat, statistics: String,
-                        zones: HeartRateZones? = null, outputZones: OutputZones? = null,
-                        currentOutput: Boolean = false, currentHeart: Boolean = false,
+                        zones: HeartRateZones? = null, currentHeart: Boolean = false,
                         zoneTimes: HeartRateZoneTimes? = null) {
+    val outputZones = remember(charts, measure) { charts.rowOutputZones(measure) }
     val levelGuides = remember(zones, outputZones) { resultLevelGuides(zones, outputZones) }
     val scale = remember(charts, measure, levelGuides) { charts.scale(measure, levelGuides) }
     val trace = remember(charts, measure) { charts.displayTrace(measure) }
@@ -329,30 +328,29 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                 Text(clockFormat.format(Date(charts.start)),fontSize = 12.sp,color = referenceColor)
                 Text(clockFormat.format(Date(charts.end)),fontSize = 12.sp,color = referenceColor)
             }
-            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null, cadence = measure == ResultMeasure.RATE)
+            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null, cadence = !includesRest)
         }
     }
     if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
         text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(statistics)
-            Text(stringResource(if (measure == ResultMeasure.RATE) R.string.cadence_help else R.string.chart_info_help))
+            Text(stringResource(if (includesRest) R.string.chart_info_help else R.string.row_output_help))
             Text(stringResource(R.string.chart_filtered_help))
             Text(stringResource(R.string.ui_chart_started_finished,
                 clockFormat.format(Date(charts.start)), clockFormat.format(Date(charts.end))))
             if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock))
-            if (currentOutput) Text(stringResource(if (measure == ResultMeasure.RATE) R.string.chart_current_cadence_help else R.string.ui_chart_current_output_zones))
             if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))
             if (zones != null) {
                 (0..3).forEach { zone ->
-                    Text("${stringResource(chartLevelName(zone,measure == ResultMeasure.RATE))}: ${zones.bounds(zone)}")
+                    Text("${stringResource(chartLevelName(zone,!includesRest))}: ${zones.bounds(zone)}")
                     if (zoneTimes != null) Text("${formatAxisTime(zoneTimes.seconds[zone].roundToInt())} · ${zoneTimes.percent(zone).roundToInt()}%",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 if (zoneTimes != null) Text(stringResource(R.string.hr_zone_coverage,formatAxisTime(zoneTimes.total.roundToInt())))
             } else if (outputZones != null) {
                 val values = listOf(outputZones.moderate,outputZones.vigorous,outputZones.peak)
-                (1..3).forEach { zone -> Text("${stringResource(chartLevelName(zone,measure == ResultMeasure.RATE))}: ${if (measure == ResultMeasure.SPLIT) formatZoneSplit(values[zone-1]) else values[zone-1].toString()} $unit") }
-            } else if (measure != ResultMeasure.RATE) Text(stringResource(if (includesRest) R.string.hr_zone_legacy else R.string.output_zones_legacy))
+                (1..3).forEach { zone -> Text("${stringResource(chartLevelName(zone,!includesRest))}: ${if (measure == ResultMeasure.SPLIT) formatZoneSplit(values[zone-1]) else values[zone-1].toString()} $unit") }
+            } else Text(stringResource(if (includesRest) R.string.hr_zone_legacy else R.string.row_output_flat))
         } },confirmButton = { TextButton(onClick = { showInfo = false }) { Text(stringResource(R.string.ui_done)) } })
 }
 

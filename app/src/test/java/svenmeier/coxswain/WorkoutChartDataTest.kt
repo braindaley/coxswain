@@ -27,6 +27,39 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun rowBandsUseOnlyThisRowsMovingRangeAndReversePace() {
+        val result = chart(row(120), *(20..120).map { t -> sample(t,
+            power=if(t<70) 50 else 150, speed=if(t<70) 250 else 500).apply {
+                strokeRate.set(if(t<70) 20 else 32)
+            } }.toTypedArray())
+        assertEquals(OutputZones(75,100,125),result.rowOutputZones(ResultMeasure.POWER))
+        assertEquals(OutputZones(175,150,125,true),result.rowOutputZones(ResultMeasure.SPLIT))
+        assertEquals(OutputZones(23,26,29),result.rowOutputZones(ResultMeasure.RATE))
+        assertNull(result.rowOutputZones(ResultMeasure.PULSE))
+        assertEquals(0,result.rowOutputZones(ResultMeasure.POWER)!!.zone(50f))
+        assertEquals(3,result.rowOutputZones(ResultMeasure.SPLIT)!!.zone(100f))
+    }
+
+    @Test fun flatRowsDoNotInventColorVariationAndUnsupportedPowerStillShowsPace() {
+        val result = chart(row(),*(20..60).map { sample(it,power=0) }.toTypedArray())
+        assertNull(result.rowOutputZones(ResultMeasure.RATE))
+        assertNull(result.rowOutputZones(ResultMeasure.SPLIT))
+        assertTrue(result.points.all { result.plottedValue(it,ResultMeasure.SPLIT) != null })
+    }
+
+    @Test fun staleCadenceAndSlowSpeedResetDoNotStretchSplitCharts() {
+        // Restart ramp reproduces the monitor mismatch in the connected phone recording:
+        // distance advances at 2.5 m/s while reported speed slowly recovers from 0.4 m/s.
+        val samples=(40..120).map { t -> sample(t,
+            speed=if(t in 65..95) 40+(t-65)*7 else 250,
+            power=if(t in 65..69) 0 else 30, distance=t*5/2) }
+        val result=chart(row(120),*samples.toTypedArray())
+        assertTrue(result.points.filter { it.elapsed in 65f..84f }.all { result.plottedValue(it,ResultMeasure.SPLIT)==null })
+        assertTrue(result.scale(ResultMeasure.SPLIT).high < 450f)
+        assertNotNull(result.plottedValue(result.points.last(),ResultMeasure.SPLIT))
+        assertEquals(1250f,result.value(result.points[25],ResultMeasure.SPLIT)!!,.001f)
+    }
+
     @Test fun stoppedAndRestartSplitReadingsDoNotFlattenTheScaleOrBridgeThePause() {
         val samples = (40..70).map { second -> sample(second,
             speed = if (second in 50..55) 10 else 400,
@@ -234,7 +267,7 @@ class WorkoutChartDataTest {
         assertEquals("Peak", result.phases.last().segment!!.name.get())
         assertFalse(result.phases.any { it.estimated })
         assertTrue(result.breaksBefore(1))
-        assertTrue(result.scale(ResultMeasure.POWER).high > 200)
+        assertTrue(result.scale(ResultMeasure.POWER).high < 200) // Targets no longer stretch the row-only scale.
     }
     @Test fun legacyTimedStepsReconstructEvenWhenDifficultyNeverChanges() {
         val program = Program.minutes("Pyramid", 1, Difficulty.HARD).apply {

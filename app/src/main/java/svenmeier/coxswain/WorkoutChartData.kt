@@ -217,12 +217,13 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         return raw
     }
     private val stoppedSplitPoints: Set<ResultPoint> by lazy {
+        val hasPower = points.any { it.snapshot.power.get() > 0 }
         val hasCadence = points.any { it.snapshot.strokeRate.get() > 0 }
         fun idle(index: Int): Boolean {
             val point = points[index]; val previous = points.getOrNull(index-1)
             val stationary = previous != null && point.snapshot.distance.get() == previous.snapshot.distance.get() &&
                 point.snapshot.strokes.get() == previous.snapshot.strokes.get()
-            return hasCadence && point.snapshot.strokeRate.get() <= 0 && (point.snapshot.power.get() <= 0 || stationary)
+            return (hasPower && point.snapshot.power.get() <= 0) || (hasCadence && point.snapshot.strokeRate.get() <= 0 && stationary)
         }
         val idleFlags = points.indices.map(::idle)
         val hidden = mutableSetOf<ResultPoint>()
@@ -245,8 +246,41 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
                 }.mapNotNull { ResultMeasure.SPLIT.value(points[it].snapshot) }.sorted()
                 if (pace != null && nearby.size >= 4 && pace > nearby[nearby.size/2] * 2f) hidden.add(point)
             }
+            // WaterRower can restart its speed calculation while its cumulative distance
+            // already advances normally. Confirm that mismatch using several seconds of
+            // counter movement, rather than removing genuine slow rowing by pace alone.
+            if (point.interval == pauseInterval && point.elapsed-lastPause <= 60f) {
+                val before = points.subList(0,index).lastOrNull {
+                    it.interval == point.interval && it.elapsed > lastPause && point.elapsed-it.elapsed >= 5f
+                }
+                val after = if (before == null) points.drop(index+1).firstOrNull {
+                    it.interval == point.interval && it.elapsed-point.elapsed >= 5f
+                } else null
+                val a = before ?: point
+                val b = if (before != null) point else after
+                if (b != null && b.elapsed-a.elapsed in 5f..8f) {
+                    val movingSpeed = (b.snapshot.distance.get()-a.snapshot.distance.get())*100f / (b.elapsed-a.elapsed)
+                    if (movingSpeed > 0f && point.snapshot.speed.get() < movingSpeed*.7f) hidden.add(point)
+                }
+            }
         }
         hidden
+    }
+
+    /** Equal bands across this row's central moving output range, never personal HR zones. */
+    fun rowOutputZones(measure: ResultMeasure): OutputZones? {
+        if (measure == ResultMeasure.PULSE) return null
+        val values = displayTrace(measure).map { it.value }.filter { it > 0f }.sorted()
+        if (values.size < 4) return null
+        val low = values[((values.size-1)*.05f).roundToInt()]
+        val high = values[((values.size-1)*.95f).roundToInt()]
+        // A nearly flat row cannot meaningfully support four distinct colors.
+        if (high-low < maxOf(4f, (high+low)*.015f)) return null
+        fun cut(f: Float) = (low+(high-low)*f).roundToInt().coerceAtLeast(1)
+        return runCatching {
+            if (measure == ResultMeasure.SPLIT) OutputZones(cut(.75f),cut(.5f),cut(.25f),true)
+            else OutputZones(cut(.25f),cut(.5f),cut(.75f))
+        }.getOrNull()
     }
 
     fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
@@ -356,9 +390,8 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
             ResultMeasure.RATE -> statistics.averageRate
             ResultMeasure.PULSE -> statistics.pulse.average
         }?.toFloat()
-        val values = (work.mapNotNull { plottedValue(it, measure) } +
-            phases.filter { measure == ResultMeasure.PULSE || it.difficulty != Difficulty.REST }
-                .mapNotNull { measure.target(it.segment) } + listOfNotNull(average) + levelGuides)
+        val values = work.mapNotNull { plottedValue(it, measure) } + levelGuides +
+            if (measure == ResultMeasure.PULSE) listOfNotNull(average) else emptyList()
         val low = values.minOrNull() ?: 0f
         val high = values.maxOrNull() ?: 1f
         val padding = max((high - low) * .2f, if (measure == ResultMeasure.SPLIT) 4f else 3f)

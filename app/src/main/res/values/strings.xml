@@ -735,4 +735,10 @@
     <string name="cadence_high_start">High starts at (SPM)</string>
     <string name="cadence_fast_start">Fast starts at (SPM)</string>
     <string name="chart_current_cadence_help">No cadence thresholds were saved for this recording. Cadence colors use your current settings; the recorded data is unchanged.</string>
+    <string name="row_output_low">Low</string>
+    <string name="row_output_medium">Medium</string>
+    <string name="row_output_high">High</string>
+    <string name="row_output_highest">Highest</string>
+    <string name="row_output_help">Colors compare moving output within this row, not physiological effort. Dotted guides divide its central output range into four equal bands. Heart rate uses your personal zones.</string>
+    <string name="row_output_flat">This row has too little variation for four distinct output bands.</string>
 </resources>

@@ -31,23 +31,19 @@ import java.util.Locale
 class WorkoutChartsScreenTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun clusteredPowerThresholdLabelsDoNotOverlap() {
+    @Test fun rowPowerBandsReplaceCrowdedStoredThresholds() {
         checkCharts(false,true)
-        compose.onNodeWithText("77").performScrollTo().assertIsDisplayed()
-        val peak = compose.onNodeWithText("77").fetchSemanticsNode().boundsInRoot
-        val vigorous = compose.onNodeWithText("73").fetchSemanticsNode().boundsInRoot
-        val moderate = compose.onNodeWithText("69").fetchSemanticsNode().boundsInRoot
-        val low = compose.onNodeWithText("65").fetchSemanticsNode().boundsInRoot
-        org.junit.Assert.assertTrue(peak.bottom <= vigorous.top)
-        org.junit.Assert.assertTrue(vigorous.bottom <= moderate.top)
-        org.junit.Assert.assertTrue(moderate.bottom <= low.top)
+        compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
+        compose.onNodeWithText("Medium: 125 W").assertIsDisplayed()
+        compose.onNodeWithText("High: 150 W").assertIsDisplayed()
+        compose.onNodeWithText("Highest: 175 W").assertIsDisplayed()
     }
-    @Test fun strokeRateShowsCadenceLegendAndThresholds() {
-        checkCharts(false, true)
-        compose.onNodeWithText("Fast").performScrollTo().assertIsDisplayed()
+    @Test fun strokeRateShowsRowRelativeLegendAndThresholds() {
+        checkCharts(false,true)
         compose.onNodeWithContentDescription("About Stroke rate").performScrollTo().performClick()
-        compose.onNodeWithText("High: 24 SPM").assertIsDisplayed()
-        compose.onNodeWithText("Fast: 28 SPM").assertIsDisplayed()
+        compose.onNodeWithText("Medium: 23 SPM").assertIsDisplayed()
+        compose.onNodeWithText("High: 25 SPM").assertIsDisplayed()
+        compose.onNodeWithText("Highest: 28 SPM").assertIsDisplayed()
     }
     @Test fun clockChartsAreReadOnlyAndIntervalBreakdownIsReachable() = checkCharts(false)
     @Test fun darkChartsSupportLargerTextWithoutExtraControls() = checkCharts(true)
@@ -55,7 +51,7 @@ class WorkoutChartsScreenTest {
     @Test fun recordedHeartRateAddsStatisticsAndGraph() = checkCharts(false, true)
     @Test fun darkHeartRateGraphIncludesRecovery() = checkCharts(true, true)
 
-    @Test fun olderHistoryUsesCurrentSettingsAndRespondsToThresholdChanges() {
+    @Test fun rowColorsAreIndependentOfPersonalOutputSettings() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val beforeHeart = prefs.getString(HeartRateZones.KEY, null)
@@ -66,7 +62,7 @@ class WorkoutChartsScreenTest {
             checkCharts(false, true, false)
             compose.onNodeWithText("Current levels").assertDoesNotExist()
             compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
-            compose.onNodeWithText("This workout has no saved output thresholds.", substring = true).assertIsDisplayed()
+            compose.onNodeWithText("Colors compare moving output within this row", substring = true).assertIsDisplayed()
             compose.onNodeWithText("Done").performClick()
             compose.onNodeWithContentDescription("Power by clock time", substring = true).performScrollTo().assertIsDisplayed()
             FileOutputStream(File(context.cacheDir, "legacy-output-colors.png")).use {
@@ -74,7 +70,7 @@ class WorkoutChartsScreenTest {
             }
             prefs.edit().putString(PerformanceZones.KEY, PerformanceZones(OutputZones(250,300,350),null).encode()).commit()
             compose.onNodeWithContentDescription("About Power").performScrollTo().performClick()
-            compose.onNodeWithText("Peak: 350 W").assertIsDisplayed()
+            compose.onNodeWithText("Highest: 175 W").assertIsDisplayed()
             compose.onNodeWithText("Done").performClick()
         } finally {
             prefs.edit().apply {
@@ -107,7 +103,7 @@ class WorkoutChartsScreenTest {
             speed.set(if (second <= 4) 175 else if (second <= 60) 400 else if (second <= 90) 0 else 500)
             power.set(if (second <= 8 || second in 61..90) 0 else if (second <= 60) 100 else 200)
             pulse.set(if (!withHeartRate || second in 100..105) 0 else if (second <= 60) 140 else if (second <= 90) 120 else 160)
-            strokeRate.set(if (second in 61..90) 0 else 24); strokes.set(second / 2)
+            strokeRate.set(if (second in 61..90) 0 else if(second<=60) 20 else 30); strokes.set(second / 2)
             distance.set(if (second <= 60) second * 4 else if (second <= 90) 240 else 240 + (second - 90) * 5)
         } }
         compose.setContent {
