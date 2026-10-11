@@ -50,15 +50,15 @@ data class OutputZones(val moderate: Int, val vigorous: Int, val peak: Int, val 
     }
 }
 
-data class PerformanceZones(val power: OutputZones?, val pace: OutputZones?) {
-    init { require(power != null || pace != null); require(power?.fasterIsLower != true && pace?.fasterIsLower != false) }
-    fun encode(): String = JSONObject().put("version", 1).put("power", power?.encode()).put("pace", pace?.encode()).toString()
+data class PerformanceZones @JvmOverloads constructor(val power: OutputZones?, val pace: OutputZones?, val cadence: OutputZones? = null) {
+    init { require(power != null || pace != null || cadence != null); require(power?.fasterIsLower != true && pace?.fasterIsLower != false); require(cadence?.fasterIsLower != true && (cadence?.peak ?: 0) <= 200) }
+    fun encode(): String = JSONObject().put("version", 1).put("power", power?.encode()).put("pace", pace?.encode()).put("cadence", cadence?.encode() ?: JSONObject.NULL).toString()
     companion object {
         const val KEY = "performance_zone_profile"
         @JvmStatic fun decode(raw: String?): PerformanceZones? = if (raw.isNullOrBlank()) null else runCatching {
             val json = JSONObject(raw); require(json.getInt("version") == 1)
-            for (key in listOf("power", "pace")) require(!json.has(key) || json.isNull(key) || json.get(key) is JSONObject)
-            PerformanceZones(OutputZones.decode(json.optJSONObject("power"), false), OutputZones.decode(json.optJSONObject("pace"), true))
+            for (key in listOf("power", "pace", "cadence")) require(!json.has(key) || json.isNull(key) || json.get(key) is JSONObject)
+            PerformanceZones(OutputZones.decode(json.optJSONObject("power"), false), OutputZones.decode(json.optJSONObject("pace"), true), OutputZones.decode(json.optJSONObject("cadence"), false))
         }.getOrNull()
         @JvmStatic fun freeze(context: Context): String? = runCatching {
             decode(PreferenceManager.getDefaultSharedPreferences(context).getString(KEY, null))?.encode()
@@ -69,14 +69,14 @@ data class PerformanceZones(val power: OutputZones?, val pace: OutputZones?) {
             return suggestRecordings(rows.map { it to ArrayList(gym.getSnapshots(it).list()) })
         }
         internal fun suggestRecordings(recordings: List<Pair<Workout, List<Snapshot>>>): PerformanceZones? {
-            val watts = mutableListOf<Int>(); val splits = mutableListOf<Int>()
+            val watts = mutableListOf<Int>(); val splits = mutableListOf<Int>(); val rates = mutableListOf<Int>()
             val rows = recordings.filter { it.first.status.get() == WorkoutStatus.COMPLETED }
                 .sortedByDescending { it.first.start.get() }.take(20)
             for ((workout, snapshots) in rows) {
                 val statistics = WorkoutStatistics(workout, snapshots)
                 if (statistics.samples.any { (it.second.duration.get() ?: 0) <= 0 }) continue
                 val charts = WorkoutChartData(workout, statistics)
-                for ((measure, output) in listOf(ResultMeasure.POWER to watts, ResultMeasure.SPLIT to splits)) {
+                for ((measure, output) in listOf(ResultMeasure.POWER to watts, ResultMeasure.SPLIT to splits, ResultMeasure.RATE to rates)) {
                     charts.points.filter { !charts.isRest(it) && it.snapshot.difficulty.get() != Difficulty.REST && (it.snapshot.duration.get() ?: 0) > 0 }
                         .mapNotNull { point -> charts.plottedValue(point, measure)?.takeIf { it > 0 }?.let { point.elapsed to it } }
                         .groupBy { (it.first / 5).toInt() }.values.filter { it.size >= 2 }.forEach { bin ->
@@ -86,7 +86,8 @@ data class PerformanceZones(val power: OutputZones?, val pace: OutputZones?) {
                 }
             }
             val power = OutputZones.suggest(watts); val pace = OutputZones.suggest(splits, true)
-            return if (power == null && pace == null) null else PerformanceZones(power, pace)
+            val cadence = OutputZones.suggest(rates.filter { it in 1..200 })
+            return if (power == null && pace == null && cadence == null) null else PerformanceZones(power, pace, cadence)
         }
     }
 }

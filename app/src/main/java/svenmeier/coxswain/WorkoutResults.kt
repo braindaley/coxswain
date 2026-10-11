@@ -86,7 +86,7 @@ fun WorkoutResults(workout: Workout, snapshots: List<Snapshot>) {
         ResultChart(stringResource(R.string.ui_power), ResultMeasure.POWER, charts, clockFormat,
             stringResource(R.string.ui_chart_average_max, "$avgPower W", "$maxPower W"), outputZones = outputs?.power, currentOutput = profiles.currentOutput)
         ResultChart(stringResource(R.string.ui_stroke_rate), ResultMeasure.RATE, charts, clockFormat,
-            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes))
+            stringResource(R.string.ui_chart_stroke_statistics, "$avgRate SPM", rates.minOrNull()?.toString() ?: "—", rates.maxOrNull()?.toString() ?: "—", summary.workStrokes), outputZones = outputs?.cadence, currentOutput = profiles.currentCadence || profiles.currentOutput && outputs?.cadence != null)
         if (summary.pulse.average != null) {
             ResultChart(stringResource(R.string.ui_heart_rate), ResultMeasure.PULSE,
             charts, clockFormat, stringResource(R.string.ui_chart_heart_statistics,
@@ -171,15 +171,19 @@ private fun heartZoneColors(): List<Color> {
         if (dark) Color(0xFF73DFA3) else Color(0xFF217B45))
 }
 
+private fun chartLevelName(zone: Int, cadence: Boolean) = if (!cadence) heartZoneName(zone) else when (zone) {
+    0 -> R.string.cadence_low; 1 -> R.string.cadence_steady; 2 -> R.string.cadence_high; else -> R.string.cadence_fast
+}
+
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null) {
+@Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null, cadence: Boolean = false) {
     val colors = heartZoneColors()
     if (times != null) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             (0..3).forEach { zone ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(stringResource(heartZoneName(zone)), style = MaterialTheme.typography.bodySmall,
+                    Text(stringResource(chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     Row(verticalAlignment = Alignment.CenterVertically,
@@ -197,7 +201,7 @@ private fun heartZoneColors(): List<Color> {
             (0..3).forEach { zone ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(8.dp).background(colors[zone], androidx.compose.foundation.shape.CircleShape))
-                    Text(stringResource(heartZoneName(zone)), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -265,7 +269,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                             trace.forEachIndexed { index,point ->
                                 val value = point.value
                                 val before = trace.getOrNull(index-1)
-                                val color = if (measure == ResultMeasure.RATE) referenceColor
+                                val color = if (measure == ResultMeasure.RATE && outputZones == null) referenceColor
                                     else if (includesRest) zones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
                                     else outputZones?.zone(value)?.let { zoneColors[it] } ?: primaryColor
                                 if (before != null && before.run == point.run) {
@@ -316,29 +320,29 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                 Text(clockFormat.format(Date(charts.start)),fontSize = 12.sp,color = referenceColor)
                 Text(clockFormat.format(Date(charts.end)),fontSize = 12.sp,color = referenceColor)
             }
-            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null)
+            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null, cadence = measure == ResultMeasure.RATE)
         }
     }
     if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
         text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(statistics)
-            Text(stringResource(R.string.chart_info_help))
+            Text(stringResource(if (measure == ResultMeasure.RATE) R.string.cadence_help else R.string.chart_info_help))
             Text(stringResource(R.string.chart_filtered_help))
             Text(stringResource(R.string.ui_chart_started_finished,
                 clockFormat.format(Date(charts.start)), clockFormat.format(Date(charts.end))))
             if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock))
-            if (currentOutput) Text(stringResource(R.string.ui_chart_current_output_zones))
+            if (currentOutput) Text(stringResource(if (measure == ResultMeasure.RATE) R.string.chart_current_cadence_help else R.string.ui_chart_current_output_zones))
             if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))
             if (zones != null) {
                 (0..3).forEach { zone ->
-                    Text("${stringResource(heartZoneName(zone))}: ${zones.bounds(zone)}")
+                    Text("${stringResource(chartLevelName(zone,measure == ResultMeasure.RATE))}: ${zones.bounds(zone)}")
                     if (zoneTimes != null) Text("${formatAxisTime(zoneTimes.seconds[zone].roundToInt())} · ${zoneTimes.percent(zone).roundToInt()}%",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 if (zoneTimes != null) Text(stringResource(R.string.hr_zone_coverage,formatAxisTime(zoneTimes.total.roundToInt())))
             } else if (outputZones != null) {
                 val values = listOf(outputZones.moderate,outputZones.vigorous,outputZones.peak)
-                (1..3).forEach { zone -> Text("${stringResource(heartZoneName(zone))}: ${if (measure == ResultMeasure.SPLIT) formatZoneSplit(values[zone-1]) else values[zone-1].toString()} $unit") }
+                (1..3).forEach { zone -> Text("${stringResource(chartLevelName(zone,measure == ResultMeasure.RATE))}: ${if (measure == ResultMeasure.SPLIT) formatZoneSplit(values[zone-1]) else values[zone-1].toString()} $unit") }
             } else if (measure != ResultMeasure.RATE) Text(stringResource(if (includesRest) R.string.hr_zone_legacy else R.string.output_zones_legacy))
         } },confirmButton = { TextButton(onClick = { showInfo = false }) { Text(stringResource(R.string.ui_done)) } })
 }

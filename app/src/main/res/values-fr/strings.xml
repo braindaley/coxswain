@@ -620,12 +620,12 @@
     <string name="hr_history_help">Les champs vides sont remplis à partir des séances terminées. Le minimum utilise les 30 premières secondes ; les deux valeurs doivent durer au moins cinq secondes. La fréquence initiale estime le repos, et le pic enregistré n’est pas un maximum testé. Vous pouvez modifier ces valeurs avant d’enregistrer.</string>
     <string name="hr_use_history">Utiliser les suggestions de l’historique</string>
 
-    <string name="output_zones_title">Niveaux de puissance et d’allure</string>
+    <string name="output_zones_title">Niveaux de puissance, allure et cadence</string>
     <string name="output_zones_summary">Seuils personnels suggérés depuis les séances terminées</string>
     <string name="output_zones_help">Ces niveaux de performance relatifs ne sont pas des zones cardiaques. Les suggestions utilisent les 25e, 50e et 85e percentiles de puissance et de vitesse des 20 dernières séances terminées, hors repos et anomalies initiales. Vérifiez ou modifiez les seuils, puis enregistrez-les.</string>
     <string name="output_zones_failed">Impossible de lire l’historique. Vous pouvez saisir les seuils ci-dessous.</string>
     <string name="output_zones_unavailable">Pas assez de mesures variées et horodatées pour suggérer des niveaux distincts. Vous pouvez saisir vos seuils.</string>
-    <string name="output_zones_invalid">Saisissez trois seuils de puissance croissants ou trois temps intermédiaires décroissants. Laissez les trois champs vides pour désactiver une mesure.</string>
+    <string name="output_zones_invalid">Les seuils de puissance et cadence doivent augmenter, les temps diminuer. Cadence: 1–200 SPM. Laissez les trois champs vides pour désactiver une mesure.</string>
     <string name="output_power_help">Une puissance plus élevée correspond à un niveau supérieur.</string>
     <string name="output_pace_help">Une allure plus rapide correspond à un niveau supérieur. Saisissez m:ss par 500 m (ou des secondes).</string>
     <string name="output_power_moderate">Modéré à partir de (W)</string>
@@ -642,4 +642,13 @@
     <string name="chart_info">À propos de %1$s</string>
     <string name="chart_info_help">Les lignes pointillées indiquent Léger, Modéré, Vigoureux et Pic. Les trois niveaux supérieurs marquent leurs seuils; le repère Léger se situe dans cette plage. Les bandes pâles indiquent repos ou pauses; les traits en bas marquent les changements d’intervalle.</string>
     <string name="chart_filtered_help">La courbe utilise des moyennes courtes de dix secondes dans chaque intervalle. Les statistiques utilisent les mesures originales.</string>
+    <string name="cadence_low">Bas</string>
+    <string name="cadence_steady">Régulier</string>
+    <string name="cadence_high">Élevé</string>
+    <string name="cadence_fast">Rapide</string>
+    <string name="cadence_help">Les couleurs indiquent des plages personnelles de cadence, pas des zones d’effort ou de fréquence cardiaque. Une cadence plus élevée ne signifie pas forcément plus de puissance.</string>
+    <string name="cadence_steady_start">Régulier commence à (SPM)</string>
+    <string name="cadence_high_start">Élevé commence à (SPM)</string>
+    <string name="cadence_fast_start">Rapide commence à (SPM)</string>
+    <string name="chart_current_cadence_help">Aucun seuil de cadence enregistré pour cette séance. Les couleurs utilisent vos réglages actuels; les mesures restent inchangées.</string>
 </resources>

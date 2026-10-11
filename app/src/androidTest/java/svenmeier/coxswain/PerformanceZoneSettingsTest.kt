@@ -13,14 +13,17 @@ import svenmeier.coxswain.compose.CoxswainTheme
 @RunWith(AndroidJUnit4::class)
 class PerformanceZoneSettingsTest {
     @get:Rule val compose = createComposeRule()
-    private val suggested = PerformanceZones(OutputZones(100,150,200), OutputZones(180,150,120,true))
+    private val suggested = PerformanceZones(OutputZones(100,150,200), OutputZones(180,150,120,true), OutputZones(20,26,32))
     @Test fun suggestionsFillFieldsAndSavePaceInSeconds() {
         var saved: PerformanceZones? = null
         compose.setContent { CoxswainTheme { Surface { PerformanceZonesSettings(null, suggested, false, false, {}, { saved = it }) } } }
         compose.onNodeWithText("Moderate starts at (W)").performScrollTo().assertTextContains("100")
         compose.onNodeWithText("Peak starts at (m:ss /500 m)").performScrollTo().assertTextContains("2:00")
+        compose.onNodeWithText("Steady starts at (SPM)").performScrollTo().assertTextContains("20")
+        compose.onNodeWithText("Fast starts at (SPM)").performScrollTo().performTextReplacement("34")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithText("Save zones").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals(suggested, saved) }
+        compose.runOnIdle { assertEquals(suggested.copy(cadence = OutputZones(20,26,34)), saved) }
     }
     @Test fun descendingPowerCannotSaveAndPaceOverrideIsRetained() {
         var saved: PerformanceZones? = null

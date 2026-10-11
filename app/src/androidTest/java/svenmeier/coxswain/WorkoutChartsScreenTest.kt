@@ -31,6 +31,13 @@ import java.util.Locale
 class WorkoutChartsScreenTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun strokeRateShowsCadenceLegendAndThresholds() {
+        checkCharts(false, true)
+        compose.onNodeWithText("Fast").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("About Stroke rate").performScrollTo().performClick()
+        compose.onNodeWithText("High: 24 SPM").assertIsDisplayed()
+        compose.onNodeWithText("Fast: 28 SPM").assertIsDisplayed()
+    }
     @Test fun clockChartsAreReadOnlyAndIntervalBreakdownIsReachable() = checkCharts(false)
     @Test fun darkChartsSupportLargerTextWithoutExtraControls() = checkCharts(true)
 
@@ -43,7 +50,7 @@ class WorkoutChartsScreenTest {
         val beforeHeart = prefs.getString(HeartRateZones.KEY, null)
         val beforeOutput = prefs.getString(PerformanceZones.KEY, null)
         prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.reserve(60,175).encode())
-            .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode()).commit()
+            .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true),OutputZones(20,24,28)).encode()).commit()
         try {
             checkCharts(false, true, false)
             compose.onNodeWithText("Current levels").assertDoesNotExist()
@@ -76,7 +83,7 @@ class WorkoutChartsScreenTest {
         val workout = Workout().apply {
             if (withHeartRate && storedProfiles) {
                 heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
-                performanceZones.set(PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true)).encode())
+                performanceZones.set(PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true),OutputZones(20,24,28)).encode())
             }
             this.start.set(start); duration.set(150); completed.set(start + 150_000)
             distance.set(500); strokes.set(60); programDefinition.set(WorkoutDefinition.freeze(program))

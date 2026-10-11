@@ -704,12 +704,12 @@
     <string name="hr_history_help">Blank fields are filled from completed rows. The low uses the first 30 seconds; both values must persist for at least five seconds. Starting heart rate is an estimate of resting heart rate, and recorded peak is not a tested maximum. You can edit either value before saving.</string>
     <string name="hr_use_history">Use history suggestions</string>
 
-    <string name="output_zones_title">Power and pace levels</string>
+    <string name="output_zones_title">Power, pace &amp; cadence levels</string>
     <string name="output_zones_summary">Personal output thresholds, suggested from completed rows</string>
     <string name="output_zones_help">These are relative performance levels, not heart-rate zones. Suggestions use the 25th, 50th and 85th percentiles of output in your most recent 20 completed rows, excluding rest and initial sensor anomalies. Review or edit them, then save for new workouts.</string>
     <string name="output_zones_failed">Could not read rowing history. You can enter thresholds below.</string>
     <string name="output_zones_unavailable">Not enough varied, timed output data to suggest distinct levels. You can enter your own thresholds.</string>
-    <string name="output_zones_invalid">Enter three increasing power thresholds or three decreasing split times. Leave all three fields blank to disable a metric.</string>
+    <string name="output_zones_invalid">Enter increasing power or cadence thresholds, or decreasing split times. Cadence must be 1–200 SPM. Leave all three fields blank to disable a metric.</string>
     <string name="output_power_help">Higher watts enter higher levels.</string>
     <string name="output_pace_help">Faster splits enter higher levels. Enter m:ss per 500 m (or seconds).</string>
     <string name="output_power_moderate">Moderate starts at (W)</string>
@@ -726,4 +726,13 @@
     <string name="chart_info">About %1$s</string>
     <string name="chart_info_help">Colored dotted guides show Light, Moderate, Vigorous and Peak. Moderate, Vigorous and Peak mark their starting thresholds; the Light guide is a reference within the Light range. Faint bands mark rest or pauses; bottom ticks mark interval changes.</string>
     <string name="chart_filtered_help">The displayed line uses short ten-second averages and a bounded curve within each interval. Statistics use the original recorded readings.</string>
+    <string name="cadence_low">Low</string>
+    <string name="cadence_steady">Steady</string>
+    <string name="cadence_high">High</string>
+    <string name="cadence_fast">Fast</string>
+    <string name="cadence_help">Colors show personal cadence ranges, not effort or heart-rate zones. Higher stroke rate does not necessarily mean higher power.</string>
+    <string name="cadence_steady_start">Steady starts at (SPM)</string>
+    <string name="cadence_high_start">High starts at (SPM)</string>
+    <string name="cadence_fast_start">Fast starts at (SPM)</string>
+    <string name="chart_current_cadence_help">No cadence thresholds were saved for this recording. Cadence colors use your current settings; the recorded data is unchanged.</string>
 </resources>

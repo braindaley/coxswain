@@ -49,8 +49,14 @@ internal fun PerformanceZonesSettings(initial: PerformanceZones?, suggestion: Pe
     var paceModerate by rememberSaveable { mutableStateOf(initial?.pace?.moderate?.let(::formatZoneSplit) ?: "") }
     var paceVigorous by rememberSaveable { mutableStateOf(initial?.pace?.vigorous?.let(::formatZoneSplit) ?: "") }
     var pacePeak by rememberSaveable { mutableStateOf(initial?.pace?.peak?.let(::formatZoneSplit) ?: "") }
+    var cadenceSteady by rememberSaveable { mutableStateOf(initial?.cadence?.moderate?.toString() ?: "") }
+    var cadenceHigh by rememberSaveable { mutableStateOf(initial?.cadence?.vigorous?.toString() ?: "") }
+    var cadenceFast by rememberSaveable { mutableStateOf(initial?.cadence?.peak?.toString() ?: "") }
     var edited by rememberSaveable { mutableStateOf(false) }
     fun applySuggestion() {
+        suggestion?.cadence?.let {
+            cadenceSteady = it.moderate.toString(); cadenceHigh = it.vigorous.toString(); cadenceFast = it.peak.toString()
+        }
         suggestion?.power?.let {
             powerModerate = it.moderate.toString()
             powerVigorous = it.vigorous.toString()
@@ -68,7 +74,9 @@ internal fun PerformanceZonesSettings(initial: PerformanceZones?, suggestion: Pe
             else OutputZones(powerModerate.toInt(), powerVigorous.toInt(), powerPeak.toInt())
         val pace = if (listOf(paceModerate, paceVigorous, pacePeak).all { it.isBlank() }) null
             else OutputZones(requireNotNull(parseZoneSplit(paceModerate)), requireNotNull(parseZoneSplit(paceVigorous)), requireNotNull(parseZoneSplit(pacePeak)), true)
-        PerformanceZones(power, pace)
+        val cadence = if (listOf(cadenceSteady,cadenceHigh,cadenceFast).all { it.isBlank() }) null
+            else OutputZones(cadenceSteady.toInt(),cadenceHigh.toInt(),cadenceFast.toInt())
+        PerformanceZones(power, pace, cadence)
     }.getOrNull()
     Surface {
         Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -90,6 +98,11 @@ internal fun PerformanceZonesSettings(initial: PerformanceZones?, suggestion: Pe
             OutputNumber(stringResource(R.string.output_pace_moderate), paceModerate, true) { edited = true; paceModerate = it }
             OutputNumber(stringResource(R.string.output_pace_vigorous), paceVigorous, true) { edited = true; paceVigorous = it }
             OutputNumber(stringResource(R.string.output_pace_peak), pacePeak, true) { edited = true; pacePeak = it }
+            Text(stringResource(R.string.ui_stroke_rate), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.cadence_help), style = MaterialTheme.typography.bodySmall)
+            OutputNumber(stringResource(R.string.cadence_steady_start), cadenceSteady, false) { edited = true; cadenceSteady = it }
+            OutputNumber(stringResource(R.string.cadence_high_start), cadenceHigh, false) { edited = true; cadenceHigh = it }
+            OutputNumber(stringResource(R.string.cadence_fast_start), cadenceFast, false) { edited = true; cadenceFast = it }
             if (profile == null) Text(stringResource(R.string.output_zones_invalid), style = MaterialTheme.typography.bodySmall)
             Text(stringResource(R.string.hr_frozen_help), style = MaterialTheme.typography.bodySmall)
             Button(onClick = { onSave(profile) }, enabled = profile != null, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.hr_save)) }

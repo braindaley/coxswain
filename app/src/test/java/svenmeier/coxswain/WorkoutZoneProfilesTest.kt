@@ -28,6 +28,17 @@ class WorkoutZoneProfilesTest {
         assertFalse(resolved.currentHeart); assertFalse(resolved.currentOutput)
         assertNull(resolved.output!!.pace)
     }
+    @Test fun legacyCadenceFallbackPreservesOtherFrozenMetricsAndExplicitDisable() {
+        val current = output.copy(cadence = OutputZones(20,26,32))
+        val legacyJson = org.json.JSONObject(output.encode()).apply { remove("cadence") }.toString()
+        val row = Workout().apply { performanceZones.set(legacyJson) }
+        val resolved = WorkoutZoneProfiles.resolve(row,null,current)
+        assertEquals(current.cadence,resolved.output!!.cadence)
+        assertEquals(output.power,resolved.output!!.power); assertTrue(resolved.currentCadence)
+        assertEquals(legacyJson,row.performanceZones.get())
+        row.performanceZones.set(output.encode())
+        assertNull(WorkoutZoneProfiles.resolve(row,null,current).output!!.cadence)
+    }
     @Test fun absentSettingsDoNotInventThresholdsAndCorruptRecordedProfilesAreNotReplaced() {
         val row = Workout()
         assertNull(WorkoutZoneProfiles.resolve(row,null,null).output)

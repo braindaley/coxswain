@@ -610,12 +610,12 @@
     <string name="hr_history_help">Leere Felder werden aus abgeschlossenen Einheiten ausgefüllt. Der Tiefwert nutzt die ersten 30 Sekunden; beide Werte müssen mindestens fünf Sekunden anhalten. Der Anfangspuls schätzt den Ruhepuls, und die aufgezeichnete Spitze ist kein getestetes Maximum. Du kannst beide Werte vor dem Speichern ändern.</string>
     <string name="hr_use_history">Vorschläge aus dem Verlauf verwenden</string>
 
-    <string name="output_zones_title">Leistungs- und Tempostufen</string>
+    <string name="output_zones_title">Leistungs-, Tempo- und Schlagfrequenzstufen</string>
     <string name="output_zones_summary">Persönliche Leistungsgrenzen aus abgeschlossenen Einheiten</string>
     <string name="output_zones_help">Dies sind relative Leistungsstufen, keine Herzfrequenzzonen. Vorschläge nutzen das 25., 50. und 85. Perzentil der Leistung deiner letzten 20 abgeschlossenen Einheiten, ohne Erholung und anfängliche Sensorfehler. Prüfe oder ändere sie und speichere sie für neue Einheiten.</string>
     <string name="output_zones_failed">Ruderverlauf konnte nicht gelesen werden. Gib Grenzen unten ein.</string>
     <string name="output_zones_unavailable">Nicht genügend unterschiedliche zeitlich erfasste Leistungswerte für verschiedene Stufen. Du kannst eigene Grenzen eingeben.</string>
-    <string name="output_zones_invalid">Gib drei aufsteigende Leistungsgrenzen oder drei absteigende Zwischenzeiten ein. Lass alle drei Felder leer, um eine Messgröße zu deaktivieren.</string>
+    <string name="output_zones_invalid">Leistungs- und Schlagfrequenzschwellen müssen steigen, Zwischenzeiten sinken. Schlagfrequenz: 1–200 SPM. Drei leere Felder deaktivieren eine Messgröße.</string>
     <string name="output_power_help">Mehr Watt bedeuten höhere Stufen.</string>
     <string name="output_pace_help">Schnellere Zwischenzeiten bedeuten höhere Stufen. Gib m:ss pro 500 m (oder Sekunden) ein.</string>
     <string name="output_power_moderate">Moderat beginnt bei (W)</string>
@@ -632,4 +632,13 @@
     <string name="chart_info">Über %1$s</string>
     <string name="chart_info_help">Die farbigen Punktlinien zeigen Leicht, Moderat, Intensiv und Spitzenbereich. Die drei höheren Linien markieren die Startschwellen; die Linie für Leicht liegt innerhalb dieses Bereichs. Blasse Flächen markieren Erholung oder Pausen; kurze Striche unten markieren Intervallwechsel.</string>
     <string name="chart_filtered_help">Die dargestellte Linie verwendet kurze Zehn-Sekunden-Mittelwerte innerhalb jedes Intervalls. Statistiken basieren auf den ursprünglichen Messwerten.</string>
+    <string name="cadence_low">Niedrig</string>
+    <string name="cadence_steady">Gleichmäßig</string>
+    <string name="cadence_high">Hoch</string>
+    <string name="cadence_fast">Schnell</string>
+    <string name="cadence_help">Farben zeigen persönliche Schlagfrequenzbereiche, keine Belastungs- oder Pulszonen. Eine höhere Schlagfrequenz bedeutet nicht unbedingt mehr Leistung.</string>
+    <string name="cadence_steady_start">Gleichmäßig beginnt bei (SPM)</string>
+    <string name="cadence_high_start">Hoch beginnt bei (SPM)</string>
+    <string name="cadence_fast_start">Schnell beginnt bei (SPM)</string>
+    <string name="chart_current_cadence_help">Für diese Aufzeichnung wurden keine Schlagfrequenzschwellen gespeichert. Die Farben verwenden die aktuellen Einstellungen; die Messwerte bleiben unverändert.</string>
 </resources>

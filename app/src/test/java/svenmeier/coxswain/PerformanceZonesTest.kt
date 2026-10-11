@@ -21,6 +21,31 @@ class PerformanceZonesTest {
         assertEquals(listOf(0,1,2,3), power.pieces(80f, 220f).map { it.third })
         assertEquals(listOf(3,2,1,0), pace.pieces(110f, 200f).map { it.third })
     }
+    @Test fun cadenceProfilesRoundTripAndRejectMalformedOrUnrealisticLimits() {
+        val cadence = PerformanceZones(null,null,OutputZones(20,26,32))
+        assertEquals(cadence,PerformanceZones.decode(cadence.encode()))
+        val rates = requireNotNull(cadence.cadence)
+        assertEquals(0,rates.zone(18f)); assertEquals(1,rates.zone(20f))
+        assertEquals(2,rates.zone(26f)); assertEquals(3,rates.zone(32f))
+        assertNull(PerformanceZones.decode("{\"version\":1,\"cadence\":false}"))
+        assertTrue(runCatching { PerformanceZones(null,null,OutputZones(20,30,201)) }.isFailure)
+    }
+    @Test fun cadenceSuggestionsUseCompletedWorkAndExcludeRestAndIncompleteRows() {
+        val row = svenmeier.coxswain.gym.Workout().apply {
+            status.set(svenmeier.coxswain.gym.WorkoutStatus.COMPLETED); start.set(100000L); duration.set(300)
+        }
+        val samples = (1..300).map { second -> svenmeier.coxswain.gym.Snapshot().apply {
+            duration.set(second); recordedAt.set(100000L+second*1000); strokeRate.set(12+second/10)
+            speed.set(400); power.set(100); strokes.set(second/2); distance.set(second*4)
+        } }
+        val suggested = PerformanceZones.suggestRecordings(listOf(row to samples))
+        assertNotNull(suggested?.cadence)
+        samples.forEach { it.difficulty.set(svenmeier.coxswain.gym.Difficulty.REST) }
+        assertNull(PerformanceZones.suggestRecordings(listOf(row to samples)))
+        samples.forEach { it.difficulty.set(svenmeier.coxswain.gym.Difficulty.MEDIUM) }
+        row.status.set(svenmeier.coxswain.gym.WorkoutStatus.ENDED_EARLY)
+        assertNull(PerformanceZones.suggestRecordings(listOf(row to samples)))
+    }
     @Test fun percentileSuggestionsNeedEnoughVariationAndReversePaceRanks() {
         val values = (1..100).toList()
         assertEquals(OutputZones(25, 50, 85), OutputZones.suggest(values))
