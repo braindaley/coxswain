@@ -27,6 +27,49 @@ class WorkoutChartDataTest {
     private fun chart(workout: Workout, vararg samples: Snapshot) =
         WorkoutChartData(workout, WorkoutStatistics(workout, samples.toList()))
 
+    @Test fun stoppedAndRestartSplitReadingsDoNotFlattenTheScaleOrBridgeThePause() {
+        val samples = (40..70).map { second -> sample(second,
+            speed = if (second in 50..55) 10 else 400,
+            power = if (second in 50..54) 0 else 100,
+            strokes = if (second in 50..54) 24 else second/2,
+            distance = if (second in 50..54) 196 else second*4).apply {
+            if (second in 50..54) strokeRate.set(0)
+        } }
+        val result = chart(row(120).apply { distance.set(480) },*samples.toTypedArray())
+        assertTrue(result.points.filter { it.elapsed in 50f..55f }.all { result.plottedValue(it,ResultMeasure.SPLIT) == null })
+        assertTrue(result.scale(ResultMeasure.SPLIT).high < 200f)
+        assertEquals(5000f,result.value(result.points[10],ResultMeasure.SPLIT)!!,.001f)
+        assertEquals(0f,result.plottedValue(result.points[10],ResultMeasure.POWER)!!,.001f)
+        assertEquals(2,result.displayTrace(ResultMeasure.SPLIT).map { it.run }.distinct().size)
+    }
+
+    @Test fun clockPauseAlsoExcludesAnAbnormallySlowFirstResumeReading() {
+        val samples = (40..70).map { second -> sample(second,speed=if (second==50) 10 else 400).apply {
+            if (second>=50) recordedAt.set(start+second*1000L+30000L)
+        } }
+        val result = chart(row(120).apply { distance.set(480) },*samples.toTypedArray())
+        assertEquals(1,result.pauseRanges.size)
+        assertNull(result.plottedValue(result.points[10],ResultMeasure.SPLIT))
+        assertNotNull(result.plottedValue(result.points[11],ResultMeasure.SPLIT))
+        assertTrue(result.scale(ResultMeasure.SPLIT).high < 200f)
+    }
+
+    @Test fun genuinelySlowWorkAndDevicesWithoutCadenceAreNotRemoved() {
+        val work = chart(row(),*(20..40).map { sample(it,speed=60,power=30).apply { strokeRate.set(18) } }.toTypedArray())
+        assertTrue(work.points.all { work.plottedValue(it,ResultMeasure.SPLIT) != null })
+        val unsupported = chart(row(),*(20..40).map { sample(it,speed=400,power=100).apply { strokeRate.set(0) } }.toTypedArray())
+        assertTrue(unsupported.points.all { unsupported.plottedValue(it,ResultMeasure.SPLIT) != null })
+    }
+
+    @Test fun clusteredGuideLabelsStayReadableAndWithinTheAxis() {
+        for (centers in listOf(listOf(100f,102f,104f,106f),listOf(175f,173f,171f,169f))) {
+            val placed = spreadAxisLabels(centers,190f,18f,3f)
+            assertTrue(placed.all { it in 9f..181f })
+            assertTrue(placed.sorted().zipWithNext().all { (a,b) -> b-a >= 21f-.001f })
+            assertEquals(centers.indices.sortedBy { centers[it] },placed.indices.sortedBy { placed[it] })
+        }
+    }
+
     @Test fun displayBinsReduceDenseNoiseButKeepIntervalEdgesAndSustainedOutput() {
         val program = Program.minutes("Steps", 1, Difficulty.MEDIUM).apply {
             getSegment(0).setDuration(30); addSegment(Segment(Difficulty.HARD).setDuration(30))

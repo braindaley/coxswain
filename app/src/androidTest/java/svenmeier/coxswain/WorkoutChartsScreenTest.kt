@@ -31,6 +31,17 @@ import java.util.Locale
 class WorkoutChartsScreenTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun clusteredPowerThresholdLabelsDoNotOverlap() {
+        checkCharts(false,true)
+        compose.onNodeWithText("77").performScrollTo().assertIsDisplayed()
+        val peak = compose.onNodeWithText("77").fetchSemanticsNode().boundsInRoot
+        val vigorous = compose.onNodeWithText("73").fetchSemanticsNode().boundsInRoot
+        val moderate = compose.onNodeWithText("69").fetchSemanticsNode().boundsInRoot
+        val low = compose.onNodeWithText("65").fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue(peak.bottom <= vigorous.top)
+        org.junit.Assert.assertTrue(vigorous.bottom <= moderate.top)
+        org.junit.Assert.assertTrue(moderate.bottom <= low.top)
+    }
     @Test fun strokeRateShowsCadenceLegendAndThresholds() {
         checkCharts(false, true)
         compose.onNodeWithText("Fast").performScrollTo().assertIsDisplayed()
@@ -83,7 +94,7 @@ class WorkoutChartsScreenTest {
         val workout = Workout().apply {
             if (withHeartRate && storedProfiles) {
                 heartRateZones.set(HeartRateZones.reserve(60, 175).encode())
-                performanceZones.set(PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true),OutputZones(20,24,28)).encode())
+                performanceZones.set(PerformanceZones(OutputZones(69,73,77),OutputZones(150,120,100,true),OutputZones(20,24,28)).encode())
             }
             this.start.set(start); duration.set(150); completed.set(start + 150_000)
             distance.set(500); strokes.set(60); programDefinition.set(WorkoutDefinition.freeze(program))

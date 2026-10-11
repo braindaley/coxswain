@@ -77,6 +77,23 @@ internal class ResultCurve(val from: Float, val to: Float, before: Float? = null
     }
 }
 
+/** Separates axis labels without changing the numeric scale or guide positions. */
+internal fun spreadAxisLabels(centers: List<Float>, height: Float, labelHeight: Float, gap: Float): List<Float> {
+    if (centers.isEmpty()) return emptyList()
+    val order = centers.indices.sortedBy { centers[it] }
+    val positions = FloatArray(centers.size)
+    order.forEachIndexed { rank, index ->
+        positions[index] = maxOf(centers[index], labelHeight/2,
+            if (rank == 0) Float.NEGATIVE_INFINITY else positions[order[rank-1]]+labelHeight+gap)
+    }
+    for (rank in order.indices.reversed()) {
+        val index = order[rank]
+        positions[index] = minOf(positions[index],height-labelHeight/2,
+            if (rank == order.lastIndex) Float.POSITIVE_INFINITY else positions[order[rank+1]]-labelHeight-gap)
+    }
+    return positions.toList()
+}
+
 internal data class IntervalResult(val seconds: Int, val meters: Int, val split: Int?,
                                    val power: Int?, val rate: Int?, val pulse: Int?)
 
@@ -199,8 +216,42 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         if (raw <= 0f && point.elapsed < (firstValid[measure] ?: Float.MAX_VALUE)) return null
         return raw
     }
+    private val stoppedSplitPoints: Set<ResultPoint> by lazy {
+        val hasCadence = points.any { it.snapshot.strokeRate.get() > 0 }
+        fun idle(index: Int): Boolean {
+            val point = points[index]; val previous = points.getOrNull(index-1)
+            val stationary = previous != null && point.snapshot.distance.get() == previous.snapshot.distance.get() &&
+                point.snapshot.strokes.get() == previous.snapshot.strokes.get()
+            return hasCadence && point.snapshot.strokeRate.get() <= 0 && (point.snapshot.power.get() <= 0 || stationary)
+        }
+        val idleFlags = points.indices.map(::idle)
+        val hidden = mutableSetOf<ResultPoint>()
+        var lastPause = Float.NEGATIVE_INFINITY
+        var pauseInterval = -2
+        points.forEachIndexed { index, point ->
+            val previous = points.getOrNull(index-1)
+            val paused = previous != null && point.clock-previous.clock-
+                ((point.elapsed-previous.elapsed)*1000).toLong() > 2000L
+            if (idleFlags[index] || paused) {
+                lastPause = point.elapsed; pauseInterval = point.interval
+            }
+            if (idleFlags[index]) hidden.add(point)
+            else if (point.interval == pauseInterval && point.elapsed-lastPause <= 10f) {
+                val pace = ResultMeasure.SPLIT.value(point.snapshot)
+                val nearby = points.indices.filter { candidate ->
+                    val other = points[candidate]
+                    other.interval == point.interval && kotlin.math.abs(other.elapsed-point.elapsed) <= 12f &&
+                        !idleFlags[candidate] && other.snapshot.strokeRate.get() > 0
+                }.mapNotNull { ResultMeasure.SPLIT.value(points[it].snapshot) }.sorted()
+                if (pace != null && nearby.size >= 4 && pace > nearby[nearby.size/2] * 2f) hidden.add(point)
+            }
+        }
+        hidden
+    }
+
     fun plottedValue(point: ResultPoint, measure: ResultMeasure): Float? =
-        if (measure != ResultMeasure.PULSE && point.elapsed < startupEnd) null else value(point, measure)
+        if (measure != ResultMeasure.PULSE && point.elapsed < startupEnd ||
+            measure == ResultMeasure.SPLIT && point in stoppedSplitPoints) null else value(point, measure)
 
     /** Short time-window median for presentation only; never cross steps, zeros or sensor gaps. */
     fun displayValues(measure: ResultMeasure): List<Float?> {

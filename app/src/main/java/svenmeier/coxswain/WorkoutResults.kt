@@ -241,7 +241,9 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = chartBackground)) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(Modifier.fillMaxWidth().height(190.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val labelHeight = with(androidx.compose.ui.platform.LocalDensity.current) { 18.sp.toDp() }
+            val plotHeight = maxOf(190.dp,labelHeight*4+24.dp)
+            Row(Modifier.fillMaxWidth().height(plotHeight), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
                         color = referenceColor, modifier = Modifier.align(Alignment.Center))
@@ -302,21 +304,28 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                 }
                 val axisValues = if (levelGuides.isNotEmpty()) levelGuides else
                     listOf(scale.low,(scale.low+scale.high)/2,scale.high)
-                androidx.compose.ui.layout.Layout(
-                    content = { axisValues.forEach { value -> Text(label(value),fontSize = 12.sp,color = referenceColor) } },
-                    modifier = Modifier.width(52.dp).fillMaxHeight()
-                ) { measurables, constraints ->
-                    val labels = measurables.map { it.measure(constraints.copy(minHeight = 0)) }
-                    layout(constraints.maxWidth,constraints.maxHeight) {
-                        labels.forEachIndexed { index, text ->
-                            val center = 6.dp.toPx() + (constraints.maxHeight-12.dp.toPx()) *
-                                scale.fraction(axisValues[index],measure == ResultMeasure.SPLIT)
-                            text.placeRelative(0,(center-text.height/2).roundToInt().coerceIn(0,(constraints.maxHeight-text.height).coerceAtLeast(0)))
+                BoxWithConstraints(Modifier.width(64.dp).fillMaxHeight()) {
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+                    val centers = with(density) { axisValues.map { value ->
+                        6.dp.toPx()+(maxHeight.toPx()-12.dp.toPx())*scale.fraction(value,measure == ResultMeasure.SPLIT)
+                    } }
+                    val positions = with(density) { spreadAxisLabels(centers,maxHeight.toPx(),labelHeight.toPx(),3.dp.toPx()) }
+                    Canvas(Modifier.fillMaxSize()) {
+                        positions.forEachIndexed { index, center ->
+                            if (kotlin.math.abs(center-centers[index]) > 1.dp.toPx()) {
+                                val color = if (levelGuides.isNotEmpty()) zoneColors[index] else referenceColor
+                                drawLine(color.copy(alpha=.7f),Offset(0f,centers[index]),Offset(8.dp.toPx(),center),.75.dp.toPx())
+                            }
                         }
+                    }
+                    axisValues.forEachIndexed { index, value ->
+                        val top = with(density) { positions[index].toDp()-labelHeight/2 }
+                        Text(label(value),Modifier.offset(x=10.dp,y=top).height(labelHeight),
+                            fontSize=12.sp,lineHeight=18.sp,color=referenceColor)
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(end = 60.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth().padding(end = 72.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(clockFormat.format(Date(charts.start)),fontSize = 12.sp,color = referenceColor)
                 Text(clockFormat.format(Date(charts.end)),fontSize = 12.sp,color = referenceColor)
             }
