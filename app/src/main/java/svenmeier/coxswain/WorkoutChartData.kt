@@ -240,7 +240,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         }
     }
 
-    /** Display-only five-second bins; phase edges, zero readings and gaps split each run. */
+    /** Display-only ten-second bins; phase edges, zero readings and gaps split each run. */
     fun displayTrace(measure: ResultMeasure): List<ResultTracePoint> {
         val filtered = displayValues(measure)
         val result = mutableListOf<ResultTracePoint>()
@@ -254,7 +254,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
                 result.add(ResultTracePoint(p.elapsed,p.clock,value,p.interval,runId))
             }
             append(first)
-            run.drop(1).dropLast(1).groupBy { (points[it].clock-points[first].clock)/5000L }.values.forEach { bin ->
+            run.drop(1).dropLast(1).groupBy { (points[it].clock-points[first].clock)/10000L }.values.forEach { bin ->
                 append(bin[bin.size/2],bin.map { filtered[it]!!.toDouble() }.average().toFloat())
             }
             if (last != first) append(last)
