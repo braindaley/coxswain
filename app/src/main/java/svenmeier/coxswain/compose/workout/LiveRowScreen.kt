@@ -46,6 +46,7 @@ import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
+import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
 
@@ -511,10 +512,18 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         active.strokes.get() > 0 -> "${getValueForBinding(ValueBinding.STROKES, gym)} strokes remaining"
         else -> "${getValueForBinding(ValueBinding.ENERGY, gym)} kcal remaining"
     }
+    val referenceValue = if (race != null && !gym.hasPlanPaceTarget()) {
+        remember(gym.pace, gym.program) {
+            val reference = gym.pace!!
+            val definition = gym.program ?: WorkoutDefinition.thaw(reference.programDefinition.get())
+            formatRaceReferenceValue(definition, gym.paceScoringDistance,
+                if (definition != null) gym.resultSeconds(reference, definition).toInt() else reference.duration.get())
+        }
+    } else ""
     val detail = when {
         rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
         race != null && gym.hasPlanPaceTarget() -> "Target pace · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
-        race != null -> "${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${formatClock(gym.pace!!.duration.get())}"
+        race != null -> "${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${referenceValue}"
         segments.size > 1 -> "Interval ${index + 1} of ${segments.size}"
         active != null && active.distance.get() > 0 -> {
             val remaining = getValueForBinding(ValueBinding.DISTANCE, gym)
@@ -547,7 +556,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
                 Text(if (gym.hasPlanPaceTarget()) "━ Target · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
-                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${formatClock(gym.pace!!.duration.get())}",
+                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${referenceValue}",
                     modifier = Modifier.weight(1f), color = Color(0xFFFFCD72), fontSize = 15.sp,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -655,6 +664,11 @@ private fun goalBinding(segment: Segment): ValueBinding? = when {
     segment.pulse.get() > 0 -> ValueBinding.PULSE
     else -> null
 }
+
+/** Match the metric used to rank completed races, including mixed interval programs. */
+internal fun formatRaceReferenceValue(program: Program?, workMeters: Int, finishSeconds: Int): String =
+    if (WorkoutDefinition.ranksByDistance(program)) "%,d m".format(Locale.getDefault(), workMeters)
+    else formatClock(finishSeconds)
 
 private fun formatClock(seconds: Int): String {
     val value = seconds.coerceAtLeast(0)
