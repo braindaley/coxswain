@@ -11,6 +11,22 @@ import java.util.Locale
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class RaceReferenceLabelTest {
+    @Test fun distanceRaceKeepsTheLossVisibleAfterTheBestReachesTheFinish() {
+        val program=Program.meters("5K",5000,Difficulty.EASY)
+        assertNull(raceFinishReadout(program,1479,1479.8f))
+        assertEquals("Best finished",raceFinishReadout(program,1480,1479.8f))
+        assertEquals("1:03 behind",raceFinishReadout(program,1543,1479.8f))
+        // The final distance difference is zero, but the finish-time difference is not.
+        val row=Measurement().apply { distance=5000; duration=1543 }
+        val best=Workout().apply { distance.set(5000); duration.set(1480) }
+        assertEquals(0,raceDisplay(row,best,program,5000f,5000).leadMeters)
+        assertEquals("1:03 behind",raceFinishReadout(program,row.duration,1479.8f))
+    }
+    @Test fun timedRacesAndPaceTargetsDoNotSwitchToFinishTime() {
+        assertNull(raceFinishReadout(Program.minutes("Timed",32,Difficulty.EASY),1920,1920f))
+        assertNull(raceFinishReadout(null,1543,1480f))
+        assertNull(raceFinishReadout(Program.meters("5K",5000,Difficulty.EASY),1500,Float.NaN))
+    }
     @Test fun timedIntervalsShowScoringDistanceInsteadOfTheirFixedDuration() {
         val original = Locale.getDefault()
         try {

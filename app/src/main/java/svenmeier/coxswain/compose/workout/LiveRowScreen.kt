@@ -49,6 +49,7 @@ import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
+import kotlin.math.roundToInt
 
 private const val LIVE_ROW_DISPLAY_PREFERENCES = "live_row_display"
 private const val LIVE_ROW_METRICS_KEY = "metric_bindings"
@@ -501,8 +502,19 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
     val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
         ?: planRaceDisplay(gym)
+    val reference = if (gym.pace != null && !gym.hasPlanPaceTarget()) {
+        remember(gym.pace, gym.program) {
+            val best = gym.pace!!
+            val definition = gym.program ?: WorkoutDefinition.thaw(best.programDefinition.get())
+            val seconds = if (definition != null) gym.resultSeconds(best, definition) else best.duration.get().toFloat()
+            Triple(definition, seconds, formatRaceReferenceValue(definition, gym.paceScoringDistance, seconds.roundToInt()))
+        }
+    } else null
+    val referenceValue = reference?.third.orEmpty()
+    val finishReadout = reference?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
+        race != null && finishReadout != null -> finishReadout
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
         active == null -> "Find your rhythm"
         active.duration.get() > 0 && segments.size == 1 -> "${((gym.progress?.completion() ?: 0f) * 100).toInt().coerceIn(0, 100)}% complete"
@@ -512,14 +524,6 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         active.strokes.get() > 0 -> "${getValueForBinding(ValueBinding.STROKES, gym)} strokes remaining"
         else -> "${getValueForBinding(ValueBinding.ENERGY, gym)} kcal remaining"
     }
-    val referenceValue = if (race != null && !gym.hasPlanPaceTarget()) {
-        remember(gym.pace, gym.program) {
-            val reference = gym.pace!!
-            val definition = gym.program ?: WorkoutDefinition.thaw(reference.programDefinition.get())
-            formatRaceReferenceValue(definition, gym.paceScoringDistance,
-                if (definition != null) gym.resultSeconds(reference, definition).toInt() else reference.duration.get())
-        }
-    } else ""
     val detail = when {
         rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
         race != null && gym.hasPlanPaceTarget() -> "Target pace · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
@@ -548,7 +552,7 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
                 style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Bold)).size.width.coerceAtLeast(1)
             val width = with(density) { maxWidth.toPx() }
             val font = (56f * (width / measured).coerceAtMost(1f)).sp
-            Text(primary, color = if (race == null) Color.White else if (race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
+            Text(primary, color = if (race == null) Color.White else if (finishReadout == null && race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
                 fontSize = font, lineHeight = font * 1.1f, fontWeight = FontWeight.Bold,
                 maxLines = 1, softWrap = false)
         }
@@ -663,6 +667,14 @@ private fun goalBinding(segment: Segment): ValueBinding? = when {
     segment.power.get() > 0 -> ValueBinding.POWER
     segment.pulse.get() > 0 -> ValueBinding.PULSE
     else -> null
+}
+
+/** Once a finish-time reference is done, equal final distances must not suggest a tie. */
+internal fun raceFinishReadout(program: Program?, currentSeconds: Int, bestFinishSeconds: Float): String? {
+    if (program == null || WorkoutDefinition.ranksByDistance(program) || !bestFinishSeconds.isFinite() ||
+        bestFinishSeconds <= 0f || currentSeconds < bestFinishSeconds) return null
+    val gap = (currentSeconds-bestFinishSeconds).roundToInt()
+    return if (gap == 0) "Best finished" else "${formatClock(gap)} behind"
 }
 
 /** Match the metric used to rank completed races, including mixed interval programs. */
