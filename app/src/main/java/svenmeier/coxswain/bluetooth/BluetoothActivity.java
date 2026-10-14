@@ -83,7 +83,7 @@ public class BluetoothActivity extends AppCompatActivity implements CompoundButt
 		filterCheckBox.setOnCheckedChangeListener(this);
 
 		rememberCheckBox = findViewById(R.id.bluetooth_remember);
-		rememberCheckBox.setChecked(false);
+		rememberCheckBox.setChecked(getIntent().getBooleanExtra(DEVICE_REMEMBER, false));
 
 		devicesView = findViewById(R.id.bluetooth_devices);
 		devicesView.setLayoutManager(new LinearLayoutManager(this));
@@ -363,10 +363,15 @@ public class BluetoothActivity extends AppCompatActivity implements CompoundButt
 	}
 
 	public static IntentFilter start(Context context, String name, String serviceFilter) {
+        return start(context, name, serviceFilter, false);
+    }
+
+    public static IntentFilter start(Context context, String name, String serviceFilter, boolean remember) {
 		Intent intent = new Intent(context, BluetoothActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		intent.putExtra(NAME, name);
 		intent.putExtra(SERVICE_FILTER, serviceFilter);
+        intent.putExtra(DEVICE_REMEMBER, remember);
 		context.startActivity(intent);
 
 		IntentFilter filter = new IntentFilter();

@@ -39,6 +39,7 @@ import svenmeier.coxswain.util.PermissionBlock;
 public class BluetoothHeart extends Heart {
 
 	private static final int CONNECT_TIMEOUT_MILLIS = 10000;
+    private static final int REMEMBERED_CONNECT_TIMEOUT_MILLIS = 60000;
 
 	private static final int BATTERY_LEVEL_NOTIFICATION_THRESHOLD = 25;
 
@@ -265,17 +266,21 @@ public class BluetoothHeart extends Heart {
 	private class SelectionConnection extends BroadcastReceiver implements Connection {
 
 		private boolean registered;
+        private final boolean forceSelection;
 
-		@Override
-		public void open() {
-			String address = devicePreference.get();
-			if (address != null) {
+        SelectionConnection() { this(false); }
+        SelectionConnection(boolean forceSelection) { this.forceSelection = forceSelection; }
+
+        @Override
+        public void open() {
+            String address = devicePreference.get();
+            if (address != null && !forceSelection) {
 				proceed(address);
 				return;
 			}
 
 			String name = context.getString(R.string.bluetooth_heart);
-			IntentFilter filter = BluetoothActivity.start(context, name, BlueWriter.SERVICE_HEART_RATE.toString());
+			IntentFilter filter = BluetoothActivity.start(context, name, BlueWriter.SERVICE_HEART_RATE.toString(), address != null);
 			if (Build.VERSION.SDK_INT >= 33) {
 				context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
 			} else {
@@ -335,15 +340,23 @@ public class BluetoothHeart extends Heart {
 			this.address = address;
 		}
 
-		private void select() {
-			devicePreference.set(null);
+        private void select() {
+            // A temporary timeout or disconnect must not forget the user's choice.
+            handler.post(() -> {
+                if (connections.peek() != this || adapter == null) return;
+                handler.removeCallbacks(this);
+                pop();
+                pop();
+                push(new SelectionConnection(true));
+            });
+        }
 
-			handler.removeCallbacks(this);
+        private boolean remembered() { return address.equals(devicePreference.get()); }
 
-			pop();
-            pop();
-			push(new SelectionConnection());
-		}
+        private void scheduleTimeout() {
+            handler.removeCallbacks(this);
+            handler.postDelayed(this, remembered() ? REMEMBERED_CONNECT_TIMEOUT_MILLIS : CONNECT_TIMEOUT_MILLIS);
+        }
 
 		@Override
 		public synchronized void open() {
@@ -355,10 +368,9 @@ public class BluetoothHeart extends Heart {
 
 				BluetoothDevice device = adapter.getRemoteDevice(address);
 				Log.d(Coxswain.TAG, "bluetooth heart connecting " + device.getAddress());
-				connected = device.connectGatt(context, false, this);
-
-				handler.removeCallbacks(this);
-				handler.postDelayed(this, CONNECT_TIMEOUT_MILLIS);
+				connected = device.connectGatt(context, remembered(), this);
+                if (connected == null) select();
+                else scheduleTimeout();
 			} catch (IllegalArgumentException invalid) {
 				select();
 			}
@@ -366,7 +378,7 @@ public class BluetoothHeart extends Heart {
 
 		@Override
 		public synchronized void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-			if (adapter == null) {
+			if (adapter == null || gatt != connected) {
 				return;
 			}
 
@@ -384,15 +396,21 @@ public class BluetoothHeart extends Heart {
 					if (adapter.isEnabled()) {
 						toast(context.getString(R.string.bluetooth_heart_disconnected, address));
 
-						select();
-					} else {
-						close();
+                        heartRateMeasurement = null;
+                        batteryLevel = null;
+                        if (remembered()) {
+                            connected.connect();
+                            scheduleTimeout();
+                        } else select();
+                    } else {
+                        close();
 					}
 				}
 			}
 		}
 
 		public synchronized void close() {
+            handler.removeCallbacks(this);
 			if (connected != null) {
 				connected.close();
 				connected = null;
@@ -405,7 +423,7 @@ public class BluetoothHeart extends Heart {
 
 		@Override
 		public synchronized void onServicesDiscovered(final BluetoothGatt gatt, int status) {
-			if (connected == null) {
+			if (connected == null || gatt != connected) {
 				return;
 			}
 
@@ -428,18 +446,19 @@ public class BluetoothHeart extends Heart {
 
 				select();
 			} else {
-				toast(context.getString(R.string.bluetooth_heart_connected, gatt.getDevice().getAddress()));
+				handler.removeCallbacks(this);
+                toast(context.getString(R.string.bluetooth_heart_connected, gatt.getDevice().getAddress()));
 			}
 		}
 		
 		@Override
 		@WorkerThread
 		public synchronized void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-			if (connected == null) {
+			if (connected == null || gatt != connected) {
 				return;
 			}
 
-			if (characteristic.getUuid().equals(heartRateMeasurement.getUuid())) {
+			if (heartRateMeasurement != null && characteristic.getUuid().equals(heartRateMeasurement.getUuid())) {
 				int heartRate;
 				Fields fields = new Fields(characteristic, Fields.UINT8);
 				if (fields.isSet(0)) {
