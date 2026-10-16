@@ -8,7 +8,7 @@ import kotlin.math.ceil
 
 /** Integer BPM lower boundaries. Values exactly on a boundary enter the higher zone. */
 data class HeartRateZones @JvmOverloads constructor(val moderate: Int, val vigorous: Int, val peak: Int,
-                          val resting: Int? = null, val maximum: Int? = null, val age: Int? = null, val zone5: Int? = null) {
+                          val resting: Int? = null, val maximum: Int? = null, val age: Int? = null, val zone5: Int? = null, val maximumConfirmed: Boolean = false) {
     init {
         require(moderate in 2..398 && vigorous > moderate && peak > vigorous && peak <= 400)
         require(zone5 == null || zone5 > peak && zone5 <= 400)
@@ -41,9 +41,9 @@ data class HeartRateZones @JvmOverloads constructor(val moderate: Int, val vigor
     }
     /** Legacy recorded profiles remain intact; current maximum-based settings can upgrade. */
     fun asTraining(): HeartRateZones? = if (zone5 != null) this
-        else maximum?.let { training(it, resting, age) }
+        else maximum?.let { training(it, resting, age, maximumConfirmed = false) }
     fun belowTraining(bpm: Int): Boolean = zone5 != null && maximum != null && bpm < ceil(maximum*.5).toInt()
-    fun encode(): String = JSONObject().put("version", if (zone5 == null) 1 else 2).put("zone5", zone5).put("moderate", moderate)
+    fun encode(): String = JSONObject().put("version", if (zone5 == null) 1 else 2).put("zone5", zone5).put("maximumConfirmed", maximumConfirmed).put("moderate", moderate)
         .put("vigorous", vigorous).put("peak", peak).put("resting", resting)
         .put("maximum", maximum).put("age", age).toString()
 
@@ -58,10 +58,10 @@ data class HeartRateZones @JvmOverloads constructor(val moderate: Int, val vigor
         return cuts.sorted().zipWithNext().map { (a, b) -> Triple(a, b, zone(from + (to - from) * (a + b) / 2)!!) }
     }
     companion object {
-        fun training(maximum: Int, resting: Int? = null, age: Int? = null): HeartRateZones {
+        fun training(maximum: Int, resting: Int? = null, age: Int? = null, maximumConfirmed: Boolean = true): HeartRateZones {
             require(maximum in 10..400)
             return HeartRateZones(ceil(maximum*.6).toInt(),ceil(maximum*.7).toInt(),
-                ceil(maximum*.8).toInt(),resting,maximum,age,ceil(maximum*.9).toInt())
+                ceil(maximum*.8).toInt(),resting,maximum,age,ceil(maximum*.9).toInt(),maximumConfirmed)
         }
         const val KEY = "heart_rate_zone_profile"
         fun reserve(resting: Int, maximum: Int, age: Int? = null): HeartRateZones {
@@ -77,10 +77,14 @@ data class HeartRateZones @JvmOverloads constructor(val moderate: Int, val vigor
                 if (json.has("resting") && !json.isNull("resting")) json.getInt("resting") else null,
                 if (json.has("maximum") && !json.isNull("maximum")) json.getInt("maximum") else null,
                 if (json.has("age") && !json.isNull("age")) json.getInt("age") else null,
-                if (version == 2) json.getInt("zone5") else null)
+                if (version == 2) json.getInt("zone5") else null,
+                version == 2 && json.optBoolean("maximumConfirmed",false))
         }.getOrNull()
         @JvmStatic fun freeze(context: Context): String? = runCatching {
-            decode(PreferenceManager.getDefaultSharedPreferences(context).getString(KEY, null))?.let { (it.asTraining() ?: it).encode() }
+            decode(PreferenceManager.getDefaultSharedPreferences(context).getString(KEY, null))?.let {
+                val zones = it.asTraining() ?: it
+                if (zones.maximum != null && !zones.maximumConfirmed && zones.age == null) null else zones.encode()
+            }
         }.getOrNull()
     }
 }

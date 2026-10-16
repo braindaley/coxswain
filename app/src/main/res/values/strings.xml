@@ -699,9 +699,9 @@
 
     <string name="hr_peak_loading">Checking completed rows…</string>
     <string name="hr_peak_failed">Could not read heart-rate history. You can still enter values.</string>
-    <string name="hr_peak_unavailable">Not enough timed heart-rate data in completed rows to fill both values.</string>
-    <string name="hr_history_values">History suggestions: starting low %1$d BPM · sustained peak %2$d BPM</string>
-    <string name="hr_history_help">Blank fields are filled from completed rows. The low uses the first 30 seconds; both values must persist for at least five seconds. Starting heart rate is an estimate of resting heart rate, and recorded peak is not a tested maximum. You can edit either value before saving.</string>
+    <string name="hr_peak_unavailable">Not enough timed heart-rate history to show a recorded range. Enter a known maximum or estimate from age.</string>
+    <string name="hr_history_values">Recorded history: starting low %1$d BPM · sustained peak %2$d BPM</string>
+    <string name="hr_history_help">Recorded peak is the highest heart rate sustained for five seconds in completed rows. It is reference data, not your maximum heart rate, and is never copied into the maximum field. Enter a known maximum or choose an age-based estimate.</string>
     <string name="hr_use_history">Use history suggestions</string>
 
     <string name="output_zones_title">Power, pace &amp; cadence levels</string>
@@ -749,4 +749,5 @@
     <string name="hr_zone5_from">Zone 5 starts at (BPM)</string>
     <string name="hr_below_zone1">Below Zone 1</string>
     <string name="hr_training_help">Training zones use maximum heart rate, not heart-rate reserve. Zone 1 includes readings below 50% in the history summary; the live tile identifies those as Below Zone 1. Zone 2 is 60–70%, Zone 3 is 70–80%, Zone 4 is 80–90%, and Zone 5 starts at 90%. These are estimates, not measured physiological thresholds.</string>
+    <string name="hr_review_previous_max">Previously saved maximum: %1$d BPM. Its source was not confirmed. Re-enter a known maximum or choose an age-based estimate before using zones for new rows.</string>
 </resources>

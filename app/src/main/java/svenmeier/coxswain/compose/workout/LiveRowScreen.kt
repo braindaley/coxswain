@@ -379,7 +379,7 @@ fun MetricCell(
 
     val heartZones = if (binding == ValueBinding.PULSE) remember(gym.current) {
         val frozen = gym.current?.heartRateZones?.get()
-        (HeartRateZones.decode(frozen) ?: HeartRateZones.decode(HeartRateZones.freeze(context)))?.asTraining()
+        (HeartRateZones.decode(frozen) ?: HeartRateZones.decode(HeartRateZones.freeze(context)))?.asTraining()?.takeIf { it.maximum == null || it.maximumConfirmed || it.age != null }
     } else null
     val heartZone = heartZones?.zone(gym.getMeasurement().pulse.toFloat())
     val belowZone = heartZones?.belowTraining(gym.getMeasurement().pulse) == true

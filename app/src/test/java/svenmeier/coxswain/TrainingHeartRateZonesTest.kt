@@ -11,6 +11,39 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[34])
 class TrainingHeartRateZonesTest {
+    @Test fun oldObservedMaximumCannotSilentlyBecomeANewTrainingMaximum() {
+        val context=org.robolectric.RuntimeEnvironment.getApplication()
+        val prefs=androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val before=prefs.getString(HeartRateZones.KEY,null)
+        try {
+            val old=HeartRateZones.reserve(76,135)
+            prefs.edit().putString(HeartRateZones.KEY,old.encode()).commit()
+            assertNull(HeartRateZones.freeze(context))
+            assertEquals(135,HeartRateZones.decode(old.encode())!!.maximum)
+            val previousRelease=org.json.JSONObject(HeartRateZones.training(135,76).encode()).apply { remove("maximumConfirmed") }.toString()
+            prefs.edit().putString(HeartRateZones.KEY,previousRelease).commit()
+            assertNull(HeartRateZones.freeze(context))
+            val chosen=HeartRateZones.training(180,76)
+            prefs.edit().putString(HeartRateZones.KEY,chosen.encode()).commit()
+            assertEquals(chosen,HeartRateZones.decode(HeartRateZones.freeze(context)))
+        } finally {
+            if(before==null) prefs.edit().remove(HeartRateZones.KEY).commit()
+            else prefs.edit().putString(HeartRateZones.KEY,before).commit()
+        }
+    }
+    @Test fun anExplicitAgeEstimateStillWorksWithoutARecordedMaximum() {
+        val context=org.robolectric.RuntimeEnvironment.getApplication()
+        val prefs=androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        val before=prefs.getString(HeartRateZones.KEY,null)
+        try {
+            prefs.edit().putString(HeartRateZones.KEY,HeartRateZones.reserve(60,180,40).encode()).commit()
+            val frozen=HeartRateZones.decode(HeartRateZones.freeze(context))!!
+            assertEquals(40,frozen.age);assertEquals(180,frozen.maximum);assertEquals(5,frozen.count)
+        } finally {
+            if(before==null) prefs.edit().remove(HeartRateZones.KEY).commit()
+            else prefs.edit().putString(HeartRateZones.KEY,before).commit()
+        }
+    }
     @Test fun exactBoundariesEnterTheHigherTrainingZone() {
         val zones=HeartRateZones.training(180,60)
         assertEquals(listOf(108,126,144,162),zones.thresholds)

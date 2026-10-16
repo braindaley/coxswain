@@ -33,7 +33,7 @@ class HeartRateZonesTest {
     @Test fun savedRecordingThresholdsAreIndependentOfLaterSettings() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.reserve(60, 175).encode()).commit()
+        prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.training(175,60).encode()).commit()
         val frozen = HeartRateZones.freeze(context)
         prefs.edit().putString(HeartRateZones.KEY, HeartRateZones(120, 150, 180).encode()).commit()
         assertEquals(105, HeartRateZones.decode(frozen)!!.moderate)

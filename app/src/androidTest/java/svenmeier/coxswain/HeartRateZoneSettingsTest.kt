@@ -45,19 +45,36 @@ class HeartRateZoneSettingsTest {
         compose.onNodeWithText("Turn off zones for new workouts").performScrollTo().performClick()
         compose.runOnIdle { assertNull(saved); assertEquals(2, calls) }
     }
-    @Test fun historyAutofillsEmptyFieldsAndKeepsUserOverrides() {
+    @Test fun historyDoesNotAutofillMaximumAndKeepsUserOverrides() {
         var history by androidx.compose.runtime.mutableStateOf(RecordedHeartRateRange(70, 180))
         var saved: HeartRateZones? = null
         compose.setContent { CoxswainTheme { Surface {
             HeartRateZonesSettings(null, {}, { saved = it }, recordedRange = history)
         } } }
         compose.onNodeWithText("Resting heart rate (BPM)").assertTextContains("70")
-        compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().assertTextContains("180")
+        compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().assert(hasText("180").not())
         compose.onNodeWithText("Resting heart rate (BPM)").performScrollTo().performTextReplacement("60")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithText("Save zones").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().performTextInput("180")
         androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.runOnIdle { history = RecordedHeartRateRange(65, 185) }
         compose.onNodeWithText("Save zones").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(HeartRateZones.training(180,60), saved) }
+    }
+    @Test fun unverifiedSavedMaximumNeedsExplicitReview() {
+        var saved:HeartRateZones?=null
+        compose.setContent { CoxswainTheme { Surface {
+            HeartRateZonesSettings(HeartRateZones.reserve(76,135).asTraining(),{}, { saved=it },
+                recordedRange=RecordedHeartRateRange(76,148))
+        } } }
+        compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().assert(hasText("135").not())
+        compose.onNodeWithText("Save zones").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Estimate maximum from age").performScrollTo().performClick()
+        compose.onNodeWithText("Age").performScrollTo().performTextInput("40")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithText("Save zones").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(180,saved!!.maximum);assertEquals(40,saved!!.age) }
     }
 
 }

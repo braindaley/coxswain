@@ -56,7 +56,7 @@ class WorkoutChartsScreenTest {
         val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
         val beforeHeart = prefs.getString(HeartRateZones.KEY, null)
         val beforeOutput = prefs.getString(PerformanceZones.KEY, null)
-        prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.reserve(60,175).encode())
+        prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.training(175,60).encode())
             .putString(PerformanceZones.KEY, PerformanceZones(OutputZones(110,160,210),OutputZones(150,120,100,true),OutputZones(20,24,28)).encode()).commit()
         try {
             checkCharts(false, true, false)

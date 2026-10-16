@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -30,7 +32,7 @@ class HeartRateZonesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val initial = HeartRateZones.decode(HeartRateZones.freeze(this))
+        val initial = HeartRateZones.decode(prefs.getString(HeartRateZones.KEY,null))?.let { it.asTraining() ?: it }
         lifecycleScope.launch {
             try {
                 recordedRange = withContext(Dispatchers.IO) {
@@ -70,18 +72,16 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
     var custom by rememberSaveable { mutableStateOf(initial != null && initial.maximum == null) }
     var estimate by rememberSaveable { mutableStateOf(initial?.age != null) }
     var resting by rememberSaveable { mutableStateOf(initial?.resting?.toString() ?: "") }
-    var maximum by rememberSaveable { mutableStateOf(initial?.maximum?.toString() ?: "") }
+    var maximum by rememberSaveable { mutableStateOf(initial?.takeIf { it.maximumConfirmed || it.age != null }?.maximum?.toString() ?: "") }
     var age by rememberSaveable { mutableStateOf(initial?.age?.toString() ?: "") }
     var moderate by rememberSaveable { mutableStateOf(initial?.moderate?.toString() ?: "") }
     var vigorous by rememberSaveable { mutableStateOf(initial?.vigorous?.toString() ?: "") }
     var peak by rememberSaveable { mutableStateOf(initial?.peak?.toString() ?: "") }
     var zone5 by rememberSaveable { mutableStateOf(initial?.zone5?.toString() ?: "") }
     var restingEdited by rememberSaveable { mutableStateOf(false) }
-    var maximumEdited by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(recordedRange) {
         if (initial == null) {
             if (!restingEdited && resting.isBlank()) recordedRange.startingLow?.let { resting = it.toString() }
-            if (!maximumEdited && maximum.isBlank()) recordedRange.peak?.let { maximum = it.toString() }
         }
     }
     val profile = runCatching {
@@ -115,24 +115,20 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
                     else -> R.string.hr_history_values
                 }, recordedRange.startingLow ?: 0, recordedRange.peak ?: 0),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (recordedRange.startingLow != null && recordedRange.peak != null) {
-                    Text(stringResource(R.string.hr_history_help), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = {
-                        resting = recordedRange.startingLow.toString()
-                        maximum = recordedRange.peak.toString()
-                        estimate = false
-                        restingEdited = true
-                        maximumEdited = true
-                    }) { Text(stringResource(R.string.hr_use_history)) }
+                if (recordedRange.peak != null) Text(stringResource(R.string.hr_history_help), style = MaterialTheme.typography.bodySmall)
+                if (initial?.maximum != null && !initial.maximumConfirmed && initial.age == null) {
+                    Text(stringResource(R.string.hr_review_previous_max,initial.maximum),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 }
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Switch(checked = estimate, onCheckedChange = { estimate = it })
+                Row(modifier = Modifier.toggleable(value=estimate, role=Role.Switch, onValueChange={estimate=it}),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Switch(checked = estimate, onCheckedChange = null)
                     Text(stringResource(R.string.hr_estimate), Modifier.padding(start = 8.dp))
                 }
                 if (estimate) {
                     HeartNumber(stringResource(R.string.hr_age), age) { age = it }
                     Text(stringResource(R.string.hr_estimate_help), style = MaterialTheme.typography.bodySmall)
-                } else HeartNumber(stringResource(R.string.hr_maximum), maximum) { maximumEdited = true; maximum = it }
+                } else HeartNumber(stringResource(R.string.hr_maximum), maximum) { maximum = it }
             }
             if (profile != null) {
                 Card(Modifier.fillMaxWidth()) {
