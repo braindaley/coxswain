@@ -30,7 +30,7 @@ class HeartRateZonesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val initial = HeartRateZones.decode(prefs.getString(HeartRateZones.KEY, null))
+        val initial = HeartRateZones.decode(HeartRateZones.freeze(this))
         lifecycleScope.launch {
             try {
                 recordedRange = withContext(Dispatchers.IO) {
@@ -67,7 +67,7 @@ class HeartRateZonesActivity : ComponentActivity() {
 internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit,
                                      onSave: (HeartRateZones?) -> Unit, recordedRange: RecordedHeartRateRange = RecordedHeartRateRange(),
                                      peakLoading: Boolean = false, peakFailed: Boolean = false) {
-    var custom by rememberSaveable { mutableStateOf(initial != null && initial.resting == null) }
+    var custom by rememberSaveable { mutableStateOf(initial != null && initial.maximum == null) }
     var estimate by rememberSaveable { mutableStateOf(initial?.age != null) }
     var resting by rememberSaveable { mutableStateOf(initial?.resting?.toString() ?: "") }
     var maximum by rememberSaveable { mutableStateOf(initial?.maximum?.toString() ?: "") }
@@ -75,6 +75,7 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
     var moderate by rememberSaveable { mutableStateOf(initial?.moderate?.toString() ?: "") }
     var vigorous by rememberSaveable { mutableStateOf(initial?.vigorous?.toString() ?: "") }
     var peak by rememberSaveable { mutableStateOf(initial?.peak?.toString() ?: "") }
+    var zone5 by rememberSaveable { mutableStateOf(initial?.zone5?.toString() ?: "") }
     var restingEdited by rememberSaveable { mutableStateOf(false) }
     var maximumEdited by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(recordedRange) {
@@ -84,9 +85,9 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
         }
     }
     val profile = runCatching {
-        if (custom) HeartRateZones(moderate.toInt(), vigorous.toInt(), peak.toInt())
-        else HeartRateZones.reserve(resting.toInt(), if (estimate) 220 - age.toInt() else maximum.toInt(),
-            if (estimate) age.toInt() else null)
+        if (custom) HeartRateZones(moderate.toInt(), vigorous.toInt(), peak.toInt(), zone5 = zone5.toInt())
+        else HeartRateZones.training(if (estimate) 220 - age.toInt() else maximum.toInt(),
+            resting.toIntOrNull(), if (estimate) age.toInt() else null)
     }.getOrNull()
     Surface {
         Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -104,6 +105,7 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
                 HeartNumber(stringResource(R.string.hr_moderate_from), moderate) { moderate = it }
                 HeartNumber(stringResource(R.string.hr_vigorous_from), vigorous) { vigorous = it }
                 HeartNumber(stringResource(R.string.hr_peak_from), peak) { peak = it }
+                HeartNumber(stringResource(R.string.hr_zone5_from), zone5) { zone5 = it }
             } else {
                 HeartNumber(stringResource(R.string.hr_resting), resting) { restingEdited = true; resting = it }
                 Text(stringResource(when {
@@ -136,9 +138,9 @@ internal fun HeartRateZonesSettings(initial: HeartRateZones?, onBack: () -> Unit
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (estimate && !custom) Text(stringResource(R.string.hr_estimated_max, profile.maximum!!))
-                        (0..3).forEach { zone ->
+                        (0 until profile.count).forEach { zone ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(stringResource(heartZoneName(zone)))
+                                Text(stringResource(heartZoneName(zone, profile.count == 5)))
                                 Text(profile.bounds(zone))
                             }
                         }
@@ -164,7 +166,9 @@ private fun HeartNumber(label: String, value: String, onChange: (String) -> Unit
         modifier = Modifier.fillMaxWidth())
 }
 
-internal fun heartZoneName(zone: Int): Int = when (zone) {
+internal fun heartZoneName(zone: Int, training: Boolean = false): Int = if (training) when(zone) {
+    0 -> R.string.hr_zone1; 1 -> R.string.hr_zone2; 2 -> R.string.hr_zone3; 3 -> R.string.hr_zone4; else -> R.string.hr_zone5
+} else when (zone) {
     0 -> R.string.ui_chart_light
     1 -> R.string.ui_chart_moderate
     2 -> R.string.ui_chart_vigorous

@@ -39,6 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.text.rememberTextMeasurer
+import svenmeier.coxswain.HeartRateZones
+import svenmeier.coxswain.heartZoneName
+import svenmeier.coxswain.trainingZoneTileColors
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Difficulty
@@ -370,17 +373,27 @@ fun MetricCell(
 ) {
     val context = LocalContext.current
     val rawValue = getValueForBinding(binding, gym)
-    val valueStr = displayValue ?: binding.format(context, rawValue, false)
+    val valueStr = if (binding == ValueBinding.PULSE) binding.format(context, rawValue, false)
+        else displayValue ?: binding.format(context, rawValue, false)
     val (titleLabel, unitLabel) = getMetricTitleAndUnit(binding, context)
 
-    val cellColor = when (goalState) {
+    val heartZones = if (binding == ValueBinding.PULSE) remember(gym.current) {
+        val frozen = gym.current?.heartRateZones?.get()
+        (HeartRateZones.decode(frozen) ?: HeartRateZones.decode(HeartRateZones.freeze(context)))?.asTraining()
+    } else null
+    val heartZone = heartZones?.zone(gym.getMeasurement().pulse.toFloat())
+    val belowZone = heartZones?.belowTraining(gym.getMeasurement().pulse) == true
+    val zoneLabel = if (heartZone != null) stringResource(if(belowZone) R.string.hr_below_zone1 else heartZoneName(heartZone,true)) else null
+    val cellColor = if (binding == ValueBinding.PULSE) {
+        if (heartZone != null && !belowZone) trainingZoneTileColors[heartZone] else Color(0xFF042C3D)
+    } else when (goalState) {
         -1 -> Color(0xFF7A2836)
         0, 1 -> Color(0xFF126B4D)
         else -> Color(0xFF042C3D)
     }
-    val accessibleDescription = if (goalState != null && targetDescription != null) {
+    val accessibleDescription = (if (goalState != null && targetDescription != null) {
         "$titleLabel $valueStr, target $targetDescription"
-    } else "$titleLabel $valueStr"
+    } else "$titleLabel $valueStr") + (zoneLabel?.let { ", $it" } ?: "")
     val cellModifier = modifier
         .background(cellColor)
         .then(
@@ -411,12 +424,12 @@ fun MetricCell(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = displayLabel ?: if (unitLabel.isNotEmpty()) "$titleLabel · $unitLabel" else titleLabel,
+                text = zoneLabel?.let { "$it · BPM" } ?: displayLabel ?: if (unitLabel.isNotEmpty()) "$titleLabel · $unitLabel" else titleLabel,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
+                    fontSize = if (zoneLabel != null) 16.sp else 13.sp
                 ),
-                color = Color(0xFFCAD4E1),
+                color = if (zoneLabel != null) Color.White else Color(0xFFCAD4E1),
                 textAlign = TextAlign.Center,
                 maxLines = 2
             )

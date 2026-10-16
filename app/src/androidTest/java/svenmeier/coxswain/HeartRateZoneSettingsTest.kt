@@ -22,9 +22,9 @@ class HeartRateZoneSettingsTest {
         compose.onNodeWithText("Resting heart rate (BPM)").performScrollTo().performTextInput("60")
         compose.onNodeWithText("Maximum heart rate (BPM)").performScrollTo().performTextInput("175")
         androidx.test.espresso.Espresso.closeSoftKeyboard()
-        compose.onNodeWithText("106–128 BPM").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("105–122 BPM").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Save zones").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals(HeartRateZones.reserve(60, 175), saved) }
+        compose.runOnIdle { assertEquals(HeartRateZones.training(175,60), saved) }
     }
     @Test fun customValidationAndTurnOffPreserveAtomicSettings() {
         var saved: HeartRateZones? = HeartRateZones.reserve(60, 175)
@@ -33,10 +33,12 @@ class HeartRateZoneSettingsTest {
             HeartRateZonesSettings(saved, {}, { saved = it; calls++ })
         } } }
         compose.onNodeWithText("Custom").performClick()
-        compose.onNodeWithText("Moderate starts at (BPM)").performTextReplacement("150")
+        compose.onNodeWithText("Zone 2 starts at (BPM)").performTextReplacement("150")
         androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithText("Save zones").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("Moderate starts at (BPM)").performScrollTo().performTextReplacement("100")
+        compose.onNodeWithText("Zone 2 starts at (BPM)").performScrollTo().performTextReplacement("100")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithText("Zone 5 starts at (BPM)").performScrollTo().performTextInput("175")
         androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithText("Save zones").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(100, saved!!.moderate); assertNull(saved!!.resting); assertEquals(1, calls) }
@@ -55,7 +57,7 @@ class HeartRateZoneSettingsTest {
         androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.runOnIdle { history = RecordedHeartRateRange(65, 185) }
         compose.onNodeWithText("Save zones").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals(HeartRateZones.reserve(60, 180), saved) }
+        compose.runOnIdle { assertEquals(HeartRateZones.training(180,60), saved) }
     }
 
 }

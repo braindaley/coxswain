@@ -7,33 +7,43 @@ import svenmeier.coxswain.gym.Snapshot
 import kotlin.math.ceil
 
 /** Integer BPM lower boundaries. Values exactly on a boundary enter the higher zone. */
-data class HeartRateZones(val moderate: Int, val vigorous: Int, val peak: Int,
-                          val resting: Int? = null, val maximum: Int? = null, val age: Int? = null) {
+data class HeartRateZones @JvmOverloads constructor(val moderate: Int, val vigorous: Int, val peak: Int,
+                          val resting: Int? = null, val maximum: Int? = null, val age: Int? = null, val zone5: Int? = null) {
     init {
         require(moderate in 2..398 && vigorous > moderate && peak > vigorous && peak <= 400)
-        require((resting == null) == (maximum == null))
+        require(zone5 == null || zone5 > peak && zone5 <= 400)
+        if (zone5 == null) require((resting == null) == (maximum == null))
         if (resting != null && maximum != null) {
             require(resting > 0 && maximum > resting && maximum <= 400)
+            if (zone5 == null) {
             require(moderate == ceil(resting + .4 * (maximum - resting)).toInt())
             require(vigorous == ceil(resting + .6 * (maximum - resting)).toInt())
             require(peak == ceil(resting + .85 * (maximum - resting)).toInt())
+            }
+        }
+        if (zone5 != null) {
+            require(resting == null || maximum != null)
+            maximum?.let { max ->
+                require(max in 10..400)
+                require(listOf(moderate,vigorous,peak,zone5) == listOf(.6,.7,.8,.9).map { ceil(max*it).toInt() })
+            }
         }
         if (age != null) require(age in 1..120 && maximum == 220 - age)
     }
-    fun zone(bpm: Float): Int? = when {
-        !bpm.isFinite() || bpm <= 0 -> null
-        bpm < moderate -> 0
-        bpm < vigorous -> 1
-        bpm < peak -> 2
-        else -> 3
-    }
+    val count: Int get() = if (zone5 == null) 4 else 5
+    val thresholds: List<Int> get() = listOfNotNull(moderate, vigorous, peak, zone5)
+    fun zone(bpm: Float): Int? = if (!bpm.isFinite() || bpm <= 0) null
+        else thresholds.count { bpm >= it }
     fun bounds(zone: Int): String = when (zone) {
         0 -> "< $moderate BPM"
-        1 -> "$moderate–${vigorous - 1} BPM"
-        2 -> "$vigorous–${peak - 1} BPM"
-        else -> "≥ $peak BPM"
+        count-1 -> "≥ ${thresholds.last()} BPM"
+        else -> "${thresholds[zone-1]}–${thresholds[zone]-1} BPM"
     }
-    fun encode(): String = JSONObject().put("version", 1).put("moderate", moderate)
+    /** Legacy recorded profiles remain intact; current maximum-based settings can upgrade. */
+    fun asTraining(): HeartRateZones? = if (zone5 != null) this
+        else maximum?.let { training(it, resting, age) }
+    fun belowTraining(bpm: Int): Boolean = zone5 != null && maximum != null && bpm < ceil(maximum*.5).toInt()
+    fun encode(): String = JSONObject().put("version", if (zone5 == null) 1 else 2).put("zone5", zone5).put("moderate", moderate)
         .put("vigorous", vigorous).put("peak", peak).put("resting", resting)
         .put("maximum", maximum).put("age", age).toString()
 
@@ -41,13 +51,18 @@ data class HeartRateZones(val moderate: Int, val vigorous: Int, val peak: Int,
     fun pieces(from: Float, to: Float): List<Triple<Float, Float, Int>> {
         if (zone(from) == null || zone(to) == null) return emptyList()
         val cuts = mutableListOf(0f, 1f)
-        if (from != to) listOf(moderate, vigorous, peak).forEach {
+        if (from != to) thresholds.forEach {
             val fraction = (it - from) / (to - from)
             if (fraction > 0f && fraction < 1f) cuts.add(fraction)
         }
         return cuts.sorted().zipWithNext().map { (a, b) -> Triple(a, b, zone(from + (to - from) * (a + b) / 2)!!) }
     }
     companion object {
+        fun training(maximum: Int, resting: Int? = null, age: Int? = null): HeartRateZones {
+            require(maximum in 10..400)
+            return HeartRateZones(ceil(maximum*.6).toInt(),ceil(maximum*.7).toInt(),
+                ceil(maximum*.8).toInt(),resting,maximum,age,ceil(maximum*.9).toInt())
+        }
         const val KEY = "heart_rate_zone_profile"
         fun reserve(resting: Int, maximum: Int, age: Int? = null): HeartRateZones {
             require(resting > 0 && maximum > resting && maximum <= 400)
@@ -57,21 +72,22 @@ data class HeartRateZones(val moderate: Int, val vigorous: Int, val peak: Int,
         }
         @JvmStatic fun decode(raw: String?): HeartRateZones? = if (raw.isNullOrBlank()) null else runCatching {
             val json = JSONObject(raw)
-            require(json.getInt("version") == 1)
+            val version = json.getInt("version"); require(version in 1..2)
             HeartRateZones(json.getInt("moderate"), json.getInt("vigorous"), json.getInt("peak"),
                 if (json.has("resting") && !json.isNull("resting")) json.getInt("resting") else null,
                 if (json.has("maximum") && !json.isNull("maximum")) json.getInt("maximum") else null,
-                if (json.has("age") && !json.isNull("age")) json.getInt("age") else null)
+                if (json.has("age") && !json.isNull("age")) json.getInt("age") else null,
+                if (version == 2) json.getInt("zone5") else null)
         }.getOrNull()
         @JvmStatic fun freeze(context: Context): String? = runCatching {
-            decode(PreferenceManager.getDefaultSharedPreferences(context).getString(KEY, null))?.encode()
+            decode(PreferenceManager.getDefaultSharedPreferences(context).getString(KEY, null))?.let { (it.asTraining() ?: it).encode() }
         }.getOrNull()
     }
 }
 
 /** Use observed HR only, including recovery; a missing reading cannot contribute zone time. */
 internal class HeartRateZoneTimes(zones: HeartRateZones, samples: List<Pair<Float, Snapshot>>) {
-    val seconds = FloatArray(4)
+    val seconds = FloatArray(zones.count)
     init {
         val ordered = samples.sortedBy { it.first }.groupBy { it.first }.values.map { it.last() }
         ordered.forEachIndexed { index, (time, sample) ->

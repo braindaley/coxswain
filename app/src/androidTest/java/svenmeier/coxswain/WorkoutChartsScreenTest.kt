@@ -134,7 +134,7 @@ class WorkoutChartsScreenTest {
         if (withHeartRate) {
             compose.onNodeWithText("Time in heart-rate zones").assertDoesNotExist()
             compose.onNodeWithContentDescription("About Heart rate").performScrollTo().performClick()
-            compose.onNodeWithText("Moderate: 106–128 BPM").assertIsDisplayed()
+            compose.onNodeWithText(if(storedProfiles) "Moderate: 106–128 BPM" else "Zone 2: 105–122 BPM").assertIsDisplayed()
             compose.onNodeWithText("Done").performClick()
             compose.onNodeWithText("Avg", substring = false).assertDoesNotExist()
             compose.onNodeWithContentDescription("Heart rate by clock time", substring = true)

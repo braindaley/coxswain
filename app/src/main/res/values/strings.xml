@@ -675,7 +675,7 @@
 
     <string name="hr_zones_title">Heart-rate zones</string>
     <string name="hr_zones_summary">Personal thresholds for recorded heart rate</string>
-    <string name="hr_zones_explanation" formatted="false">Calculate zones at 40%, 60%, and 85% of your heart-rate reserve (maximum minus resting), added to resting heart rate, or enter your own boundaries. These zones describe measured heart rate, not the programmed effort.</string>
+    <string name="hr_zones_explanation" formatted="false">Five training zones based on maximum heart rate: Zone 2 starts at 60%, Zone 3 at 70%, Zone 4 at 80%, and Zone 5 at 90%. Or enter four custom boundaries.</string>
     <string name="hr_calculate">Calculate</string>
     <string name="hr_custom">Custom</string>
     <string name="hr_resting">Resting heart rate (BPM)</string>
@@ -684,12 +684,12 @@
     <string name="hr_estimate">Estimate maximum from age</string>
     <string name="hr_estimate_help">Uses 220 − age. This is an estimate; a known personal maximum is more specific.</string>
     <string name="hr_estimated_max">Estimated maximum: %1$d BPM</string>
-    <string name="hr_moderate_from">Moderate starts at (BPM)</string>
-    <string name="hr_vigorous_from">Vigorous starts at (BPM)</string>
-    <string name="hr_peak_from">Peak starts at (BPM)</string>
-    <string name="hr_custom_help">Enter increasing lower boundaries. Light includes valid readings below Moderate.</string>
-    <string name="hr_invalid_custom">Enter three increasing BPM boundaries between 2 and 400.</string>
-    <string name="hr_invalid_reserve">Enter a positive resting heart rate below your maximum. For an estimate, enter an age from 1 to 120.</string>
+    <string name="hr_moderate_from">Zone 2 starts at (BPM)</string>
+    <string name="hr_vigorous_from">Zone 3 starts at (BPM)</string>
+    <string name="hr_peak_from">Zone 4 starts at (BPM)</string>
+    <string name="hr_custom_help">Enter four increasing boundaries for Zones 2–5. Lower readings are grouped under Zone 1.</string>
+    <string name="hr_invalid_custom">Enter four increasing BPM boundaries between 2 and 400.</string>
+    <string name="hr_invalid_reserve">Enter a maximum heart rate between 10 and 400, above resting heart rate if provided. Estimated age must be 1–120.</string>
     <string name="hr_frozen_help">Changes apply to new workouts. Each recording keeps the thresholds it started with.</string>
     <string name="hr_save">Save zones</string>
     <string name="hr_disable">Turn off zones for new workouts</string>
@@ -741,4 +741,12 @@
     <string name="row_output_highest">Highest</string>
     <string name="row_output_help">Colors compare moving output within this row, not physiological effort. Dotted guides divide its central output range into four equal bands. Heart rate uses your personal zones.</string>
     <string name="row_output_flat">This row has too little variation for four distinct output bands.</string>
+    <string name="hr_zone1">Zone 1</string>
+    <string name="hr_zone2">Zone 2</string>
+    <string name="hr_zone3">Zone 3</string>
+    <string name="hr_zone4">Zone 4</string>
+    <string name="hr_zone5">Zone 5</string>
+    <string name="hr_zone5_from">Zone 5 starts at (BPM)</string>
+    <string name="hr_below_zone1">Below Zone 1</string>
+    <string name="hr_training_help">Training zones use maximum heart rate, not heart-rate reserve. Zone 1 includes readings below 50% in the history summary; the live tile identifies those as Below Zone 1. Zone 2 is 60–70%, Zone 3 is 70–80%, Zone 4 is 80–90%, and Zone 5 starts at 90%. These are estimates, not measured physiological thresholds.</string>
 </resources>

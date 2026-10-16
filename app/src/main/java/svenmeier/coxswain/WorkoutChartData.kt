@@ -39,6 +39,9 @@ internal data class ResultScale(val low: Float, val high: Float) {
 }
 /** Light has no lower threshold; its guide is a reference inside that open-ended level. */
 internal fun resultLevelGuides(heart: HeartRateZones? = null, output: OutputZones? = null): List<Float> {
+    if (heart?.count == 5) return listOf(heart.maximum?.let { kotlin.math.ceil(it*.5).toInt() }
+        ?: (heart.moderate-(heart.vigorous-heart.moderate)).coerceAtLeast(0))
+        .plus(heart.thresholds).map { it.toFloat() }
     if (heart != null) {
         val light = heart.resting?.takeIf { it < heart.moderate }
             ?: (heart.moderate - (heart.vigorous - heart.moderate)).coerceAtLeast(0)

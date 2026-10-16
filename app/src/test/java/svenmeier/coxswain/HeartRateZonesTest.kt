@@ -36,10 +36,10 @@ class HeartRateZonesTest {
         prefs.edit().putString(HeartRateZones.KEY, HeartRateZones.reserve(60, 175).encode()).commit()
         val frozen = HeartRateZones.freeze(context)
         prefs.edit().putString(HeartRateZones.KEY, HeartRateZones(120, 150, 180).encode()).commit()
-        assertEquals(106, HeartRateZones.decode(frozen)!!.moderate)
+        assertEquals(105, HeartRateZones.decode(frozen)!!.moderate)
         assertEquals(120, HeartRateZones.decode(HeartRateZones.freeze(context))!!.moderate)
         prefs.edit().remove(HeartRateZones.KEY).commit()
-        assertNull(HeartRateZones.freeze(context)); assertEquals(106, HeartRateZones.decode(frozen)!!.moderate)
+        assertNull(HeartRateZones.freeze(context)); assertEquals(105, HeartRateZones.decode(frozen)!!.moderate)
     }
     private fun sample(time: Int, pulse: Int, rest: Boolean = false) = time.toFloat() to Snapshot().apply {
         this.pulse.set(pulse); recordedAt.set(100000L + time * 1000)

@@ -162,7 +162,7 @@ private fun effortColors(): Map<Difficulty, Color> {
 }
 
 @Composable
-private fun heartZoneColors(): List<Color> {
+internal fun heartZoneColors(): List<Color> {
     val dark = MaterialTheme.colorScheme.surface.luminance() < .4f
     return listOf(MaterialTheme.colorScheme.primary,
         if (dark) Color(0xFF54CDD0) else Color(0xFF007D83),
@@ -170,19 +170,25 @@ private fun heartZoneColors(): List<Color> {
         if (dark) Color(0xFF73DFA3) else Color(0xFF217B45))
 }
 
+internal val trainingZoneTileColors = listOf(Color(0xFF354F68), Color(0xFF00666B),
+    Color(0xFF775600), Color(0xFF24643C), Color(0xFF85451D))
+internal fun trainingZoneChartColors(dark: Boolean) = if (dark)
+    listOf(Color(0xFF78AAFF),Color(0xFF54CDD0),Color(0xFFFFCB74),Color(0xFF73DFA3),Color(0xFFFFAA72))
+    else listOf(Color(0xFF0B63DC),Color(0xFF007D83),Color(0xFFB07800),Color(0xFF217B45),Color(0xFFAE5018))
+
 private fun chartLevelName(zone: Int, cadence: Boolean) = if (!cadence) heartZoneName(zone) else when (zone) {
     0 -> R.string.row_output_low; 1 -> R.string.row_output_medium; 2 -> R.string.row_output_high; else -> R.string.row_output_highest
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null, cadence: Boolean = false) {
-    val colors = heartZoneColors()
+@Composable private fun ChartLevelLegend(times: HeartRateZoneTimes? = null, cadence: Boolean = false, training: Boolean = false) {
+    val colors = if (training) trainingZoneChartColors(MaterialTheme.colorScheme.surface.luminance()<.4f) else heartZoneColors()
     if (times != null) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            (0..3).forEach { zone ->
+            (0 until colors.size).forEach { zone ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(stringResource(chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall,
+                    Text(stringResource(if(training) heartZoneName(zone,true) else chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     Row(verticalAlignment = Alignment.CenterVertically,
@@ -197,10 +203,10 @@ private fun chartLevelName(zone: Int, cadence: Boolean) = if (!cadence) heartZon
     } else {
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            (0..3).forEach { zone ->
+            (0 until colors.size).forEach { zone ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(8.dp).background(colors[zone], androidx.compose.foundation.shape.CircleShape))
-                    Text(stringResource(chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(if(training) heartZoneName(zone,true) else chartLevelName(zone,cadence)), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -216,7 +222,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
     val levelGuides = remember(zones, outputZones) { resultLevelGuides(zones, outputZones) }
     val scale = remember(charts, measure, levelGuides) { charts.scale(measure, levelGuides) }
     val trace = remember(charts, measure) { charts.displayTrace(measure) }
-    val zoneColors = heartZoneColors()
+    val zoneColors = if(zones?.count == 5) trainingZoneChartColors(MaterialTheme.colorScheme.surface.luminance()<.4f) else heartZoneColors()
     val primaryColor = MaterialTheme.colorScheme.primary
     val referenceColor = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MaterialTheme.colorScheme.outlineVariant
@@ -241,7 +247,7 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
         colors = CardDefaults.cardColors(containerColor = chartBackground)) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             val labelHeight = with(androidx.compose.ui.platform.LocalDensity.current) { 18.sp.toDp() }
-            val plotHeight = maxOf(190.dp,labelHeight*4+24.dp)
+            val plotHeight = maxOf(190.dp,labelHeight*maxOf(3,levelGuides.size)+24.dp)
             Row(Modifier.fillMaxWidth().height(plotHeight), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (!hasSamples) Text(stringResource(R.string.ui_no_recorded_samples),
@@ -328,21 +334,21 @@ private fun ResultChart(title: String, measure: ResultMeasure, charts: WorkoutCh
                 Text(clockFormat.format(Date(charts.start)),fontSize = 12.sp,color = referenceColor)
                 Text(clockFormat.format(Date(charts.end)),fontSize = 12.sp,color = referenceColor)
             }
-            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null, cadence = !includesRest)
+            if (zones != null || outputZones != null) ChartLevelLegend(if (includesRest) zoneTimes else null, cadence = !includesRest, training = zones?.count == 5)
         }
     }
     if (showInfo) AlertDialog(onDismissRequest = { showInfo = false },title = { Text(title) },
         text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(statistics)
-            Text(stringResource(if (includesRest) R.string.chart_info_help else R.string.row_output_help))
+            Text(stringResource(if (zones?.count == 5) R.string.hr_training_help else if (includesRest) R.string.chart_info_help else R.string.row_output_help))
             Text(stringResource(R.string.chart_filtered_help))
             Text(stringResource(R.string.ui_chart_started_finished,
                 clockFormat.format(Date(charts.start)), clockFormat.format(Date(charts.end))))
             if (charts.estimatedClock) Text(stringResource(R.string.ui_chart_estimated_clock))
             if (currentHeart) Text(stringResource(R.string.ui_chart_current_heart_zones))
             if (zones != null) {
-                (0..3).forEach { zone ->
-                    Text("${stringResource(chartLevelName(zone,!includesRest))}: ${zones.bounds(zone)}")
+                (0 until zones.count).forEach { zone ->
+                    Text("${stringResource(heartZoneName(zone,zones.count==5))}: ${zones.bounds(zone)}")
                     if (zoneTimes != null) Text("${formatAxisTime(zoneTimes.seconds[zone].roundToInt())} · ${zoneTimes.percent(zone).roundToInt()}%",
                         style = MaterialTheme.typography.bodySmall)
                 }
