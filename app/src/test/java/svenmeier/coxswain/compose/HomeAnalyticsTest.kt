@@ -1,11 +1,30 @@
 package svenmeier.coxswain.compose
 
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import svenmeier.coxswain.gym.Workout
 import java.util.Calendar
 
 class HomeAnalyticsTest {
+    @Test fun lastRowSkipsPlanSessionsAndStillFindsTheLatestStandaloneRow() {
+        val ordinary=Workout().apply { start.set(200L) }
+        val older=Workout().apply { start.set(100L) }
+        val plan=Workout().apply { start.set(400L);planEnrollment.set("enrollment");planSession.set(0) }
+        val previousAttempt=Workout().apply { start.set(300L);planEnrollment.set("old-enrollment");planSession.set(2) }
+        val rows=listOf(plan,older,previousAttempt,ordinary)
+        assertSame(ordinary,lastStandaloneWorkout(rows))
+    }
+    @Test fun onlyPlanHistoryHasNoStandaloneLastRowCard() {
+        assertNull(lastStandaloneWorkout(emptyList()))
+        assertNull(lastStandaloneWorkout(listOf(Workout().apply { planEnrollment.set("plan");planSession.set(3) })))
+        assertNull(lastStandaloneWorkout(listOf(Workout().apply { planSession.set(1) })))
+    }
+    @Test fun programNamesDoNotDeterminePlanParticipation() {
+        val ordinary=Workout().apply { programName.set("Pete's Plan 5000m");start.set(100L) }
+        assertSame(ordinary,lastStandaloneWorkout(listOf(ordinary)))
+    }
     private fun instant(year: Int, month: Int, day: Int): Long = Calendar.getInstance().apply {
         clear(); set(year, month, day, 12, 0, 0)
     }.timeInMillis

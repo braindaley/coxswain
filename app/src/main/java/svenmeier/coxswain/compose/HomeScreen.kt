@@ -46,6 +46,11 @@ private val HomeHeroColor = Color(0xFF052F43)
 private val HeroControl = Color(0xFF16475B)
 private val HeroBlue = Color(0xFF0B63F6)
 
+/** Plan sessions must be chosen from the active week's remaining rows, never Row again. */
+internal fun lastStandaloneWorkout(workouts: List<Workout>): Workout? = workouts
+    .filter { it.planEnrollment.get().isNullOrBlank() && (it.planSession.get() ?: -1) < 0 }
+    .maxByOrNull { it.start.get() }
+
 @Composable
 fun HomeScreen(
     gym: Gym? = null,
@@ -80,7 +85,7 @@ fun HomeScreen(
             if (peteStore?.state()?.started == true) {
                 PetePlanHomeCard(peteStore, onOpenPetePlan, onPeteSession)
             }
-            gym?.getAllWorkouts()?.list()?.maxByOrNull { it.start.get() }?.let { last ->
+            gym?.getAllWorkouts()?.list()?.let(::lastStandaloneWorkout)?.let { last ->
                 LastWorkoutCard(last, { onWorkoutDetails(last) }, { onRowAgain(last) })
             }
             gym?.let { HomeProgress(it) { onQuickStart("Duration") } }
