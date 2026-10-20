@@ -180,7 +180,18 @@ public class Gym {
         Workout interrupted = new Workout();
         for (Workout saved : repository.query(interrupted, equal(interrupted.status, WorkoutStatus.ACTIVE)).list()) {
             saved.status.set(WorkoutStatus.ENDED_EARLY);
-            saved.completed.set(saved.start.get() + saved.duration.get() * 1000L);
+            // Active duration excludes pauses. Recover the wall clock from the
+            // persisted pause total and last valid sample, never today's restart time.
+            long finish = saved.start.get() +
+                    (Math.max(0L, saved.duration.get()) + Math.max(0L, saved.pausedDuration.get())) * 1000L;
+            Snapshot sample = new Snapshot();
+            Snapshot latest = repository.query(sample, all(
+                    equal(sample.workout, saved),
+                    greaterEqual(sample.recordedAt, saved.start.get()),
+                    Where.lessEqual(sample.recordedAt, System.currentTimeMillis())))
+                    .first(Order.descending(sample.recordedAt));
+            if (latest != null) finish = Math.max(finish, latest.recordedAt.get());
+            saved.completed.set(finish);
             repository.merge(saved);
         }
         

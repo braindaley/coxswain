@@ -231,9 +231,6 @@
         android:title="@string/preference_hardware_title"
         >
 
-        <Preference android:key="performance_zones" android:title="@string/output_zones_title"
-            android:summary="@string/output_zones_summary" />
-
         <Preference android:key="heart_rate_zones" android:title="@string/hr_zones_title"
             android:summary="@string/hr_zones_summary" />
 

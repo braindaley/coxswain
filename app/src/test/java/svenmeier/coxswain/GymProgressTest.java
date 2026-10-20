@@ -19,6 +19,7 @@ import svenmeier.coxswain.gym.Difficulty;
 import svenmeier.coxswain.gym.Measurement;
 import svenmeier.coxswain.gym.Program;
 import svenmeier.coxswain.gym.Segment;
+import svenmeier.coxswain.gym.Snapshot;
 import svenmeier.coxswain.gym.Workout;
 import svenmeier.coxswain.gym.WorkoutStatus;
 
@@ -112,6 +113,41 @@ public class GymProgressTest {
         assertEquals(100, recovered.distance.get().intValue());
         assertFalse(gym.hasActiveSession());
         assertTrue(gym.createBackup().contains("ENDED_EARLY"));
+    }
+
+    @Test
+    public void interruptedRecoveryUsesLatestSampleOrPersistedPausesWithoutCountingDowntime() throws Exception {
+        long start = System.currentTimeMillis() - 3600_000L;
+        Field field = Gym.class.getDeclaredField("repository");
+        field.setAccessible(true);
+        Repository repository = (Repository) field.get(gym);
+        for (int scenario = 0; scenario < 3; scenario++) {
+            Workout workout = new Workout(null);
+            workout.start.set(start + scenario * 1000L);
+            workout.duration.set(120);
+            workout.pausedDuration.set(60);
+            workout.status.set(WorkoutStatus.ACTIVE);
+            gym.mergeWorkout(workout);
+            Snapshot sample = new Snapshot();
+            sample.workout.set(workout);
+            sample.recordedAt.set(scenario == 0 ? workout.start.get() + 200_000L
+                    : scenario == 1 ? 0L : System.currentTimeMillis() + 3600_000L);
+            repository.insert(sample);
+        }
+        repository.close();
+        Constructor<Gym> constructor = Gym.class.getDeclaredConstructor(Context.class);
+        constructor.setAccessible(true);
+        gym = constructor.newInstance(context);
+        gym.initialize();
+        for (Workout recovered : gym.getAllWorkouts().list()) {
+            int scenario = (int) ((recovered.start.get() - start) / 1000L);
+            assertEquals(recovered.start.get() + (scenario == 0 ? 200_000L : 180_000L),
+                    recovered.completed.get().longValue());
+            assertEquals(WorkoutStatus.ENDED_EARLY, recovered.status.get());
+            assertEquals(120, recovered.duration.get().intValue());
+            assertEquals(60, recovered.pausedDuration.get().intValue());
+        }
+        assertEquals(3, gym.getAllWorkouts().count());
     }
 
     @Test

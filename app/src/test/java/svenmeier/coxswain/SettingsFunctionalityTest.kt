@@ -19,6 +19,10 @@ class SettingsFunctionalityTest {
             val activity = controller.get()
             activity.supportFragmentManager.executePendingTransactions()
             val fragment = activity.supportFragmentManager.findFragmentByTag("settings") as SettingsFragment
+            assertNull(fragment.findPreference<Preference>("performance_zones"))
+            val heartZones = fragment.findPreference<Preference>("heart_rate_zones")!!
+            assertTrue(heartZones.isVisible)
+            assertNotNull(heartZones.onPreferenceClickListener)
             val display = activity.getSharedPreferences("live_row_display", Context.MODE_PRIVATE)
             display.edit().putString("metrics", "custom").commit()
             val reset = fragment.findPreference<Preference>(activity.getString(R.string.preference_workout_bindings_reset))!!
