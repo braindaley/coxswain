@@ -152,6 +152,54 @@ class GoalDisplayTest {
         assertEquals(120, getValueForBinding(ValueBinding.DURATION, gym))
     }
 
+    @Test fun averageSplitExcludesRecoveryTimeAndDistanceForOrdinaryAndPlanIntervals() {
+        val context = RuntimeEnvironment.getApplication()
+        context.deleteDatabase("gym")
+        val constructor = Gym::class.java.getDeclaredConstructor(Context::class.java).apply { isAccessible = true }
+        val gym = constructor.newInstance(context)
+        Gym::class.java.getDeclaredMethod("initialize").apply { isAccessible = true }.invoke(gym)
+        try {
+            for (plan in listOf(false, true)) {
+                val program = Program("Work and recovery").apply {
+                    getSegment(0).setDuration(120)
+                    addSegment(Segment(Difficulty.REST).setDuration(60))
+                    addSegment(Segment(Difficulty.MEDIUM).setDuration(120))
+                }
+                if (plan) gym.startPlanSession(program, "test-enrollment", 1, 1, 1, "NONE", 0, 0L, null)
+                else gym.select(program)
+                assertEquals(0, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                fun sample(seconds: Int, meters: Int) {
+                    gym.onMeasured(Measurement().apply { duration = seconds; distance = meters; strokes = meters / 10 })
+                }
+                sample(120, 500)
+                assertEquals(120, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                sample(150, 520) // Recovery drifting must not change average work split.
+                assertEquals(120, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                gym.pause()
+                sample(160, 525)
+                gym.resume()
+                assertEquals(120, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                sample(190, 545) // Normalized time 180; recovery has finished.
+                assertEquals(120, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                sample(310, 1045) // Normalized work totals: 240 seconds, 1,000 meters.
+                assertEquals(120, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+                val workout = gym.complete()!!
+                val saved = svenmeier.coxswain.WorkoutStatistics(workout, gym.getSnapshots(workout).list())
+                assertEquals(240, saved.workSeconds)
+                assertEquals(1000, saved.workMeters)
+                assertEquals(120, saved.averageSplit)
+            }
+            gym.startFreeRow()
+            gym.onMeasured(Measurement().apply { duration = 180; distance = 500 })
+            assertEquals(180, getValueForBinding(ValueBinding.AVERAGE_SPLIT, gym))
+            gym.endEarly()
+        } finally {
+            val field = Gym::class.java.getDeclaredField("repository").apply { isAccessible = true }
+            (field.get(gym) as propoid.db.Repository).close()
+            context.deleteDatabase("gym")
+        }
+    }
+
     @Test fun liveMetricFormattingPreservesRealisticLargeValues() {
         val context = RuntimeEnvironment.getApplication()
         val tenThousand = "%,d".format(Locale.getDefault(), 10_000)

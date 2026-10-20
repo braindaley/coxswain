@@ -843,7 +843,11 @@ internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
             calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calendar.get(java.util.Calendar.MINUTE)
         }
         ValueBinding.SPLIT -> if (m.speed > 0) 50000 / m.speed else 0
-        ValueBinding.AVERAGE_SPLIT -> if (m.distance > 0) m.duration * 500 / m.distance else 0
+        ValueBinding.AVERAGE_SPLIT -> {
+            // Work totals exclude both completed rests and the rest in progress.
+            val meters = gym.planLiveDistance
+            if (meters > 0) (gym.planActiveSeconds * 500L / meters).toInt() else 0
+        }
         ValueBinding.DELTA_DISTANCE -> {
             val pace = gym.pace
             if (pace != null && pace.duration.get() > 0) {
