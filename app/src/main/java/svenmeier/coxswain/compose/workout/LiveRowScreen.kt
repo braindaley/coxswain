@@ -45,6 +45,7 @@ import svenmeier.coxswain.trainingZoneTileColors
 import svenmeier.coxswain.Gym
 import svenmeier.coxswain.R
 import svenmeier.coxswain.gym.Difficulty
+import svenmeier.coxswain.gym.IntervalRailReplay
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
@@ -447,19 +448,28 @@ fun MetricCell(
 }
 
 @Composable
-private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
+internal fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val segments = gym.program?.getSegments().orEmpty()
-    val activeIndex = segments.indexOfFirst { it === gym.progress?.segment }.coerceAtLeast(0)
+    val activeIndex = segments.indexOfFirst { it === gym.progress?.segment }.takeIf { it >= 0 }
+        ?: if (gym.getMeasurement().duration > 0 && gym.progress == null) segments.lastIndex.coerceAtLeast(0) else 0
     val weights = segments.map { it.asDuration().coerceAtLeast(1).toFloat() }
     val total = weights.sum().coerceAtLeast(1f)
-    val completion = gym.progress?.completion()?.coerceIn(0f, 1f) ?: 0f
-    val position = if (weights.isNotEmpty())
-        (weights.take(activeIndex).sum() + weights[activeIndex] * completion) / total else completion
+    val completion = gym.progress?.completion()?.coerceIn(0f, 1f)
+        ?: if (gym.getMeasurement().duration > 0 && segments.isNotEmpty()) 1f else 0f
+    val position = if (segments.isNotEmpty())
+        IntervalRailReplay.position(gym.program!!, activeIndex, completion) else completion
     val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
         ?: planRaceDisplay(gym)
+    // Distance comparison and interval position are different quantities. During recovery,
+    // meters stay still while each marker must continue through its own recovery band.
+    val currentPosition = if (segments.size > 1) position else race?.currentProgress ?: position
+    val bestPosition = if (segments.size > 1 && race != null) {
+        if (gym.pace != null) gym.getPaceRailProgress(gym.getMeasurement().duration)
+        else IntervalRailReplay.paceProgress(gym.program!!, gym.planTargetSplitSeconds, gym.getMeasurement().duration.toFloat())
+    } else race?.bestProgress ?: 0f
     Canvas(modifier.padding(vertical = 4.dp).semantics {
-        contentDescription = if (race != null) "Live row ${(race.currentProgress * 100).toInt()} percent, ${if (gym.hasPlanPaceTarget()) "target pace" else "saved row"} ${(race.bestProgress * 100).toInt()} percent"
+        contentDescription = if (race != null) "Live row ${(currentPosition * 100).toInt()} percent, ${if (gym.hasPlanPaceTarget()) "target pace" else "saved row"} ${(bestPosition * 100).toInt()} percent"
         else "Workout ${(position * 100).toInt()} percent complete"
     }) {
         val laneWidth = 9.dp.toPx()
@@ -486,8 +496,8 @@ private fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
             drawLine(marker, Offset(x - 2.dp.toPx(), y), Offset(x + laneWidth + 2.dp.toPx(), y), 4.dp.toPx(), StrokeCap.Round)
         }
         if (race != null) {
-            lane(2.dp.toPx(), race.currentProgress, Color(0xFF0B8FFF), Color.White)
-            lane(18.dp.toPx(), race.bestProgress, Color(0xFFFFCD72), Color(0xFFFFCD72))
+            lane(2.dp.toPx(), currentPosition, Color(0xFF0B8FFF), Color.White)
+            lane(18.dp.toPx(), bestPosition, Color(0xFFFFCD72), Color(0xFFFFCD72))
         } else if (segments.size > 1) {
             val x = (size.width - laneWidth) / 2
             var bottom = size.height

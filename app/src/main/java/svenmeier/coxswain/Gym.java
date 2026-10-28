@@ -54,6 +54,7 @@ import svenmeier.coxswain.gym.SessionType;
 import svenmeier.coxswain.gym.Segment;
 import svenmeier.coxswain.gym.Snapshot;
 import svenmeier.coxswain.gym.RaceReplay;
+import svenmeier.coxswain.gym.IntervalRailReplay;
 import svenmeier.coxswain.gym.Workout;
 import svenmeier.coxswain.gym.WorkoutDefinition;
 import svenmeier.coxswain.gym.WorkoutStatus;
@@ -129,6 +130,7 @@ public class Gym {
 
     private Workout replayWorkout;
     private RaceReplay replay;
+    private IntervalRailReplay railReplay;
     private int replayScoringDistance;
     private boolean replayEstimated;
     private boolean targetReached;
@@ -970,6 +972,9 @@ public class Gym {
             List<Snapshot> samples = new ArrayList<>(getSnapshots(pace).list());
             samples.sort((left, right) -> Long.compare(Row.getID(left), Row.getID(right)));
             replay = new RaceReplay(pace, samples, true);
+            Program definition = WorkoutDefinition.thaw(pace.programDefinition.get());
+            railReplay = definition != null && definition.getSegmentsCount() > 0
+                    ? new IntervalRailReplay(definition, pace, samples) : null;
             replayEstimated = samples.isEmpty() || samples.stream().anyMatch(sample -> sample.duration.get() == null || sample.duration.get() <= 0);
             replayScoringDistance = activeDistance(pace);
             replayWorkout = pace;
@@ -980,6 +985,11 @@ public class Gym {
     public float getPaceDistanceAt(int seconds) {
         RaceReplay value = paceReplay();
         return value == null ? 0f : Math.min(replayScoringDistance, value.distanceAt(seconds));
+    }
+
+    public float getPaceRailProgress(int seconds) {
+        paceReplay();
+        return pace != null && railReplay != null ? railReplay.progressAt(seconds) : 0f;
     }
 
     public float getPaceTimeAtDistance(int meters) {
