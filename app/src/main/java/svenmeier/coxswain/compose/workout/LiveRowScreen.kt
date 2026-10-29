@@ -51,6 +51,8 @@ import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutDefinition
+import svenmeier.coxswain.pete.peteLiveInstruction
+import svenmeier.coxswain.pete.peteSourceDate
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -518,7 +520,7 @@ internal fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
 }
 
 @Composable
-private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
+internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val segments = gym.program?.getSegments().orEmpty()
     val active = gym.progress?.segment ?: segments.firstOrNull()
@@ -535,6 +537,10 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     } else null
     val referenceValue = reference?.third.orEmpty()
     val finishReadout = reference?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
+    val coaching = if (gym.isPlanSession) peteLiveInstruction(
+        gym.planGoalKind, gym.planGoalValue, active?.speed?.get() ?: 0, rest != null,
+        WorkoutDefinition.ranksByDistance(gym.program)
+    ) else null
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
         race != null && finishReadout != null -> finishReadout
@@ -582,14 +588,19 @@ private fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
         if (race != null) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
-                Text(if (gym.hasPlanPaceTarget()) "━ Target · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
-                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else if (gym.isPlanSession) "Plan reference" else "Saved best"} · ${referenceValue}",
+                Text(if (gym.hasPlanPaceTarget()) "━ Target pace"
+                     else if (gym.isPlanSession) "━ Previous row · ${peteSourceDate(gym.pace!!.start.get())}"
+                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else "Saved best"} · ${referenceValue}",
                     modifier = Modifier.weight(1f), color = Color(0xFFFFCD72), fontSize = 15.sp,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         } else {
             Spacer(Modifier.height(8.dp))
-            Text(detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
+            Text(coaching ?: detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
+        }
+        if (race != null && coaching != null) {
+            Text(coaching, modifier = Modifier.padding(top = 6.dp), color = Color(0xFFC5D7E2),
+                fontSize = 20.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

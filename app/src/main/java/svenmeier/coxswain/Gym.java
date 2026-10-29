@@ -557,6 +557,9 @@ public class Gym {
 
     public boolean isPlanSession() { return planEnrollment != null; }
 
+    public String getPlanGoalKind() { return planGoalKind; }
+    public int getPlanGoalValue() { return planGoalValue; }
+
     public boolean hasPlanRateCap() { return "RATE_CAP".equals(planGoalKind); }
 
     /** Seconds of actual rowing; planned rests and pauses cannot advance a virtual pace. */

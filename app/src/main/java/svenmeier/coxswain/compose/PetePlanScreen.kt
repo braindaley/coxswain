@@ -229,7 +229,7 @@ fun PetePlanScreen(
                 Button(
                     onClick = { brief = null; onStartWorkout(session, goal, current) },
                     enabled = canStart && !requiredToday
-                ) { Text(if (goal is PeteGoal.Speed && goal.firstPieces == 0 || goal is PeteGoal.RowAgainst) "Row against target" else "Start row") }
+                ) { Text(presentPeteGoal(goal, { sourceLabel(it, store) }, store::averageSplit)?.startLabel ?: "Start row") }
             },
             dismissButton = { TextButton(onClick = { brief = null }) { Text("Done") } }
         )
@@ -280,39 +280,12 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
 
 @Composable
 private fun GoalBrief(goal: PeteGoal, store: PetePlanStore) {
-    val title: String
-    val value: String
-    val detail: String
-    when (goal) {
-        is PeteGoal.Speed -> {
-            title = if (goal.firstPieces > 0) "SPEED TARGET · FIRST ${goal.firstPieces} PIECES" else "SPEED GOAL · ROW AGAINST PACE"
-            value = "${clock(goal.splitSeconds)} /500 m"
-            detail = "Based on ${sourceLabel(goal.source, store)}. The target holds a steady pace."
-        }
-        is PeteGoal.StrokeRateCap -> {
-            title = "STROKE-RATE CEILING"; value = "≤ ${goal.spm} SPM"
-            detail = goal.description.ifBlank { "Stay at or below this rate while focusing on technique." }
-        }
-        is PeteGoal.StrokeRate -> {
-            title = "STROKE-RATE TARGET"; value = "${goal.spm} SPM"
-            detail = "Hold a steady rate while focusing on easy efficiency."
-        }
-        is PeteGoal.RowAgainst -> {
-            title = "ROW AGAINST"; value = goal.source.programName("Previous row")
-            detail = "Race the actual recorded progress from ${sourceLabel(goal.source, store)}."
-        }
-        is PeteGoal.Reference -> {
-            title = "PACING REFERENCE"; value = "${clock(goal.splitSeconds)} /500 m"
-            detail = "${goal.description} Based on ${sourceLabel(goal.source, store)}."
-        }
-        is PeteGoal.Unavailable -> { title = "TARGET UNAVAILABLE"; value = "No completed reference yet"; detail = goal.description }
-        PeteGoal.None -> return
-    }
+    val presentation = presentPeteGoal(goal, { sourceLabel(it, store) }, store::averageSplit) ?: return
     Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(15.dp)) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
-            Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(detail, style = MaterialTheme.typography.bodySmall)
+            Text(presentation.title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(presentation.value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(presentation.detail, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
