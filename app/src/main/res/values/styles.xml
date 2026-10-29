@@ -5,6 +5,7 @@
         <item name="colorSecondary">@color/secondary</item>
         <item name="colorAccent">@color/accent</item>
 
+        <item name="actionBarTheme">@style/ThemeOverlay.Material3.Dark</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
         <item name="icon_more">@drawable/ic_more_vert_black_24dp</item>
@@ -13,11 +14,33 @@
     </style>
 
     <style name="DarkTheme" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorAccent">@color/accent</item>
+        <item name="colorPrimary">#8DB8FF</item>
+        <item name="colorOnPrimary">#0A1C35</item>
+        <item name="colorPrimaryDark">#0F141A</item>
+        <item name="colorPrimaryContainer">#203753</item>
+        <item name="colorOnPrimaryContainer">#E0EBFF</item>
+        <item name="colorSecondary">#A9C7EE</item>
+        <item name="colorOnSecondary">#10243D</item>
+        <item name="colorSecondaryContainer">#253448</item>
+        <item name="colorOnSecondaryContainer">#DCE7F5</item>
+        <item name="colorAccent">#8DB8FF</item>
+        <item name="colorControlActivated">#8DB8FF</item>
+        <item name="android:colorBackground">#0F141A</item>
+        <item name="android:windowBackground">#0F141A</item>
+        <item name="android:colorForeground">#E5EBF2</item>
+        <item name="android:textColorPrimary">#E5EBF2</item>
+        <item name="android:textColorSecondary">#AEBBCB</item>
+        <item name="android:statusBarColor">#0F141A</item>
+        <item name="android:navigationBarColor">#19212A</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="colorSurface">#19212A</item>
+        <item name="colorOnSurface">#E5EBF2</item>
+        <item name="colorSurfaceVariant">#26323F</item>
+        <item name="colorOnSurfaceVariant">#AEBBCB</item>
+        <item name="colorOutline">#798A9F</item>
 
+        <item name="actionBarTheme">@style/CoxswainDarkAppBar</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
         <item name="icon_more">@drawable/ic_more_vert_white_24dp</item>
@@ -35,8 +58,14 @@
         <item name="windowFixedHeightMinor">75%</item>
     </style>
 
+    <style name="CoxswainDarkAppBar" parent="ThemeOverlay.Material3.Dark">
+        <item name="colorSurface">#19212A</item>
+        <item name="colorOnSurface">#E5EBF2</item>
+        <item name="colorPrimary">#8DB8FF</item>
+    </style>
+
     <style name="AppBar">
-        <item name="android:theme">@style/ThemeOverlay.Material3.Dark</item>
+        <item name="android:theme">?attr/actionBarTheme</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
     </style>

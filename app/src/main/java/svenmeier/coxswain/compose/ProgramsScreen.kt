@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -190,6 +191,10 @@ fun ProgramCard(
                 }
                 Button(
                     onClick = onStart,
+                    colors = if (MaterialTheme.colorScheme.surface.luminance() < .4f)
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                    else ButtonDefaults.buttonColors(),
                     shape = MaterialTheme.shapes.extraLarge,
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     modifier = Modifier.height(36.dp)

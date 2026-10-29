@@ -47,13 +47,18 @@ class DarkThemeContrastTest {
             assertContrast("main text on card", colors.onSurface, colors.surface, 4.5)
             assertContrast("secondary text on background", colors.onSurfaceVariant, colors.background, 4.5)
             assertContrast("secondary text on card", colors.onSurfaceVariant, colors.surface, 4.5)
-            assertContrast("selected toggle text", colors.primary, colors.surface, 4.5)
+            assertContrast("selected toggle text", colors.primary, colors.surfaceContainerHighest, 4.5)
             assertContrast("button text", colors.onPrimary, colors.primary, 4.5)
             assertContrast("chip text", colors.primary, colors.primaryContainer, 4.5)
             assertContrast("secondary container text", colors.onSecondaryContainer, colors.secondaryContainer, 4.5)
             assertContrast("error text", colors.error, colors.background, 4.5)
             assertContrast("input outline", colors.outline, colors.surface, 3.0)
-            assertContrast("card/divider outline", colors.outlineVariant, colors.surface, 3.0)
+            assertContrast("input outline on raised controls", colors.outline, colors.surfaceContainerHighest, 3.0)
+            assertContrast("secondary text on dialog", colors.onSurfaceVariant, colors.surfaceContainerHigh, 4.5)
+            assertContrast("main text on raised control", colors.onSurface, colors.surfaceContainerHighest, 4.5)
+            // Decorative separators do not convey control boundaries; they can be softer.
+            assertTrue(colors.surfaceContainerHighest != colors.surface)
+            assertTrue(colors.outlineVariant != colors.outline)
         }
     }
 

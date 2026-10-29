@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -56,7 +57,10 @@ fun SingleSelectToggleGroup(
             options.forEach { option ->
                 val isSelected = option == selectedOption
                 Surface(
-                    color = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+                    color = if (isSelected) {
+                        if (MaterialTheme.colorScheme.surface.luminance() < .4f) MaterialTheme.colorScheme.surfaceContainerHighest
+                        else MaterialTheme.colorScheme.surface
+                    } else Color.Transparent,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                     shadowElevation = if (isSelected) 1.dp else 0.dp,
                     modifier = Modifier
