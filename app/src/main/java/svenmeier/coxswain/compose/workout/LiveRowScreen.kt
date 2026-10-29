@@ -103,8 +103,12 @@ fun LiveRowScreen(
         gym.program != null -> gym.program.name.get()?.uppercase() ?: "WORKOUT"
         else -> "FREE ROW"
     }
-    val goalBinding = activeSegment?.let(::goalBinding)
-    val goal = if (goalBinding != null) goalDisplay(goalBinding, activeSegment, gym.getMeasurement(), gym.hasPlanRateCap()) else null
+    val goalBinding = activeSegment?.let { goalBinding(it, gym.planGoalKind) }
+    val smoother = remember(gym.sessionGeneration, activeSegment) { LiveGoalSmoother() }
+    val feedbackMeasurement = smoother.update(gym.getMeasurement())
+    val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
+    val goal = if (goalBinding != null) goalDisplay(goalBinding, activeSegment, feedbackMeasurement, gym.hasPlanRateCap(), exactSplit) else null
+    val displayMetrics = metricsWithGoal(activeMetrics, goalBinding)
     var countdownTick by remember { mutableIntStateOf(0) }
     LaunchedEffect(rest != null, gym.isPaused) {
         if (rest != null && !gym.isPaused) {
@@ -123,11 +127,6 @@ fun LiveRowScreen(
                 (value.remaining.substringAfter(':').toIntOrNull() ?: 0)
             value.copy(remaining = formatClock((baseSeconds - elapsed).coerceAtLeast(0)))
         } else value
-    }
-    LaunchedEffect(goalBinding) {
-        if (goalBinding != null && goalBinding !in activeMetrics) {
-            activeMetrics[3.coerceAtMost(activeMetrics.lastIndex)] = goalBinding
-        }
     }
     LaunchedEffect(rest != null) {
         if (rest != null) {
@@ -254,7 +253,8 @@ fun LiveRowScreen(
                     RestCountdownCard(visibleRest, Modifier.weight(1f).fillMaxWidth())
                 } else {
                     MetricGrid(
-                        metrics = activeMetrics, gym = gym, refreshTick = refreshTick,
+                        metrics = displayMetrics, gym = gym, refreshTick = refreshTick,
+                        feedbackMeasurement = feedbackMeasurement,
                         goalBinding = goalBinding, goal = goal, isEditing = isEditingDisplay,
                         selectedSlotIndex = selectedSlotIndex,
                         onMetricSelected = { selectedSlotIndex = it },
@@ -269,10 +269,12 @@ fun LiveRowScreen(
     if (isEditingDisplay && selectedSlotIndex >= 0) {
         MetricPickerDialog(
             positionIndex = selectedSlotIndex,
-            currentBinding = activeMetrics[selectedSlotIndex],
+            currentBinding = displayMetrics[selectedSlotIndex],
             onDismiss = { selectedSlotIndex = -1 },
             onSelect = { newBinding ->
-                activeMetrics[selectedSlotIndex] = newBinding
+                val changed = displayMetrics.toMutableList().apply { this[selectedSlotIndex] = newBinding }
+                activeMetrics.clear()
+                activeMetrics.addAll(changed)
                 saveLiveRowMetrics(context, activeMetrics)
                 selectedSlotIndex = -1
             }
@@ -303,6 +305,7 @@ private fun MetricGrid(
     refreshTick: Int,
     goalBinding: ValueBinding?,
     goal: GoalDisplay?,
+    feedbackMeasurement: Measurement,
     isEditing: Boolean,
     selectedSlotIndex: Int,
     onMetricSelected: (Int) -> Unit,
@@ -318,11 +321,13 @@ private fun MetricGrid(
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
             val rawValue = getValueForBinding(binding, gym)
-            if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ')
+            if (binding == goalBinding && binding == ValueBinding.SPLIT)
+                formatMetricValue(binding, if(feedbackMeasurement.speed > 0) (50000f/feedbackMeasurement.speed).roundToInt() else 0, context)
+            else if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ')
             else formatMetricValue(binding, rawValue, context)
         }
         val availableWidthPx = with(density) { (cellWidth - 24.dp).roundToPx() }.coerceAtLeast(1)
-        val availableHeightPx = with(density) { (cellHeight - 52.dp).roundToPx() }.coerceAtLeast(1)
+        val availableHeightPx = with(density) { (cellHeight - 68.dp).roundToPx() }.coerceAtLeast(1)
         val baseMeasures = values.map { value ->
             textMeasurer.measure(AnnotatedString(value), style = TextStyle(fontSize = 100.sp, fontWeight = FontWeight.Medium)).size
         }
@@ -345,7 +350,8 @@ private fun MetricGrid(
                             onClick = { onMetricSelected(index) },
                             displayValue = values[index],
                             displayLabel = if (cellGoal != null) {
-                                "${getMetricTitleAndUnit(binding, context).first} · TO TARGET"
+                                if(binding == ValueBinding.SPLIT) "SPLIT · /500 M\n${cellGoal.feedback} · ${cellGoal.target.substringBefore(" /500") } target"
+                                else "${getMetricTitleAndUnit(binding, context).first} · TO TARGET"
                             } else null,
                             goalState = cellGoal?.state,
                             targetDescription = cellGoal?.target,
@@ -434,7 +440,7 @@ fun MetricCell(
                 ),
                 color = if (zoneLabel != null) Color.White else Color(0xFFCAD4E1),
                 textAlign = TextAlign.Center,
-                maxLines = 2
+                maxLines = if (targetDescription != null) 3 else 2
             )
         }
         if (isEditing) {
@@ -695,9 +701,12 @@ private fun getMetricTitleAndUnit(binding: ValueBinding, context: Context): Pair
     }
 }
 
-private fun goalBinding(segment: Segment): ValueBinding? = when {
+internal fun goalBinding(segment: Segment, planKind: String? = null): ValueBinding? = when {
+    segment.difficulty.get() == Difficulty.REST -> null
+    planKind in listOf("SPEED", "SPEED_PHASE") && segment.speed.get() > 0 -> ValueBinding.SPLIT
+    planKind in listOf("RATE", "RATE_CAP") && segment.strokeRate.get() > 0 -> ValueBinding.STROKE_RATE
     segment.strokeRate.get() > 0 -> ValueBinding.STROKE_RATE
-    segment.speed.get() > 0 -> ValueBinding.SPEED
+    segment.speed.get() > 0 -> ValueBinding.SPLIT
     segment.power.get() > 0 -> ValueBinding.POWER
     segment.pulse.get() > 0 -> ValueBinding.PULSE
     else -> null
@@ -757,9 +766,9 @@ internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: 
     return RestDisplay(index + 1, segments.size, remaining, nextDescription, activeTitle)
 }
 
-data class GoalDisplay(val variance: String, val target: String, val state: Int)
+data class GoalDisplay(val variance: String, val target: String, val state: Int, val feedback: String? = null)
 
-internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement, rateCap: Boolean = false): GoalDisplay? {
+internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: Measurement, rateCap: Boolean = false, exactSplit: Int? = null): GoalDisplay? {
     if (segment == null || segment.getLimit() <= 0) return null
     return when {
         binding == ValueBinding.STROKE_RATE && segment.strokeRate.get() > 0 && rateCap -> {
@@ -777,9 +786,12 @@ internal fun goalDisplay(binding: ValueBinding, segment: Segment?, measurement: 
             GoalDisplay(value, String.format(Locale.getDefault(), "%.1f m/s", segment.speed.get() / 100f), stateFor(difference))
         }
         binding == ValueBinding.SPLIT && segment.speed.get() > 0 && measurement.speed > 0 -> {
-            val targetPace = 50000 / segment.speed.get()
-            val actualPace = 50000 / measurement.speed
-            signedGoal(targetPace - actualPace, "%d:%02d".format(targetPace / 60, targetPace % 60), " s", "%d:%02d /500 m".format(targetPace / 60, targetPace % 60))
+            val targetPace = exactSplit ?: (50000f / segment.speed.get()).roundToInt()
+            val actualPace = (50000f / measurement.speed).roundToInt()
+            val difference = targetPace - actualPace
+            signedGoal(difference, "%d:%02d".format(targetPace / 60, targetPace % 60), " s", "%d:%02d /500 m".format(targetPace / 60, targetPace % 60)).copy(
+                feedback = when { difference > 0 -> "$difference s faster"; difference < 0 -> "${-difference} s slower"; else -> "On target" }
+            )
         }
         else -> null
     }
