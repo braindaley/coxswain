@@ -103,12 +103,8 @@ fun LiveRowScreen(
         gym.program != null -> gym.program.name.get()?.uppercase() ?: "WORKOUT"
         else -> "FREE ROW"
     }
-    val goalBinding = activeSegment?.let { goalBinding(it, gym.planGoalKind) }
     val smoother = remember(gym.sessionGeneration, activeSegment) { LiveGoalSmoother() }
     val feedbackMeasurement = smoother.update(gym.getMeasurement())
-    val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
-    val goal = if (goalBinding != null) goalDisplay(goalBinding, activeSegment, feedbackMeasurement, gym.hasPlanRateCap(), exactSplit) else null
-    val displayMetrics = metricsWithGoal(activeMetrics, goalBinding)
     var countdownTick by remember { mutableIntStateOf(0) }
     LaunchedEffect(rest != null, gym.isPaused) {
         if (rest != null && !gym.isPaused) {
@@ -253,15 +249,15 @@ fun LiveRowScreen(
                     RestCountdownCard(visibleRest, Modifier.weight(1f).fillMaxWidth())
                 } else {
                     MetricGrid(
-                        metrics = displayMetrics, gym = gym, refreshTick = refreshTick,
+                        metrics = activeMetrics, gym = gym, refreshTick = refreshTick,
                         feedbackMeasurement = feedbackMeasurement,
-                        goalBinding = goalBinding, goal = goal, isEditing = isEditingDisplay,
+                        isEditing = isEditingDisplay,
                         selectedSlotIndex = selectedSlotIndex,
                         onMetricSelected = { selectedSlotIndex = it },
                         modifier = Modifier.weight(1f).fillMaxWidth()
                     )
                 }
-                LiveRowStatus(gym, visibleRest, refreshTick)
+                LiveRowStatus(gym, visibleRest, refreshTick, feedbackMeasurement)
             }
         }
     }
@@ -269,10 +265,10 @@ fun LiveRowScreen(
     if (isEditingDisplay && selectedSlotIndex >= 0) {
         MetricPickerDialog(
             positionIndex = selectedSlotIndex,
-            currentBinding = displayMetrics[selectedSlotIndex],
+            currentBinding = activeMetrics[selectedSlotIndex],
             onDismiss = { selectedSlotIndex = -1 },
             onSelect = { newBinding ->
-                val changed = displayMetrics.toMutableList().apply { this[selectedSlotIndex] = newBinding }
+                val changed = activeMetrics.toMutableList().apply { this[selectedSlotIndex] = newBinding }
                 activeMetrics.clear()
                 activeMetrics.addAll(changed)
                 saveLiveRowMetrics(context, activeMetrics)
@@ -303,8 +299,6 @@ private fun MetricGrid(
     metrics: List<ValueBinding>,
     gym: Gym,
     refreshTick: Int,
-    goalBinding: ValueBinding?,
-    goal: GoalDisplay?,
     feedbackMeasurement: Measurement,
     isEditing: Boolean,
     selectedSlotIndex: Int,
@@ -323,11 +317,10 @@ private fun MetricGrid(
             val rawValue = getValueForBinding(binding, gym)
             if (binding == ValueBinding.SPLIT)
                 formatMetricValue(binding, if(feedbackMeasurement.speed > 0) (50000f/feedbackMeasurement.speed).roundToInt() else 0, context)
-            else if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ')
             else formatMetricValue(binding, rawValue, context)
         }
         val availableWidthPx = with(density) { (cellWidth - 24.dp).roundToPx() }.coerceAtLeast(1)
-        val availableHeightPx = with(density) { (cellHeight - 68.dp).roundToPx() }.coerceAtLeast(1)
+        val availableHeightPx = with(density) { (cellHeight - 52.dp).roundToPx() }.coerceAtLeast(1)
         val baseMeasures = values.map { value ->
             textMeasurer.measure(AnnotatedString(value), style = TextStyle(fontSize = 100.sp, fontWeight = FontWeight.Medium)).size
         }
@@ -341,7 +334,6 @@ private fun MetricGrid(
                 Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                     rowMetrics.forEachIndexed { columnIndex, binding ->
                         val index = rowIndex * 2 + columnIndex
-                        val cellGoal = if (binding == goalBinding) goal else null
                         MetricCell(
                             binding = binding,
                             gym = gym,
@@ -349,12 +341,6 @@ private fun MetricGrid(
                             isSelected = selectedSlotIndex == index,
                             onClick = { onMetricSelected(index) },
                             displayValue = values[index],
-                            displayLabel = if (cellGoal != null) {
-                                if(binding == ValueBinding.SPLIT) "LIVE SPLIT · /500 M\n${cellGoal.feedback} · ${cellGoal.target.substringBefore(" /500") } target"
-                                else "${getMetricTitleAndUnit(binding, context).first} · TO TARGET"
-                            } else null,
-                            goalState = cellGoal?.state,
-                            targetDescription = cellGoal?.target,
                             valueFontSize = sharedFontSize,
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         )
@@ -526,7 +512,7 @@ internal fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
 }
 
 @Composable
-internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
+internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displayMeasurement: Measurement? = null) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val segments = gym.program?.getSegments().orEmpty()
     val active = gym.progress?.segment ?: segments.firstOrNull()
@@ -543,10 +529,20 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
     } else null
     val referenceValue = reference?.third.orEmpty()
     val finishReadout = reference?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
+    val smoother = remember(gym.sessionGeneration, active) { LiveGoalSmoother() }
+    val measurement = displayMeasurement ?: smoother.update(gym.getMeasurement())
+    val binding = active?.let { goalBinding(it, gym.planGoalKind) }
+    val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
+    val goal = if (rest == null && binding != null) goalDisplay(binding, active, measurement, gym.hasPlanRateCap(), exactSplit) else null
+    val feedback = if (goal != null && binding != null && active != null)
+        liveTargetFeedback(binding, active, measurement, goal, gym.hasPlanRateCap()) else null
     val coaching = if (gym.isPlanSession) peteLiveInstruction(
         gym.planGoalKind, gym.planGoalValue, active?.speed?.get() ?: 0, rest != null,
         WorkoutDefinition.ranksByDistance(gym.program)
     ) else null
+    val instruction = coaching ?: goal?.let {
+        "Target ${it.target}${if(binding == ValueBinding.STROKE_RATE) " SPM" else ""}"
+    }
     val primary = when {
         rest != null -> rest.next.substringBefore(" · ")
         race != null && finishReadout != null -> finishReadout
@@ -602,10 +598,15 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int) {
             }
         } else {
             Spacer(Modifier.height(8.dp))
-            Text(coaching ?: detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
+            Text(instruction ?: detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
         }
-        if (race != null && coaching != null) {
-            Text(coaching, modifier = Modifier.padding(top = 6.dp), color = Color(0xFFC5D7E2),
+        if (race != null && instruction != null) {
+            Text(instruction, modifier = Modifier.padding(top = 6.dp), color = Color(0xFFC5D7E2),
+                fontSize = 20.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        if (feedback != null) {
+            Text(feedback, modifier = Modifier.padding(top = 4.dp),
+                color = if (goal?.state == -1) Color(0xFFFF8A80) else Color(0xFF6DE0A8),
                 fontSize = 20.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }

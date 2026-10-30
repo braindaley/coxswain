@@ -20,11 +20,29 @@ internal class LiveGoalSmoother {
     }
 }
 
-internal fun metricsWithGoal(metrics: List<ValueBinding>, goal: ValueBinding?): List<ValueBinding> {
-    if(goal == null || goal in metrics) return metrics
-    val result = metrics.toMutableList()
-    if(result.isEmpty()) return listOf(goal)
-    val replacement = if(goal == ValueBinding.SPLIT) result.indexOf(ValueBinding.SPEED).takeIf { it >= 0 } else null
-    result[replacement ?: 2.coerceAtMost(result.lastIndex)] = goal
-    return result
+/** Target direction belongs below the user-selected metric grid. */
+internal fun liveTargetFeedback(binding: ValueBinding, segment: svenmeier.coxswain.gym.Segment,
+                                measurement: Measurement, goal: GoalDisplay, rateCap: Boolean): String? {
+    if(binding == ValueBinding.SPLIT) {
+        if(measurement.speed <= 0) return null
+        val split = (50000f / measurement.speed).roundToInt()
+        return "Now %d:%02d · %s".format(split/60,split%60,goal.feedback ?: "On target")
+    }
+    val actual: Int
+    val target: Int
+    val unit: String
+    when(binding) {
+        ValueBinding.STROKE_RATE -> { actual=measurement.strokeRate;target=segment.strokeRate.get();unit="SPM" }
+        ValueBinding.POWER -> { actual=measurement.power;target=segment.power.get();unit="W" }
+        ValueBinding.PULSE -> { actual=measurement.pulse;target=segment.pulse.get();unit="BPM" }
+        else -> return null
+    }
+    if(actual <= 0) return null
+    val difference=actual-target
+    val direction=when {
+        difference==0 -> if(rateCap) "At cap" else "On target"
+        difference>0 -> "$difference $unit above ${if(rateCap) "cap" else "target"}"
+        else -> "${-difference} $unit below ${if(rateCap) "cap" else "target"}"
+    }
+    return "Now $actual $unit · $direction"
 }

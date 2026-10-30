@@ -11,17 +11,10 @@ import svenmeier.coxswain.view.ValueBinding
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class LiveGoalFeedbackTest {
-    @Test fun splitTargetsSelectSplitAndKeepItVisibleInCustomizedLayouts() {
+    @Test fun splitTargetsUsePaceForBottomFeedback() {
         val work = Segment(Difficulty.MEDIUM).setSpeed(233)
         assertEquals(ValueBinding.SPLIT,goalBinding(work,"SPEED"))
         assertEquals(ValueBinding.SPLIT,goalBinding(work))
-        val layout = listOf(ValueBinding.DURATION,ValueBinding.DISTANCE,ValueBinding.POWER,ValueBinding.SPEED,ValueBinding.PULSE,ValueBinding.STROKE_RATE)
-        val displayed = metricsWithGoal(layout,ValueBinding.SPLIT)
-        assertEquals(ValueBinding.SPLIT,displayed[3])
-        assertEquals(ValueBinding.STROKE_RATE,displayed[5])
-        assertFalse(displayed.contains(ValueBinding.SPEED))
-        assertEquals(ValueBinding.SPEED,layout[3]) // Display overlay does not rewrite saved preferences.
-        assertEquals(displayed,metricsWithGoal(displayed,ValueBinding.SPLIT))
         work.strokeRate.set(24)
         assertEquals(ValueBinding.SPLIT,goalBinding(work,"SPEED"))
         assertEquals(ValueBinding.STROKE_RATE,goalBinding(work,"RATE_CAP"))
@@ -39,6 +32,17 @@ class LiveGoalFeedbackTest {
         assertNull(goalDisplay(ValueBinding.STROKE_RATE,work,Measurement().apply { strokeRate=24 }))
         assertNull(goalDisplay(ValueBinding.SPLIT,work,Measurement(),false,215))
     }
+    @Test fun directionIsExpressedInTheBottomCoachingReadout() {
+        val work=Segment(Difficulty.MEDIUM).setSpeed(233)
+        val m=Measurement().apply { speed=250 }
+        val goal=goalDisplay(ValueBinding.SPLIT,work,m,false,215)!!
+        assertEquals("Now 3:20 · 15 s faster",liveTargetFeedback(ValueBinding.SPLIT,work,m,goal,false))
+        work.setStrokeRate(24)
+        m.strokeRate=26
+        val cap=goalDisplay(ValueBinding.STROKE_RATE,work,m,true)!!
+        assertEquals("Now 26 SPM · 2 SPM above cap",liveTargetFeedback(ValueBinding.STROKE_RATE,work,m,cap,true))
+    }
+
     @Test fun fiveSecondFeedbackAverageDoesNotRewriteOrCountRepeatedHeartPackets() {
         val smoother = LiveGoalSmoother()
         fun read(t:Int,s:Int,r:Int=24) = smoother.update(Measurement().apply { duration=t;speed=s;strokeRate=r;power=100 })
