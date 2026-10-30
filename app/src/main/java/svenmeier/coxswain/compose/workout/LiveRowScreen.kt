@@ -321,7 +321,7 @@ private fun MetricGrid(
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
             val rawValue = getValueForBinding(binding, gym)
-            if (binding == goalBinding && binding == ValueBinding.SPLIT)
+            if (binding == ValueBinding.SPLIT)
                 formatMetricValue(binding, if(feedbackMeasurement.speed > 0) (50000f/feedbackMeasurement.speed).roundToInt() else 0, context)
             else if (binding == goalBinding && goal != null) goal.variance.substringBefore(' ')
             else formatMetricValue(binding, rawValue, context)
@@ -350,7 +350,7 @@ private fun MetricGrid(
                             onClick = { onMetricSelected(index) },
                             displayValue = values[index],
                             displayLabel = if (cellGoal != null) {
-                                if(binding == ValueBinding.SPLIT) "SPLIT · /500 M\n${cellGoal.feedback} · ${cellGoal.target.substringBefore(" /500") } target"
+                                if(binding == ValueBinding.SPLIT) "LIVE SPLIT · /500 M\n${cellGoal.feedback} · ${cellGoal.target.substringBefore(" /500") } target"
                                 else "${getMetricTitleAndUnit(binding, context).first} · TO TARGET"
                             } else null,
                             goalState = cellGoal?.state,
@@ -634,7 +634,7 @@ fun MetricPickerDialog(
     val options = listOf(
         ValueBinding.DISTANCE to "Distance (m)",
         ValueBinding.DURATION to "Duration (time)",
-        ValueBinding.SPLIT to "Split (/500m)",
+        ValueBinding.SPLIT to "Live split (5-second average, /500m)",
         ValueBinding.STROKE_RATE to "Stroke Rate (SPM)",
         ValueBinding.POWER to "Power (W)",
         ValueBinding.PULSE to "Heart Rate (BPM)",
@@ -643,7 +643,7 @@ fun MetricPickerDialog(
         ValueBinding.SPEED to "Speed (m/s)",
         ValueBinding.STROKE_RATIO to "Rhythm (recovery / drive)",
         ValueBinding.TIME to "Time of day",
-        ValueBinding.AVERAGE_SPLIT to "Average Split (/500m)",
+        ValueBinding.AVERAGE_SPLIT to "Work average split (all work intervals, /500m)",
         ValueBinding.DELTA_DISTANCE to "Distance delta",
         ValueBinding.DELTA_DURATION to "Time delta"
     )
@@ -685,14 +685,14 @@ private fun getMetricTitleAndUnit(binding: ValueBinding, context: Context): Pair
     return when (binding) {
         ValueBinding.DISTANCE -> "DISTANCE" to "M"
         ValueBinding.DURATION -> "DURATION" to "ELAPSED"
-        ValueBinding.SPLIT -> "SPLIT" to "/500 M"
+        ValueBinding.SPLIT -> "LIVE SPLIT" to "/500 M"
         ValueBinding.STROKE_RATE -> "STROKE RATE" to "SPM"
         ValueBinding.POWER -> "POWER" to "W"
         ValueBinding.PULSE -> "HEART RATE" to "BPM"
         ValueBinding.ENERGY -> "CALORIES" to "KCAL"
         ValueBinding.STROKES -> "STROKES" to "COUNT"
         ValueBinding.SPEED -> "SPEED" to "M/S"
-        ValueBinding.AVERAGE_SPLIT -> "AVG SPLIT" to "/500 M"
+        ValueBinding.AVERAGE_SPLIT -> "WORK AVG SPLIT" to "/500 M"
         ValueBinding.STROKE_RATIO -> "RHYTHM" to "RECOVERY / DRIVE"
         ValueBinding.TIME -> "TIME" to "CLOCK"
         ValueBinding.DELTA_DISTANCE -> "DISTANCE DELTA" to "M"

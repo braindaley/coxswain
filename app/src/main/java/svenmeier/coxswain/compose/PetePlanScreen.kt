@@ -137,7 +137,7 @@ fun PetePlanScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             pair.forEach { week ->
                                 val latestAttempt = store.latestAttempt(planState, week)
-                                val required = store.requiredComplete(planState, week, latestAttempt)
+                                val completion = store.weekCompletion(planState, week, latestAttempt)
                                 Card(
                                     modifier = Modifier.weight(1f).clickable { viewWeek = week; page = "week" },
                                     colors = CardDefaults.cardColors(containerColor = if (week == planState.activeWeek) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface),
@@ -145,9 +145,10 @@ fun PetePlanScreen(
                                 ) {
                                     Column(Modifier.padding(13.dp)) {
                                         Text("Week $week", fontWeight = FontWeight.Bold)
-                                        Text("$required/3 required", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                        Text("${completion.total}/5 rows", color = PlanBlue, fontWeight = FontWeight.Bold)
+                                        Text(completion.breakdown, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                                         LinearProgressIndicator(
-                                            progress = { required / 3f },
+                                            progress = { completion.total / 5f },
                                             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                                             color = PlanBlue
                                         )
@@ -164,7 +165,9 @@ fun PetePlanScreen(
                     val required = store.requiredComplete(planState, viewWeek, displayAttempt)
                     Text("Five rows. Your order.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     if (active) Text(planDateRange(planState), color = PlanBlue, fontWeight = FontWeight.Bold)
-                    Text("$required of 3 required complete", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val completion = store.weekCompletion(planState, viewWeek, displayAttempt)
+                    Text("${completion.total} of 5 rows complete", color = PlanBlue, fontWeight = FontWeight.Bold)
+                    Text(completion.breakdown, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (active && planState.pendingRollover) RolloverCard(planState, required, onDecision = {
                         store.resolveRollover(it); revision++; viewWeek = store.state().activeWeek
                     })
@@ -249,17 +252,20 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
             Spacer(Modifier.height(12.dp))
             Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text("Explore Pete's Plan") }
         } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Pete's Plan · Week ${state.activeWeek}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("${store.requiredComplete(state)}/3", color = PlanBlue, fontWeight = FontWeight.Bold)
+            val completion = store.weekCompletion(state)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Pete's Plan · Week ${state.activeWeek}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("${completion.total}/5 rows", color = PlanBlue, fontWeight = FontWeight.Bold)
             }
+            Text(completion.breakdown, color = PlanMuted, fontSize = 13.sp)
             Text(planDateRange(state), color = PlanMuted, fontSize = 13.sp)
             if (state.pendingRollover) {
                 Text("Week ended · choose whether to move on or repeat", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text("Review week") }
             } else if (state.finished) {
                 Text("Plan finished", color = PlanBlue, fontWeight = FontWeight.Bold)
-            } else {
+            }
+            run {
                 Text("REQUIRED", color = PlanMuted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 store.catalog.weeks[state.activeWeek - 1].take(3).forEach { session ->
                     val done = store.completedWorkout(state, state.activeWeek, state.activeAttempt, session.index) != null
@@ -276,6 +282,23 @@ fun PetePlanHomeCard(store: PetePlanStore, onOpen: () -> Unit, onSession: (Int) 
                 Text(if (state.finished) "View progress and manage plan" else "View all 24 weeks")
             }
         }
+    }
+}
+
+/** Recap credit belongs to the enrollment and attempt that recorded this row. */
+@Composable
+internal fun PeteWorkoutProgress(workout: Workout) {
+    val enrollment = workout.planEnrollment.get()?.takeIf { it.isNotBlank() } ?: return
+    val week = workout.planWeek.get() ?: return
+    val attempt = workout.planAttempt.get() ?: return
+    if (week !in 1..24 || attempt < 1) return
+    val context = LocalContext.current
+    val store = remember(context) { PetePlanStore(context, Gym.instance(context)) }
+    val completion = store.weekCompletion(PetePlanState(enrollmentId = enrollment, activeWeek = week, activeAttempt = attempt))
+    PlanCard {
+        Text("Pete's Plan · Week $week", fontWeight = FontWeight.Bold)
+        Text("${completion.total} of 5 rows complete", color = PlanBlue, fontWeight = FontWeight.Bold)
+        Text(completion.breakdown, color = PlanMuted, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -340,6 +363,8 @@ private fun PlanProgressChart(
                 }
             }
         }
+        val completion = store.weekCompletion(state, selectedWeek, store.latestAttempt(state, selectedWeek))
+        Text("${completion.total}/5 rows · ${completion.breakdown}", color = PlanMuted, fontSize = 12.sp)
         val selected = totals[(selectedWeek - 1).coerceIn(0, 23)]
         Text("Week $selectedWeek · ${NumberFormat.getIntegerInstance().format(selected.first)} m · ${selected.second / 60} min", color = PlanMuted, fontSize = 12.sp)
     }

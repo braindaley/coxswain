@@ -15,6 +15,7 @@ import svenmeier.coxswain.gym.Difficulty
 import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.gym.Program
 import svenmeier.coxswain.gym.Segment
+import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutStatus
 import svenmeier.coxswain.pete.PetePlanCatalog
 import svenmeier.coxswain.pete.PeteGoal
@@ -44,6 +45,33 @@ class PetePlanIntegrationTest {
         (field.get(gym) as Repository).close()
         context.deleteDatabase("gym")
         PreferenceManager.getDefaultSharedPreferences(context).edit().remove("petes_plan_state_v1").commit()
+    }
+
+    @Test fun weekCompletionCreditsOptionalRowsWithoutDoubleCountingOrUsingOtherAttempts() {
+        val store = PetePlanStore(context, gym)
+        val state = store.enroll()
+        fun add(session: Int, status: WorkoutStatus = WorkoutStatus.COMPLETED,
+                attempt: Int = state.activeAttempt, enrollment: String = state.enrollmentId) {
+            gym.mergeWorkout(Workout(null).apply {
+                this.status.set(status);planEnrollment.set(enrollment);planWeek.set(state.activeWeek)
+                planAttempt.set(attempt);planSession.set(session)
+            })
+        }
+        (0..3).forEach { add(it) }
+        add(1) // A duplicate does not count as a sixth prescribed row.
+        add(4, WorkoutStatus.ENDED_EARLY)
+        add(4, attempt = 2)
+        add(4, enrollment = "previous-enrollment")
+        val four = store.weekCompletion(state)
+        assertEquals(3, four.required)
+        assertEquals(1, four.optional)
+        assertEquals(4, four.total)
+        assertEquals("3/3 required · 1/2 optional", four.breakdown)
+        add(4)
+        assertEquals(5, store.weekCompletion(state).total)
+        assertEquals(3, store.requiredComplete(state))
+        assertEquals(2, store.optionalComplete(state))
+        assertEquals(0,store.weekCompletion(state,state.activeWeek+1,1).total)
     }
 
     @Test fun ordinaryIntervalPaceEstimateExcludesRest() {

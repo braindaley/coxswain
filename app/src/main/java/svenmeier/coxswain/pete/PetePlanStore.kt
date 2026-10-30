@@ -90,13 +90,17 @@ class PetePlanStore(context: Context, private val gym: Gym) {
 
     fun requiredComplete(state: PetePlanState = state()): Int = requiredComplete(state, state.activeWeek, state.activeAttempt)
 
-    fun requiredComplete(state: PetePlanState, week: Int, attempt: Int): Int = planWorkouts(state)
-        .asSequence().filter { it.planWeek.get() == week && it.planAttempt.get() == attempt }
-        .mapNotNull { it.planSession.get() }.filter { it in 0..2 }.distinct().count()
+    fun requiredComplete(state: PetePlanState, week: Int, attempt: Int): Int = weekCompletion(state, week, attempt).required
 
-    fun optionalComplete(state: PetePlanState = state()): Int = planWorkouts(state)
-        .asSequence().filter { it.planWeek.get() == state.activeWeek && it.planAttempt.get() == state.activeAttempt }
-        .mapNotNull { it.planSession.get() }.filter { it in 3..4 }.distinct().count()
+    fun optionalComplete(state: PetePlanState = state()): Int = weekCompletion(state, state.activeWeek, state.activeAttempt).optional
+
+    fun weekCompletion(state: PetePlanState, week: Int = state.activeWeek,
+                       attempt: Int = state.activeAttempt): PeteWeekCompletion {
+        val sessions = planWorkouts(state).asSequence()
+            .filter { it.planWeek.get() == week && it.planAttempt.get() == attempt }
+            .mapNotNull { it.planSession.get() }.toSet()
+        return PeteWeekCompletion(sessions.count { it in 0..2 }, sessions.count { it in 3..4 })
+    }
 
     fun completedWorkout(state: PetePlanState, week: Int, attempt: Int, index: Int): Workout? =
         planWorkouts(state).filter {
@@ -231,3 +235,9 @@ data class PeteTimeEstimate(
 
 private fun calendarWeekStart(today: LocalDate): LocalDate =
     today.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY))
+
+/** All five prescribed rows receive credit; advancement still depends on the three required rows. */
+data class PeteWeekCompletion(val required: Int, val optional: Int) {
+    val total get() = required + optional
+    val breakdown get() = "$required/3 required · $optional/2 optional"
+}

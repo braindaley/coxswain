@@ -36,8 +36,8 @@ class SplitGoalScreenTest {
             }
             compose.setContent { CoxswainTheme { LiveRowScreen(gym,tick,{},{},{}) } }
             compose.onNodeWithText("3:20").assertIsDisplayed()
-            compose.onNodeWithText("SPLIT · /500 M\n15 s faster · 3:35 target").assertIsDisplayed()
-            val split = compose.onNodeWithContentDescription("SPLIT 3:20, target 3:35 /500 m")
+            compose.onNodeWithText("LIVE SPLIT · /500 M\n15 s faster · 3:35 target").assertIsDisplayed()
+            val split = compose.onNodeWithContentDescription("LIVE SPLIT 3:20, target 3:35 /500 m")
             assertEquals(Color(0xFF126B4D).toArgb(),split.captureToImage().toPixelMap()[2,2].toArgb())
             val rate = compose.onNodeWithContentDescription("STROKE RATE 24")
             assertEquals(Color(0xFF042C3D).toArgb(),rate.captureToImage().toPixelMap()[2,2].toArgb())
@@ -45,8 +45,8 @@ class SplitGoalScreenTest {
                 gym.onMeasured(Measurement().apply { duration=6;distance=20;speed=220;strokeRate=36;power=75 });tick++
             }
             compose.onNodeWithText("3:47").assertIsDisplayed()
-            compose.onNodeWithText("SPLIT · /500 M\n12 s slower · 3:35 target").assertIsDisplayed()
-            val slower = compose.onNodeWithContentDescription("SPLIT 3:47, target 3:35 /500 m")
+            compose.onNodeWithText("LIVE SPLIT · /500 M\n12 s slower · 3:35 target").assertIsDisplayed()
+            val slower = compose.onNodeWithContentDescription("LIVE SPLIT 3:47, target 3:35 /500 m")
             assertEquals(Color(0xFF7A2836).toArgb(),slower.captureToImage().toPixelMap()[2,2].toArgb())
             val newRate = compose.onNodeWithContentDescription("STROKE RATE 36")
             assertEquals(Color(0xFF042C3D).toArgb(),newRate.captureToImage().toPixelMap()[2,2].toArgb())

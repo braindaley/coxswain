@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import propoid.db.Reference
 import svenmeier.coxswain.compose.CoxswainTheme
+import svenmeier.coxswain.compose.PeteWorkoutProgress
 import svenmeier.coxswain.gym.Workout
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -102,6 +103,10 @@ private fun WorkoutCompleteScreen(workout: Workout, snapshots: List<svenmeier.co
             Spacer(Modifier.height(24.dp))
             Text(workoutPrimaryValue(workout), fontSize = 56.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(22.dp))
+            if (!workout.planEnrollment.get().isNullOrBlank()) {
+                PeteWorkoutProgress(workout)
+                Spacer(Modifier.height(16.dp))
+            }
             Text(stringResource(R.string.ui_workout_summary), modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
             WorkoutResults(workout, snapshots)
