@@ -52,7 +52,6 @@ import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.pete.peteLiveInstruction
-import svenmeier.coxswain.pete.peteSourceDate
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -204,7 +203,7 @@ fun LiveRowScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E69F4)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E69F4), contentColor = Color.White),
                     shape = RoundedCornerShape(28.dp)
                 ) {
                     Icon(
@@ -257,7 +256,7 @@ fun LiveRowScreen(
                         modifier = Modifier.weight(1f).fillMaxWidth()
                     )
                 }
-                LiveRowStatus(gym, visibleRest, refreshTick, feedbackMeasurement)
+                LiveRowStatus(gym, visibleRest, refreshTick, feedbackMeasurement, activeMetrics)
             }
         }
     }
@@ -307,6 +306,11 @@ private fun MetricGrid(
 ) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val context = LocalContext.current
+    val active = gym.progress?.segment ?: gym.program?.getSegments()?.firstOrNull()
+    val targetBinding = active?.let { goalBinding(it, gym.planGoalKind) }
+    val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
+    val goal = targetBinding?.let { goalDisplay(it, active, feedbackMeasurement, gym.hasPlanRateCap(), exactSplit) }
+    val target = goal?.target?.let { if (targetBinding == ValueBinding.STROKE_RATE && !it.endsWith("SPM")) "$it SPM" else it }
     BoxWithConstraints(modifier.background(Color(0xFF31505D))) {
         val rows = (metrics.size + 1) / 2
         val cellWidth = (maxWidth - 1.dp) / 2
@@ -314,7 +318,11 @@ private fun MetricGrid(
         val density = LocalDensity.current
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
-            val rawValue = getValueForBinding(binding, gym)
+            val rawValue = if (binding == targetBinding) when (binding) {
+                ValueBinding.STROKE_RATE -> feedbackMeasurement.strokeRate
+                ValueBinding.POWER -> feedbackMeasurement.power
+                else -> getValueForBinding(binding, gym)
+            } else getValueForBinding(binding, gym)
             if (binding == ValueBinding.SPLIT)
                 formatMetricValue(binding, if(feedbackMeasurement.speed > 0) (50000f/feedbackMeasurement.speed).roundToInt() else 0, context)
             else formatMetricValue(binding, rawValue, context)
@@ -341,6 +349,8 @@ private fun MetricGrid(
                             isSelected = selectedSlotIndex == index,
                             onClick = { onMetricSelected(index) },
                             displayValue = values[index],
+                            goalState = goal?.state.takeIf { binding == targetBinding && rawGoalValue(binding, feedbackMeasurement) > 0 },
+                            targetDescription = target.takeIf { binding == targetBinding },
                             valueFontSize = sharedFontSize,
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         )
@@ -419,7 +429,10 @@ fun MetricCell(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = zoneLabel?.let { "$it · BPM" } ?: displayLabel ?: if (unitLabel.isNotEmpty()) "$titleLabel · $unitLabel" else titleLabel,
+                text = zoneLabel?.let { "$it · BPM" } ?: displayLabel ?: buildString {
+                    append(if (unitLabel.isNotEmpty()) "$titleLabel · $unitLabel" else titleLabel)
+                    targetDescription?.let { append("\nTarget $it") }
+                },
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = if (zoneLabel != null) 16.sp else 13.sp
@@ -512,7 +525,7 @@ internal fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
 }
 
 @Composable
-internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displayMeasurement: Measurement? = null) {
+internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displayMeasurement: Measurement? = null, metrics: List<ValueBinding> = emptyList()) {
     @Suppress("UNUSED_VARIABLE") val refresh = refreshTick
     val segments = gym.program?.getSegments().orEmpty()
     val active = gym.progress?.segment ?: segments.firstOrNull()
@@ -541,9 +554,15 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
         WorkoutDefinition.ranksByDistance(gym.program)
     ) else null
     val instruction = coaching ?: goal?.let {
-        "Target ${it.target}${if(binding == ValueBinding.STROKE_RATE) " SPM" else ""}"
+        "Target ${it.target}${if(binding == ValueBinding.STROKE_RATE && !it.target.endsWith("SPM")) " SPM" else ""}"
     }
+    // A recorded race owns the large comparison. A prescribed pace is coaching,
+    // not a replay; its direction is more useful than a virtual distance gap.
+    val recordedRace = race != null && !gym.hasPlanPaceTarget()
+    val targetFocus = rest == null && !recordedRace && feedback != null &&
+        (gym.hasPlanPaceTarget() || binding !in metrics)
     val primary = when {
+        targetFocus -> feedback?.substringAfter(" · ") ?: "On target"
         rest != null -> rest.next.substringBefore(" · ")
         race != null && finishReadout != null -> finishReadout
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
@@ -583,31 +602,28 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
                 style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Bold)).size.width.coerceAtLeast(1)
             val width = with(density) { maxWidth.toPx() }
             val font = (56f * (width / measured).coerceAtMost(1f)).sp
-            Text(primary, color = if (race == null) Color.White else if (finishReadout == null && race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
+            Text(primary, color = if (targetFocus) {
+                if (goal?.state == -1) Color(0xFFFF8A80) else Color(0xFF6DE0A8)
+            } else if (race == null) Color.White else if (finishReadout == null && race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
                 fontSize = font, lineHeight = font * 1.1f, fontWeight = FontWeight.Bold,
                 maxLines = 1, softWrap = false)
         }
-        if (race != null) {
-            Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (recordedRace) {
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
-                Text(if (gym.hasPlanPaceTarget()) "━ Target pace"
-                     else if (gym.isPlanSession) "━ Previous row · ${peteSourceDate(gym.pace!!.start.get())}"
-                     else "━ ${if (gym.isPaceReplayEstimated) "Estimated best" else "Saved best"} · ${referenceValue}",
-                    modifier = Modifier.weight(1f), color = Color(0xFFFFCD72), fontSize = 15.sp,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("━ ${if (gym.isPlanSession) "Previous row" else "Saved best"}",
+                    color = Color(0xFFFFCD72), fontSize = 15.sp, maxLines = 1)
             }
         } else {
-            Spacer(Modifier.height(8.dp))
-            Text(instruction ?: detail, color = Color(0xFFC5D7E2), fontSize = 20.sp, lineHeight = 25.sp)
-        }
-        if (race != null && instruction != null) {
-            Text(instruction, modifier = Modifier.padding(top = 6.dp), color = Color(0xFFC5D7E2),
-                fontSize = 20.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-        if (feedback != null) {
-            Text(feedback, modifier = Modifier.padding(top = 4.dp),
-                color = if (goal?.state == -1) Color(0xFFFF8A80) else Color(0xFF6DE0A8),
-                fontSize = 20.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            val supporting = when {
+                targetFocus -> instruction
+                goal != null && binding in metrics -> null // Already labelled on the chosen tile.
+                else -> instruction ?: detail
+            }
+            supporting?.let {
+                Text(it, modifier = Modifier.padding(top = 8.dp), color = Color(0xFFC5D7E2),
+                    fontSize = 20.sp, lineHeight = 25.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }

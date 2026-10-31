@@ -20,7 +20,15 @@ internal class LiveGoalSmoother {
     }
 }
 
-/** Target direction belongs below the user-selected metric grid. */
+internal fun rawGoalValue(binding: ValueBinding, measurement: Measurement): Int = when (binding) {
+    ValueBinding.SPLIT, ValueBinding.SPEED -> measurement.speed
+    ValueBinding.STROKE_RATE -> measurement.strokeRate
+    ValueBinding.POWER -> measurement.power
+    ValueBinding.PULSE -> measurement.pulse
+    else -> 0
+}
+
+/** Compact direction for coaching when the goal needs the large bottom readout. */
 internal fun liveTargetFeedback(binding: ValueBinding, segment: svenmeier.coxswain.gym.Segment,
                                 measurement: Measurement, goal: GoalDisplay, rateCap: Boolean): String? {
     if(binding == ValueBinding.SPLIT) {
