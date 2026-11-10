@@ -76,7 +76,7 @@ class IntervalRailTest {
         assertEquals(370f/495,IntervalRailReplay.paceProgress(p,150,420f),.0001f)
     }
 
-    @Test fun regularAndPeteRacesAlignMatchingIntervalsAndExcludeRecoveryMeters() {
+    @Test fun regularAndPeteRacesUseSavedTransitionsWhileLiveRowFollowsItsOwnInterval() {
         val context = RuntimeEnvironment.getApplication()
         context.deleteDatabase("gym")
         val gym = Gym::class.java.getDeclaredConstructor(Context::class.java).apply { isAccessible = true }.newInstance(context)
@@ -96,17 +96,14 @@ class IntervalRailTest {
                 val index = p.getSegments().indexOf(gym.progress.segment)
                 assertEquals(1,index)
                 assertEquals(155f/495,IntervalRailReplay.position(p,index,gym.progress.completion()),.0001f)
-                assertEquals(155f/495,gym.getPaceRailProgress(180),.0001f)
+                assertEquals(185f/495,gym.getPaceRailProgress(180),.0001f)
                 // Pace/distance comparison remains a separate work-only measurement.
                 assertEquals(500f,gym.getPaceDistanceAt(180),.0001f)
-                // Live row begins work two at 270; the saved row began it at 240.
-                gym.onMeasured(Measurement().apply { duration=270;distance=520 })
-                gym.onMeasured(Measurement().apply { duration=300;distance=620 })
-                assertEquals(600f,gym.getPaceDistanceAt(300),.0001f)
-                assertEquals(300f,gym.getPaceTimeAtDistance(600),.0001f)
-                assertEquals(270f,gym.getPaceTimeAtDistance(500),.0001f)
-                // A slower live effort must never make the reference enter its next rest.
-                assertEquals(1f,gym.getPaceRailProgress(700),.0001f)
+                // The saved row resumes at 240 while the live row rests until 270.
+                gym.onMeasured(Measurement().apply { duration=250;distance=515 })
+                assertEquals(1,p.getSegments().indexOf(gym.progress.segment))
+                assertTrue(gym.getPaceRailProgress(250) > 245f/495)
+                assertEquals(500f + 200f/6,gym.getPaceDistanceAt(250),.001f)
                 gym.endEarly()
             }
         } finally { repository.close();context.deleteDatabase("gym") }

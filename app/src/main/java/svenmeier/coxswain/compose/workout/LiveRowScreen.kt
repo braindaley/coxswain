@@ -541,7 +541,7 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
         }
     } else null
     val referenceValue = reference?.third.orEmpty()
-    val finishReadout = reference?.takeIf { segments.size <= 1 }?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
+    val finishReadout = reference?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
     val smoother = remember(gym.sessionGeneration, active) { LiveGoalSmoother() }
     val measurement = displayMeasurement ?: smoother.update(gym.getMeasurement())
     val binding = active?.let { goalBinding(it, gym.planGoalKind) }
@@ -577,7 +577,7 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
     val detail = when {
         rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
         race != null && gym.hasPlanPaceTarget() -> "Target pace · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
-        race != null -> "${if (segments.size > 1) "Same interval · " else ""}${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${referenceValue}"
+        race != null -> "${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${referenceValue}"
         segments.size > 1 -> "Interval ${index + 1} of ${segments.size}"
         active != null && active.distance.get() > 0 -> {
             val remaining = getValueForBinding(ValueBinding.DISTANCE, gym)

@@ -61,17 +61,6 @@ public final class IntervalRailReplay {
         }
     }
 
-    /** Compare matching steps at the same elapsed time, holding at the saved step's finish. */
-    public float timeInInterval(int index, float elapsed) {
-        if (index < 0 || index >= starts.length) return Math.max(0, elapsed);
-        float end = index + 1 < starts.length ? starts[index + 1] : duration;
-        return Math.min(end, starts[index] + Math.max(0, elapsed));
-    }
-
-    public float intervalStart(int index) {
-        return index >= 0 && index < starts.length ? starts[index] : 0;
-    }
-
     public float progressAt(float seconds) {
         if (seconds <= 0 || duration <= 0) return 0;
         if (seconds >= duration) return 1;

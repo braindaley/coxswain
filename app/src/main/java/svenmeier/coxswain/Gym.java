@@ -997,33 +997,17 @@ public class Gym {
 
     public float getPaceDistanceAt(int seconds) {
         RaceReplay value = paceReplay();
-        return value == null ? 0f : Math.min(replayScoringDistance, value.distanceAt(alignedPaceTime(seconds)));
-    }
-
-    private float alignedPaceTime(int seconds) {
-        if (railReplay == null || program == null || program.getSegmentsCount() < 2 || progress == null) return seconds;
-        int index = program.getSegments().indexOf(progress.segment);
-        return railReplay.timeInInterval(index, seconds - progress.startMeasurement.getDuration());
+        return value == null ? 0f : Math.min(replayScoringDistance, value.distanceAt(seconds));
     }
 
     public float getPaceRailProgress(int seconds) {
         paceReplay();
-        return pace != null && railReplay != null ? railReplay.progressAt(alignedPaceTime(seconds)) : 0f;
+        return pace != null && railReplay != null ? railReplay.progressAt(seconds) : 0f;
     }
 
     public float getPaceTimeAtDistance(int meters) {
         RaceReplay value = paceReplay();
-        if (value == null) return 0f;
-        float time = value.timeAtDistance(meters);
-        if (railReplay != null && program != null && program.getSegmentsCount() > 1 && progress != null) {
-            int index = program.getSegments().indexOf(progress.segment);
-            float start = railReplay.intervalStart(index);
-            // A flat recovery distance belongs to the start of this effort,
-            // rather than the first time those meters were reached before rest.
-            if (meters >= value.distanceAt(start)) time = Math.max(start, time);
-            time += progress.startMeasurement.getDuration() - start;
-        }
-        return time;
+        return value == null ? 0f : value.timeAtDistance(meters);
     }
 
     public float getWorkoutTimeAtDistance(Workout workout, int meters) {
