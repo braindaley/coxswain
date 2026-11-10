@@ -52,6 +52,7 @@ import svenmeier.coxswain.gym.Segment
 import svenmeier.coxswain.gym.Workout
 import svenmeier.coxswain.gym.WorkoutDefinition
 import svenmeier.coxswain.pete.peteLiveInstruction
+import svenmeier.coxswain.pete.peteTrackingMessage
 import svenmeier.coxswain.view.ValueBinding
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -242,7 +243,7 @@ fun LiveRowScreen(
     ) { innerPadding ->
         Row(Modifier.padding(innerPadding).fillMaxSize().background(Color(0xFF042C3D)).padding(horizontal = 10.dp)) {
             if (gym.program != null || gym.pace != null) {
-                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null || gym.hasPlanPaceTarget()) 30.dp else 24.dp))
+                SideProgressRail(gym, refreshTick, Modifier.fillMaxHeight().width(if (gym.pace != null) 30.dp else 24.dp))
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f).fillMaxHeight()) {
@@ -469,16 +470,14 @@ internal fun SideProgressRail(gym: Gym, refreshTick: Int, modifier: Modifier) {
     val position = if (segments.isNotEmpty())
         IntervalRailReplay.position(gym.program!!, activeIndex, completion) else completion
     val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
-        ?: planRaceDisplay(gym)
     // Distance comparison and interval position are different quantities. During recovery,
     // meters stay still while each marker must continue through its own recovery band.
     val currentPosition = if (segments.size > 1) position else race?.currentProgress ?: position
     val bestPosition = if (segments.size > 1 && race != null) {
-        if (gym.pace != null) gym.getPaceRailProgress(gym.getMeasurement().duration)
-        else IntervalRailReplay.paceProgress(gym.program!!, gym.planTargetSplitSeconds, gym.getMeasurement().duration.toFloat())
+        gym.getPaceRailProgress(gym.getMeasurement().duration)
     } else race?.bestProgress ?: 0f
     Canvas(modifier.padding(vertical = 4.dp).semantics {
-        contentDescription = if (race != null) "Live row ${(currentPosition * 100).toInt()} percent, ${if (gym.hasPlanPaceTarget()) "target pace" else "saved row"} ${(bestPosition * 100).toInt()} percent"
+        contentDescription = if (race != null) "Live row ${(currentPosition * 100).toInt()} percent, saved row ${(bestPosition * 100).toInt()} percent"
         else "Workout ${(position * 100).toInt()} percent complete"
     }) {
         val laneWidth = 9.dp.toPx()
@@ -533,8 +532,7 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
     val active = gym.progress?.segment ?: segments.firstOrNull()
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
     val race = gym.pace?.let { raceDisplay(gym.getRaceMeasurement(), it, gym.program, gym.getPaceDistanceAt(gym.getMeasurement().duration), gym.getPaceScoringDistance()) }
-        ?: planRaceDisplay(gym)
-    val reference = if (gym.pace != null && !gym.hasPlanPaceTarget()) {
+    val reference = if (gym.pace != null) {
         remember(gym.pace, gym.program) {
             val best = gym.pace!!
             val definition = gym.program ?: WorkoutDefinition.thaw(best.programDefinition.get())
@@ -560,14 +558,13 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
     val instruction = coaching ?: goal?.let {
         "Target ${it.target}${if(binding == ValueBinding.STROKE_RATE && !it.target.endsWith("SPM")) " SPM" else ""}"
     }
-    // A recorded race owns the large comparison. A prescribed pace is coaching,
-    // not a replay; its direction is more useful than a virtual distance gap.
-    val recordedRace = race != null && !gym.hasPlanPaceTarget()
-    val targetFocus = rest == null && !recordedRace && feedback != null &&
-        (gym.hasPlanPaceTarget() || binding !in metrics)
+    val planTracking = if (gym.isPlanSession)
+        peteTrackingMessage(gym.planGoalKind, active?.speed?.get() ?: 0, feedback) else null
+    val targetFocus = rest == null && race == null && feedback != null && binding !in metrics
     val primary = when {
-        targetFocus -> feedback?.substringAfter(" · ") ?: "On target"
         rest != null -> rest.next.substringBefore(" · ")
+        planTracking != null -> planTracking
+        targetFocus -> feedback?.substringAfter(" · ") ?: "On target"
         race != null && finishReadout != null -> finishReadout
         race != null -> "${kotlin.math.abs(race.leadMeters)} m ${if (race.leadMeters >= 0) "ahead" else "behind"}"
         active == null -> "Find your rhythm"
@@ -580,7 +577,6 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
     }
     val detail = when {
         rest != null -> rest.next.substringAfter(" · ", "Interval ${rest.position} of ${rest.total}")
-        race != null && gym.hasPlanPaceTarget() -> "Target pace · ${formatClock(gym.planTargetSplitSeconds)} /500 m"
         race != null -> "${if (gym.isPlanSession) "Plan reference" else "Your best"} · ${referenceValue}"
         segments.size > 1 -> "Interval ${index + 1} of ${segments.size}"
         active != null && active.distance.get() > 0 -> {
@@ -606,13 +602,13 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
                 style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Bold)).size.width.coerceAtLeast(1)
             val width = with(density) { maxWidth.toPx() }
             val font = (56f * (width / measured).coerceAtMost(1f)).sp
-            Text(primary, color = if (targetFocus) {
+            Text(primary, color = if (targetFocus || rest == null && planTracking != null && feedback != null) {
                 if (goal?.state == -1) Color(0xFFFF8A80) else Color(0xFF6DE0A8)
             } else if (race == null) Color.White else if (finishReadout == null && race.leadMeters >= 0) Color(0xFF6DE0A8) else Color(0xFFFF8A80),
                 fontSize = font, lineHeight = font * 1.1f, fontWeight = FontWeight.Bold,
                 maxLines = 1, softWrap = false)
         }
-        if (recordedRace) {
+        if (race != null) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("━ Live row", color = Color(0xFF83D7FF), fontSize = 15.sp, maxLines = 1)
                 Text("━ ${if (gym.isPlanSession) "Previous row" else "Saved best"}",
@@ -620,6 +616,7 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
             }
         } else {
             val supporting = when {
+                rest == null && planTracking != null -> instruction
                 targetFocus -> instruction
                 goal != null && binding in metrics -> null // Already labelled on the chosen tile.
                 else -> instruction ?: detail
@@ -833,24 +830,6 @@ private fun segmentTarget(segment: Segment): String = when {
 }
 
 data class RaceDisplay(val currentProgress: Float, val bestProgress: Float, val leadMeters: Int, val bestMeters: Int)
-
-private fun planRaceDisplay(gym: Gym): RaceDisplay? {
-    if (!gym.hasPlanPaceTarget()) return null
-    val program = gym.program ?: return null
-    val work = program.getSegments().filter { it.difficulty.get() != Difficulty.REST }
-    val split = gym.planTargetSplitSeconds.coerceAtLeast(1)
-    val targetDistance = if (work.all { it.distance.get() > 0 })
-        work.sumOf { it.distance.get() }.toFloat()
-    else work.sumOf { it.duration.get() } * 500f / split
-    if (targetDistance <= 0f) return null
-    val live = gym.planLiveDistance.toFloat()
-    val target = gym.planTargetDistance
-    return RaceDisplay(
-        (live / targetDistance).coerceIn(0f, 1f),
-        (target / targetDistance).coerceIn(0f, 1f),
-        (live - target).toInt(), target.toInt()
-    )
-}
 
 internal fun raceDisplay(current: Measurement, pace: Workout, program: Program?, recordedDistance: Float? = null, benchmarkDistance: Int? = null): RaceDisplay {
     val expectedDistance = recordedDistance ?: if (pace.duration.get() > 0) pace.distance.get() * current.duration.toFloat() / pace.duration.get() else 0f

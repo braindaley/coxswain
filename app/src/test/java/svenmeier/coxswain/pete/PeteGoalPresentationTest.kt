@@ -10,6 +10,16 @@ import svenmeier.coxswain.gym.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class PeteGoalPresentationTest {
+    @Test fun liveMessageTracksThePrescribedGoalWithoutAVirtualRace() {
+        assertEquals("Finding your pace",peteTrackingMessage("SPEED",345,null))
+        assertEquals("3 s slower /500 m",peteTrackingMessage("SPEED",345,"Now 2:28 · 3 s slower"))
+        assertEquals("On target",peteTrackingMessage("SPEED_PHASE",345,"Now 2:25 · On target"))
+        assertEquals("Follow the coaching note",peteTrackingMessage("SPEED_PHASE",0,null))
+        assertEquals("2 SPM above cap",peteTrackingMessage("RATE_CAP",0,"Now 26 SPM · 2 SPM above cap"))
+        assertEquals("Row by feel",peteTrackingMessage("REFERENCE",0,null))
+        assertNull(peteTrackingMessage("ROW_AGAINST",0,null))
+        assertNull(peteTrackingMessage("NONE",0,null))
+    }
     private val source = Workout(Program.meters("Week 1 · 5,000m",5000,Difficulty.MEDIUM))
     private fun show(goal: PeteGoal) = presentPeteGoal(goal,{ "Week 1 · 5,000m (Oct 20 · 2:25 /500 m)" },{145})!!
 

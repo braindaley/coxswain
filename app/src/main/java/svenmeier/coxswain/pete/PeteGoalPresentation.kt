@@ -58,3 +58,14 @@ internal fun peteLiveInstruction(kind: String?, value: Int, activeSpeed: Int, re
 }
 
 internal fun peteSourceDate(start: Long): String = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(start))
+
+/** The prescribed goal owns the main message, even when that metric is already in a tile. */
+internal fun peteTrackingMessage(kind: String?, activeSpeed: Int, feedback: String?): String? = when (kind) {
+    "SPEED", "SPEED_PHASE" -> if (kind == "SPEED_PHASE" && activeSpeed <= 0)
+        "Follow the coaching note" else feedback?.substringAfter(" · ")?.let {
+            if (it == "On target") it else "$it /500 m"
+        } ?: "Finding your pace"
+    "RATE", "RATE_CAP" -> feedback?.substringAfter(" · ") ?: "Finding your rhythm"
+    "REFERENCE", "UNAVAILABLE" -> "Row by feel"
+    else -> null
+}
