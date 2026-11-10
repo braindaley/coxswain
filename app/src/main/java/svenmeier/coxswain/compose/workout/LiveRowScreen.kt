@@ -102,7 +102,9 @@ fun LiveRowScreen(
         gym.program != null -> gym.program.name.get()?.uppercase() ?: "WORKOUT"
         else -> "FREE ROW"
     }
-    val smoother = remember(gym.sessionGeneration, activeSegment) { LiveGoalSmoother() }
+    val smoother = remember(gym.sessionGeneration, activeSegment) {
+        LiveGoalSmoother(progress?.startMeasurement ?: Measurement())
+    }
     val feedbackMeasurement = smoother.update(gym.getMeasurement())
     var countdownTick by remember { mutableIntStateOf(0) }
     LaunchedEffect(rest != null, gym.isPaused) {
@@ -542,7 +544,9 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
     } else null
     val referenceValue = reference?.third.orEmpty()
     val finishReadout = reference?.let { raceFinishReadout(it.first, gym.getMeasurement().duration, it.second) }
-    val smoother = remember(gym.sessionGeneration, active) { LiveGoalSmoother() }
+    val smoother = remember(gym.sessionGeneration, active) {
+        LiveGoalSmoother(gym.progress?.startMeasurement ?: Measurement())
+    }
     val measurement = displayMeasurement ?: smoother.update(gym.getMeasurement())
     val binding = active?.let { goalBinding(it, gym.planGoalKind) }
     val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }

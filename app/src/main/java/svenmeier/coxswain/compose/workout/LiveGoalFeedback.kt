@@ -5,14 +5,23 @@ import svenmeier.coxswain.view.ValueBinding
 import kotlin.math.roundToInt
 
 /** Five seconds of display-only goal feedback; recordings and scoring keep raw measurements. */
-internal class LiveGoalSmoother {
-    private val samples = java.util.TreeMap<Int, Measurement>()
+internal class LiveGoalSmoother(initial: Measurement? = null) {
+    private val useDistance = initial != null
+    private val samples = java.util.TreeMap<Int, Measurement>().apply {
+        initial?.let { put(it.duration, Measurement(it)) }
+    }
     fun update(raw: Measurement): Measurement {
         if (samples.isNotEmpty() && raw.duration < samples.lastKey()) samples.clear()
         samples[raw.duration] = Measurement(raw)
         while (samples.isNotEmpty() && samples.firstKey() < raw.duration - 4) samples.pollFirstEntry()
         return Measurement(raw).apply {
-            speed = average(raw.speed) { it.speed }
+            // Some monitors report a workout-average speed that includes recovery.
+            // Recent counter deltas describe the current effort instead.
+            speed = if (useDistance || raw.distance > 0) {
+                val first = samples.firstEntry().value
+                val seconds = raw.duration - first.duration
+                if (seconds > 0) (((raw.distance - first.distance).coerceAtLeast(0) * 100.0) / seconds).roundToInt() else 0
+            } else average(raw.speed) { it.speed }
             strokeRate = average(raw.strokeRate) { it.strokeRate }
             power = average(raw.power) { it.power }
         }
