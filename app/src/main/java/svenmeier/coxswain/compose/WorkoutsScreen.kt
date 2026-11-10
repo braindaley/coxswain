@@ -41,7 +41,8 @@ fun WorkoutsScreen(
 
     LaunchedEffect(refreshKey) {
         workouts.clear()
-        workouts.addAll(gym.getAllWorkouts().list())
+        // Materialize the cursor-backed query before Compose reads size again.
+        workouts.addAll(ArrayList(gym.getAllWorkouts().list()))
     }
 
     val filters = listOf(

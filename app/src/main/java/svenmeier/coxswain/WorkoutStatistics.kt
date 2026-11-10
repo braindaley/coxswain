@@ -27,7 +27,6 @@ internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
     private var seconds = 0f
     private var meters = 0
     private var strokes = 0
-    private var weightedPower = 0f
     init {
         var previousTime = 0f
         var previousDistance = 0
@@ -38,7 +37,6 @@ internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
                 seconds += delta
                 meters += (sample.distance.get() - previousDistance).coerceAtLeast(0)
                 strokes += (sample.strokes.get() - previousStrokes).coerceAtLeast(0)
-                weightedPower += sample.power.get() * delta
             }
             previousTime = time
             previousDistance = sample.distance.get()
@@ -52,7 +50,8 @@ internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
     val workMeters = if (hasActiveTotals) workout.planActiveDistance.get() else if (hasRest) meters else workout.distance.get()
     val workStrokes = if (hasActiveTotals) workout.planActiveStrokes.get() else if (hasRest) strokes else workout.strokes.get()
     val averageSplit = if (workMeters > 0) (workSeconds * 500.0 / workMeters).roundToInt() else null
-    val averagePower = if (seconds > 0) (weightedPower / seconds).roundToInt() else null
+    val power = RecordedPowerStatistics(samples)
+    val averagePower = power.average
     val averageRate = if (workSeconds > 0) (workStrokes * 60.0 / workSeconds).roundToInt() else null
     val bestSplit = work.mapNotNull { if (it.second.speed.get() > 0) 50000 / it.second.speed.get() else null }.minOrNull()
     val minimumRate = work.minOfOrNull { it.second.strokeRate.get() }
@@ -60,6 +59,40 @@ internal class WorkoutStatistics(workout: Workout, recordings: List<Snapshot>) {
     val maximumPower = work.maxOfOrNull { it.second.power.get() }
     // Heart rate includes recovery, and unavailable readings never count as zero BPM.
     val pulse = RecordedPulseStatistics(samples)
+}
+
+/** Before the first power reading of each step, zero means unavailable. Later zeros are real. */
+internal class RecordedPowerStatistics(samples: List<Pair<Float, Snapshot>>, start: Float = 0f,
+                                       end: Float = Float.MAX_VALUE, workOnly: Boolean = true) {
+    val availableTimes = mutableSetOf<Float>()
+    val average: Int?
+    init {
+        var phase: Any? = null
+        var ready = false
+        var waiting = false
+        var previousTime = 0f
+        var weighted = 0.0
+        var seconds = 0f
+        samples.forEach { (time, sample) ->
+            val key: Any = sample.intervalIndex.get()?.takeIf { it >= 0 } ?: sample.difficulty.get()
+            if (key != phase) { phase = key; ready = false; waiting = false }
+            val watts = (sample.power.get() ?: 0).coerceAtLeast(0)
+            val firstReading = !ready && watts > 0
+            if (watts > 0) ready = true
+            if (ready) {
+                availableTimes.add(time)
+                if (!workOnly || sample.difficulty.get() != Difficulty.REST) {
+                    var weight = (minOf(time, end) - maxOf(previousTime, start)).coerceAtLeast(0f)
+                    // Do not backfill an unobserved sensor gap with its first reading.
+                    if (firstReading && waiting) weight = minOf(1f, weight)
+                    weighted += watts * weight
+                    seconds += weight
+                }
+            } else waiting = true
+            previousTime = time
+        }
+        average = if (seconds > 0) (weighted / seconds).roundToInt() else null
+    }
 }
 
 internal class RecordedPulseStatistics(samples: List<Pair<Float, Snapshot>>, start: Float = 0f,

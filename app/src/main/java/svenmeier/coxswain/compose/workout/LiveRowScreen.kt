@@ -117,13 +117,12 @@ fun LiveRowScreen(
         }
     }
     @Suppress("UNUSED_VARIABLE") val keepCountdownAlive = countdownTick
-    val countdownBaseTime = remember(rest?.remaining, gym.isPaused) { System.currentTimeMillis() }
+    val restClock = remember(gym.sessionGeneration, activeSegment) { RestCountdown() }
     val visibleRest = rest?.let { value ->
         if (value.remaining.contains(':')) {
-            val elapsed = if (gym.isPaused) 0 else ((System.currentTimeMillis() - countdownBaseTime) / 1000L).toInt()
             val baseSeconds = (value.remaining.substringBefore(':').toIntOrNull() ?: 0) * 60 +
                 (value.remaining.substringAfter(':').toIntOrNull() ?: 0)
-            value.copy(remaining = formatClock((baseSeconds - elapsed).coerceAtLeast(0)))
+            value.copy(remaining = formatClock(restClock.update(baseSeconds, gym.isPaused, android.os.SystemClock.elapsedRealtime())))
         } else value
     }
     LaunchedEffect(rest != null) {
@@ -770,7 +769,7 @@ data class RestDisplay(val position: Int, val total: Int, val remaining: String,
 internal fun restDisplay(segments: List<Segment>, active: Segment?, completion: Float): RestDisplay {
     val index = segments.indexOfFirst { it === active }.coerceAtLeast(0)
     val remaining = if ((active?.duration?.get() ?: 0) > 0) {
-        val seconds = (active!!.duration.get() * (1f - completion)).toInt().coerceAtLeast(0)
+        val seconds = (active!!.duration.get() * (1f - completion)).roundToInt().coerceAtLeast(0)
         "%d:%02d".format(seconds / 60, seconds % 60)
     } else "${((active?.getTarget() ?: 0) * (1f - completion)).toInt().coerceAtLeast(0)} m"
     val next = segments.getOrNull(index + 1)

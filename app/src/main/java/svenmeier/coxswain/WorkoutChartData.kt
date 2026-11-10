@@ -213,6 +213,7 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
     fun isRest(point: ResultPoint) = (phase(point)?.difficulty ?: point.snapshot.difficulty.get()) == Difficulty.REST
 
     fun value(point: ResultPoint, measure: ResultMeasure): Float? {
+        if (measure == ResultMeasure.POWER && point.elapsed !in statistics.power.availableTimes) return null
         val raw = measure.value(point.snapshot) ?: return null
         if (raw < 0f) return null
         // Startup zeros mean the monitor hasn't produced this measure yet. Later true zeros remain.
@@ -420,18 +421,8 @@ internal class WorkoutChartData(workout: Workout, val statistics: WorkoutStatist
         val seconds = (phase.end - phase.start).roundToInt().coerceAtLeast(0)
         val meters = (counterAt(phase.end) { it.distance.get() } - counterAt(phase.start) { it.distance.get() }).roundToInt().coerceAtLeast(0)
         val strokes = (counterAt(phase.end) { it.strokes.get() } - counterAt(phase.start) { it.strokes.get() }).roundToInt().coerceAtLeast(0)
-        var power = 0f
-        var weight = 0f
-        points.forEachIndexed { index, point ->
-            val from = max(phase.start, points.getOrNull(index - 1)?.elapsed ?: 0f)
-            val until = minOf(phase.end, point.elapsed)
-            if (until > from && point.interval == phase.index) {
-                power += point.snapshot.power.get() * (until - from)
-                weight += until - from
-            }
-        }
         return IntervalResult(seconds, meters, if (meters > 0) (seconds * 500f / meters).roundToInt() else null,
-            if (weight > 0f) (power / weight).roundToInt() else null,
+            RecordedPowerStatistics(statistics.samples, phase.start, phase.end, workOnly = false).average,
             if (seconds > 0) (strokes * 60f / seconds).roundToInt() else null,
             RecordedPulseStatistics(statistics.samples, phase.start, phase.end).average)
     }

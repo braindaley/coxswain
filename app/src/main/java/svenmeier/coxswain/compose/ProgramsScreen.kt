@@ -66,7 +66,7 @@ fun ProgramsScreen(
     LaunchedEffect(selectedTab, refreshKey) {
         programs.clear()
         if (selectedTab == 0) {
-            programs.addAll(gym.getPrograms().list())
+            programs.addAll(ArrayList(gym.getPrograms().list()))
         } else {
             programs.addAll(curatedPrograms(libraryProgramNames))
         }
@@ -137,7 +137,7 @@ fun ProgramsScreen(
                     onDuplicate = {
                         if (selectedTab == 0) {
                             onDuplicateProgram(program)
-                            programs.clear(); programs.addAll(gym.getPrograms().list())
+                            programs.clear(); programs.addAll(ArrayList(gym.getPrograms().list()))
                         } else onSaveLibraryProgram(program)
                     },
                     onDelete = { pendingDelete = program }

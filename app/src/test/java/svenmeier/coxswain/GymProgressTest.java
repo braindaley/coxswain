@@ -162,6 +162,35 @@ public class GymProgressTest {
     }
 
     @Test
+    public void sameSecondBoundariesKeepRecordedWorkTotalsConsistent() {
+        Program program = new Program("Exact boundaries");
+        program.getSegment(0).setDistance(100);
+        program.addSegment(new Segment(Difficulty.REST).setDuration(10));
+        program.addSegment(new Segment(Difficulty.MEDIUM).setDistance(100));
+        gym.select(program);
+        gym.onMeasured(measurement(10, 99, 24));
+        gym.onMeasured(measurement(10, 102, 24)); // Work ends in the same recorded second.
+        gym.onMeasured(measurement(20, 122, 24));
+        gym.onMeasured(measurement(30, 221, 24));
+        gym.onMeasured(measurement(30, 222, 24)); // Final counters must also be recorded.
+        Workout result = gym.complete();
+        List<Snapshot> snapshots = new java.util.ArrayList<>(gym.getSnapshots(result).list());
+        WorkoutStatistics statistics = new WorkoutStatistics(result, snapshots);
+        Workout copy = new Workout();
+        copy.duration.set(result.duration.get());
+        copy.distance.set(result.distance.get());
+        copy.strokes.set(result.strokes.get());
+        WorkoutStatistics fromSamples = new WorkoutStatistics(copy, snapshots);
+        assertEquals(statistics.getWorkMeters(), fromSamples.getWorkMeters());
+        assertEquals(Integer.valueOf(202), fromSamples.getWorkMeters());
+        assertEquals(Integer.valueOf(20), fromSamples.getWorkSeconds());
+        WorkoutChartData chart = new WorkoutChartData(result, statistics);
+        int workMeters = chart.getPhases().stream().filter(p -> p.getDifficulty() != Difficulty.REST)
+                .mapToInt(p -> chart.intervalResult(p).getMeters()).sum();
+        assertEquals(202, workMeters);
+    }
+
+    @Test
     public void lateIntervalFinishKeepsAveragesInsideWorkBoundaries() {
         Program program = new Program("Delayed intervals");
         program.getSegment(0).setDuration(10);

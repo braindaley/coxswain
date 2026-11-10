@@ -10,6 +10,22 @@ import svenmeier.coxswain.gym.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class WorkoutChartDataTest {
+    @Test fun powerStartupGapsAndIntervalAveragesShareAvailabilityRules() {
+        val p = Program.minutes("Power availability",1,Difficulty.MEDIUM).apply {
+            getSegment(0).setDuration(2)
+            addSegment(Segment(Difficulty.REST).setDuration(2))
+            addSegment(Segment(Difficulty.HARD).setDuration(4))
+        }
+        val result = chart(row(8,p),
+            sample(1,index=0),sample(2,index=0),
+            sample(4,power=0,index=1,stepStart=2).apply { difficulty.set(Difficulty.REST) },
+            sample(5,power=0,index=2,stepStart=4),sample(6,power=200,index=2,stepStart=4),
+            sample(7,power=0,index=2,stepStart=4),sample(8,power=200,index=2,stepStart=4))
+        assertNull(result.value(result.points.first { it.elapsed == 5f },ResultMeasure.POWER))
+        assertEquals(0f,result.value(result.points.first { it.elapsed == 7f },ResultMeasure.POWER))
+        assertEquals(133,result.intervalResult(result.phases.last()).power)
+        assertEquals(120,result.statistics.averagePower)
+    }
     private val start = 1_791_459_000_000L
     private fun row(duration: Int = 60, program: Program? = null) = Workout().apply {
         this.duration.set(duration); this.start.set(this@WorkoutChartDataTest.start)

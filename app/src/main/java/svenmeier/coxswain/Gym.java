@@ -892,15 +892,16 @@ public class Gym {
                     && progress.segment.strokes.get() == 0 && progress.segment.energy.get() == 0) {
                 int end = progress.startMeasurement.getDuration() + progress.segment.duration.get();
                 boundary = interpolateAtTime(previous, measurement, end);
-                if (end > previous.getDuration() && end < measurement.getDuration()) {
-                    Snapshot sample = new Snapshot(progress.segment.difficulty.get(), boundary);
-                    sample.intervalIndex.set(program.getSegments().indexOf(progress.segment));
-                    sample.intervalStart.set(progress.startMeasurement.getDuration());
-                    sample.recordedAt.set(System.currentTimeMillis() - (measurement.getDuration() - end) * 1000L);
-                    sample.workout.set(current);
-                    repository.insert(sample);
-                }
             }
+            // Persist every outgoing boundary, including counter updates within the
+            // same second. Otherwise charts assign those final metres to recovery.
+            Snapshot boundarySample = new Snapshot(progress.segment.difficulty.get(), boundary);
+            boundarySample.intervalIndex.set(program.getSegments().indexOf(progress.segment));
+            boundarySample.intervalStart.set(progress.startMeasurement.getDuration());
+            boundarySample.recordedAt.set(System.currentTimeMillis() -
+                    (measurement.getDuration() - boundary.getDuration()) * 1000L);
+            boundarySample.workout.set(current);
+            repository.insert(boundarySample);
             sampleDifficulty = progress.segment.difficulty.get();
             sampleInterval = program.getSegments().indexOf(progress.segment);
             sampleIntervalStart = progress.startMeasurement.getDuration();

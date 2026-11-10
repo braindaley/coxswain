@@ -2,6 +2,8 @@ package svenmeier.coxswain
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -26,6 +28,33 @@ class MainNavigationTest {
 
     @get:Rule
     val compose = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun historyCanLoadAndReloadSixRecordedRowsWithoutClosingItsCursorEarly() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val gym = Gym.instance(context)
+        val rows = mutableListOf<Workout>()
+        try {
+            compose.runOnUiThread {
+                repeat(6) { index ->
+                    val row = Workout().apply {
+                        programName.set("Cursor history $index")
+                        start.set(System.currentTimeMillis()+index*1000L)
+                        duration.set(120);distance.set(400)
+                        status.set(WorkoutStatus.COMPLETED)
+                    }
+                    gym.mergeWorkout(row);rows.add(row)
+                }
+            }
+            repeat(2) {
+                compose.onNodeWithText("History").performClick()
+                compose.onNodeWithTag("history-title").assertIsDisplayed()
+                compose.onNodeWithText("Cursor history 5").assertIsDisplayed()
+                compose.onNode(hasText("Programs") and isSelectable()).performClick()
+                compose.onNodeWithText("MY PROGRAMS").assertIsDisplayed()
+            }
+        } finally { compose.runOnUiThread { rows.forEach { gym.delete(it) } } }
+    }
 
     @Test
     fun primaryTabsOpenTheirDestinations() {
