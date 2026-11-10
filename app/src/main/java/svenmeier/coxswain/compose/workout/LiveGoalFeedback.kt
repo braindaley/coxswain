@@ -11,12 +11,19 @@ internal class LiveGoalSmoother {
         if (samples.isNotEmpty() && raw.duration < samples.lastKey()) samples.clear()
         samples[raw.duration] = Measurement(raw)
         while (samples.isNotEmpty() && samples.firstKey() < raw.duration - 4) samples.pollFirstEntry()
-        val values = samples.values
         return Measurement(raw).apply {
-            speed = if(raw.speed > 0) values.map { it.speed }.average().roundToInt() else 0
-            strokeRate = if(raw.strokeRate > 0) values.map { it.strokeRate }.average().roundToInt() else 0
-            power = if(raw.power > 0) values.map { it.power }.average().roundToInt() else 0
+            speed = average(raw.speed) { it.speed }
+            strokeRate = average(raw.strokeRate) { it.strokeRate }
+            power = average(raw.power) { it.power }
         }
+    }
+
+    private fun average(current: Int, metric: (Measurement) -> Int): Int {
+        if (current <= 0) return 0
+        // Sensors become available independently. Start with the samples we have,
+        // rather than diluting the first readings with pre-row/unavailable zeros.
+        // Keep zeros after a valid reading so real slowdowns still affect the window.
+        return samples.values.map(metric).dropWhile { it <= 0 }.average().roundToInt()
     }
 }
 

@@ -43,6 +43,28 @@ class LiveGoalFeedbackTest {
         assertEquals("Now 26 SPM · 2 SPM above cap",liveTargetFeedback(ValueBinding.STROKE_RATE,work,m,cap,true))
     }
 
+    @Test fun startupAveragesAvailableReadingsForEachMetricImmediately() {
+        val smoother = LiveGoalSmoother()
+        fun read(t: Int, speed: Int = 0, rate: Int = 0, power: Int = 0) =
+            smoother.update(Measurement().apply {
+                duration = t; this.speed = speed; strokeRate = rate; this.power = power
+            })
+        assertEquals(0, read(0).speed)
+        read(1)
+        val first = read(2, speed = 250)
+        assertEquals(250, first.speed)
+        assertEquals(0, first.strokeRate)
+        val second = read(3, speed = 270, rate = 24)
+        assertEquals(260, second.speed)
+        assertEquals(24, second.strokeRate)
+        val third = read(4, speed = 290, rate = 26, power = 120)
+        assertEquals(270, third.speed)
+        assertEquals(25, third.strokeRate)
+        assertEquals(120, third.power)
+        assertEquals(0, read(5).speed)
+        assertEquals(73, read(6, speed = 0, rate = 26, power = 100).power)
+    }
+
     @Test fun fiveSecondFeedbackAverageDoesNotRewriteOrCountRepeatedHeartPackets() {
         val smoother = LiveGoalSmoother()
         fun read(t:Int,s:Int,r:Int=24) = smoother.update(Measurement().apply { duration=t;speed=s;strokeRate=r;power=100 })

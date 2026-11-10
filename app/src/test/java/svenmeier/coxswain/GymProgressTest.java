@@ -162,6 +162,29 @@ public class GymProgressTest {
     }
 
     @Test
+    public void lateIntervalFinishKeepsAveragesInsideWorkBoundaries() {
+        Program program = new Program("Delayed intervals");
+        program.getSegment(0).setDuration(10);
+        program.addSegment(new Segment(Difficulty.REST).setDuration(10));
+        program.addSegment(new Segment(Difficulty.MEDIUM).setDuration(10));
+        gym.select(program);
+        gym.onMeasured(measurement(10, 100, 24));
+        gym.onMeasured(measurement(20, 120, 24));
+        gym.onMeasured(measurement(28, 200, 24));
+        gym.onMeasured(measurement(34, 260, 24));
+        assertEquals(30, gym.getMeasurement().getDuration());
+        assertEquals(20, gym.getPlanActiveSeconds());
+        assertEquals(200, gym.getPlanLiveDistance());
+        Workout result = gym.complete();
+        assertEquals(30, result.duration.get().intValue());
+        assertEquals(220, result.distance.get().intValue());
+        WorkoutStatistics statistics = new WorkoutStatistics(result, gym.getSnapshots(result).list());
+        assertEquals(20, statistics.getWorkSeconds().intValue());
+        assertEquals(200, statistics.getWorkMeters().intValue());
+        assertEquals(Integer.valueOf(50), statistics.getAverageSplit());
+    }
+
+    @Test
     public void timedIntervalRaceIgnoresRestMeters() {
         Program program = new Program("Rest race");
         program.getSegment(0).setDuration(10);
