@@ -12,7 +12,7 @@ import svenmeier.coxswain.gym.*
 class PeteGoalPresentationTest {
     @Test fun liveMessageTracksThePrescribedGoalWithoutAVirtualRace() {
         assertEquals("Finding your pace",peteTrackingMessage("SPEED",345,null))
-        assertEquals("3 s slower /500 m",peteTrackingMessage("SPEED",345,"Now 2:28 · 3 s slower"))
+        assertEquals("3 s slower",peteTrackingMessage("SPEED",345,"Now 2:28 · 3 s slower"))
         assertEquals("On target",peteTrackingMessage("SPEED_PHASE",345,"Now 2:25 · On target"))
         assertEquals("Follow the coaching note",peteTrackingMessage("SPEED_PHASE",0,null))
         assertEquals("2 SPM above cap",peteTrackingMessage("RATE_CAP",0,"Now 26 SPM · 2 SPM above cap"))
@@ -34,7 +34,7 @@ class PeteGoalPresentationTest {
     }
     @Test fun phasedPaceExplainsScopeAndStopsPrescribingItAfterTheTargetedPieces() {
         assertTrue(show(PeteGoal.Speed(145,source,3)).detail.contains("First 3 work intervals only"))
-        assertEquals("Hold 2:25 /500 m",peteLiveInstruction("SPEED_PHASE",145,345,false,false))
+        assertEquals("Hold 2:25",peteLiveInstruction("SPEED_PHASE",145,345,false,false))
         assertEquals("Pace target finished · Follow the coaching note",peteLiveInstruction("SPEED_PHASE",145,0,false,false))
         assertNull(peteLiveInstruction("SPEED_PHASE",145,345,true,false))
     }
@@ -53,7 +53,7 @@ class PeteGoalPresentationTest {
         assertEquals("Reference: 2:25 /500 m",reference.value)
         assertTrue(reference.detail.contains("Start gently, then build."))
         assertEquals("Start with pacing reference",reference.startLabel)
-        assertEquals("Pace reference · 2:25 /500 m",peteLiveInstruction("REFERENCE",145,0,false,false))
+        assertEquals("Pace reference · 2:25",peteLiveInstruction("REFERENCE",145,0,false,false))
         assertEquals("Start without target",show(PeteGoal.Unavailable("Complete Week 1 first.")).startLabel)
         assertNull(presentPeteGoal(PeteGoal.None,{""},{null}))
     }

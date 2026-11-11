@@ -19,12 +19,13 @@ class LiveGoalFeedbackTest {
         })
         read(469,1021,0)
         val rawSpeed14 = read(470,1024,14)
-        assertEquals(200,rawSpeed14.speed) // 4 metres / 2 seconds, rather than a 59-minute split.
+        assertEquals(0,rawSpeed14.speed) // Gather an averaging window; never show a 59-minute split.
         read(471,1027,14)
         read(472,1032,35)
         val value = read(473,1035,44)
-        assertEquals(350,value.speed) // (1035 - 1021) / (473 - 469).
-        repeat(10) { assertEquals(350,read(473,1035,44).speed) }
+        assertEquals(0,value.speed)
+        assertEquals(360,read(474,1039,57).speed) // Recent distance, independent of the stale monitor speed.
+        repeat(10) { assertEquals(360,read(474,1039,57).speed) }
         assertEquals(0,read(480,1035,44).speed) // No samples spanning the gap yet.
         assertEquals(0,read(481,1035,44).speed) // Stationary, despite a stale positive speed.
     }

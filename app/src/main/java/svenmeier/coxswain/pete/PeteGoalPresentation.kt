@@ -45,12 +45,12 @@ internal fun peteLiveInstruction(kind: String?, value: Int, activeSpeed: Int, re
                                  timedRace: Boolean): String? {
     if (resting) return null
     return when (kind) {
-        "SPEED" -> "Hold ${splitClock(value)} /500 m"
-        "SPEED_PHASE" -> if (activeSpeed > 0) "Hold ${splitClock(value)} /500 m"
+        "SPEED" -> "Hold ${splitClock(value)}"
+        "SPEED_PHASE" -> if (activeSpeed > 0) "Hold ${splitClock(value)}"
             else "Pace target finished · Follow the coaching note"
         "RATE_CAP" -> "Stay at or below $value SPM"
         "RATE" -> "Hold $value SPM"
-        "REFERENCE" -> "Pace reference · ${splitClock(value)} /500 m"
+        "REFERENCE" -> "Pace reference · ${splitClock(value)}"
         "ROW_AGAINST" -> if (timedRace) "Beat your previous distance" else "Beat your previous time"
         "UNAVAILABLE" -> "Row by feel · No completed reference yet"
         else -> null
@@ -62,9 +62,7 @@ internal fun peteSourceDate(start: Long): String = SimpleDateFormat("MMM d", Loc
 /** The prescribed goal owns the main message, even when that metric is already in a tile. */
 internal fun peteTrackingMessage(kind: String?, activeSpeed: Int, feedback: String?): String? = when (kind) {
     "SPEED", "SPEED_PHASE" -> if (kind == "SPEED_PHASE" && activeSpeed <= 0)
-        "Follow the coaching note" else feedback?.substringAfter(" · ")?.let {
-            if (it == "On target") it else "$it /500 m"
-        } ?: "Finding your pace"
+        "Follow the coaching note" else feedback?.substringAfter(" · ") ?: "Finding your pace"
     "RATE", "RATE_CAP" -> feedback?.substringAfter(" · ") ?: "Finding your rhythm"
     "REFERENCE", "UNAVAILABLE" -> "Row by feel"
     else -> null

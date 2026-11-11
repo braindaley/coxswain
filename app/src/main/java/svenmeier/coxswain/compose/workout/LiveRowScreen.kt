@@ -651,7 +651,7 @@ fun MetricPickerDialog(
     val options = listOf(
         ValueBinding.DISTANCE to "Distance (m)",
         ValueBinding.DURATION to "Duration (time)",
-        ValueBinding.SPLIT to "Live split (5-second average, /500m)",
+        ValueBinding.SPLIT to "Live split (15-second average, /500m)",
         ValueBinding.STROKE_RATE to "Stroke Rate (SPM)",
         ValueBinding.POWER to "Power (W)",
         ValueBinding.PULSE to "Heart Rate (BPM)",

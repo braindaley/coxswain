@@ -34,7 +34,7 @@ class PeteLiveCoachingTest {
                 LiveRowStatus(gym,null,tick,reading,listOf(ValueBinding.SPLIT))
             } } }
             compose.onNodeWithText("Finding your pace").assertIsDisplayed()
-            compose.onNodeWithText("Hold 2:25 /500 m").assertIsDisplayed()
+            compose.onNodeWithText("Hold 2:25").assertIsDisplayed()
             compose.onNodeWithContentDescription("Workout 0 percent complete").assertExists()
             compose.onNodeWithContentDescription("target pace",substring=true).assertDoesNotExist()
             compose.runOnUiThread {
@@ -69,11 +69,11 @@ class PeteLiveCoachingTest {
                 gym.startPlanSession(p,"coaching-test",1,1,0,"SPEED_PHASE",145,0L,null)
                 gym.onMeasured(Measurement().apply { duration=1;distance=1 });tick++
             }
-            compose.onNodeWithText("Hold 2:25 /500 m").assertIsDisplayed()
+            compose.onNodeWithText("Hold 2:25").assertIsDisplayed()
             compose.runOnUiThread {
                 gym.onMeasured(Measurement().apply { duration=145;distance=500 });tick++
             }
-            compose.onNodeWithText("Hold 2:25 /500 m").assertDoesNotExist()
+            compose.onNodeWithText("Hold 2:25").assertDoesNotExist()
             compose.runOnUiThread {
                 gym.onMeasured(Measurement().apply { duration=205;distance=500 });tick++
             }
