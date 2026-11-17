@@ -39,7 +39,7 @@ import svenmeier.coxswain.util.PermissionBlock;
 public class BluetoothHeart extends Heart {
 
 	private static final int CONNECT_TIMEOUT_MILLIS = 10000;
-    private static final int REMEMBERED_CONNECT_TIMEOUT_MILLIS = 60000;
+    private static final int REMEMBERED_CONNECT_TIMEOUT_MILLIS = 15000;
 
 	private static final int BATTERY_LEVEL_NOTIFICATION_THRESHOLD = 25;
 
@@ -368,7 +368,9 @@ public class BluetoothHeart extends Heart {
 
 				BluetoothDevice device = adapter.getRemoteDevice(address);
 				Log.d(Coxswain.TAG, "bluetooth heart connecting " + device.getAddress());
-				connected = device.connectGatt(context, remembered(), this);
+                // autoConnect waits for a background sighting and can stall a remembered watch.
+                // A row needs an immediate connection attempt instead.
+				connected = device.connectGatt(context, false, this);
                 if (connected == null) select();
                 else scheduleTimeout();
 			} catch (IllegalArgumentException invalid) {

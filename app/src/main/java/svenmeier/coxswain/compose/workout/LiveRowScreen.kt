@@ -545,8 +545,9 @@ internal fun LiveRowStatus(gym: Gym, rest: RestDisplay?, refreshTick: Int, displ
         LiveGoalSmoother(gym.progress?.startMeasurement ?: Measurement())
     }
     val measurement = displayMeasurement ?: smoother.update(gym.getMeasurement())
-    val binding = active?.let { goalBinding(it, gym.planGoalKind) }
-    val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
+    val liveGoalKind = svenmeier.coxswain.pete.peteLiveGoalKind(gym.planGoalKind, active?.speed?.get() ?: 0)
+    val binding = active?.let { goalBinding(it, liveGoalKind) }
+    val exactSplit = gym.planGoalValue.takeIf { liveGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
     val goal = if (rest == null && binding != null) goalDisplay(binding, active, measurement, gym.hasPlanRateCap(), exactSplit) else null
     val feedback = if (goal != null && binding != null && active != null)
         liveTargetFeedback(binding, active, measurement, goal, gym.hasPlanRateCap()) else null
@@ -651,7 +652,7 @@ fun MetricPickerDialog(
     val options = listOf(
         ValueBinding.DISTANCE to "Distance (m)",
         ValueBinding.DURATION to "Duration (time)",
-        ValueBinding.SPLIT to "Live split (15-second average, /500m)",
+        ValueBinding.SPLIT to "Live split (20-second average, /500m)",
         ValueBinding.STROKE_RATE to "Stroke Rate (SPM)",
         ValueBinding.POWER to "Power (W)",
         ValueBinding.PULSE to "Heart Rate (BPM)",

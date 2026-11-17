@@ -4,7 +4,7 @@ import svenmeier.coxswain.gym.Measurement
 import svenmeier.coxswain.view.ValueBinding
 import kotlin.math.roundToInt
 
-/** Display-only feedback; pace uses a rolling 15-second average, other metrics use five seconds. */
+/** Display-only feedback; pace uses a rolling 20-second average, other metrics use five seconds. */
 internal class LiveGoalSmoother(initial: Measurement? = null) {
     private val useDistance = initial != null
     private val pace = LivePaceAverage()

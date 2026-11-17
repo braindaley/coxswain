@@ -15,6 +15,8 @@ class PeteGoalPresentationTest {
         assertEquals("3 s slower",peteTrackingMessage("SPEED",345,"Now 2:28 · 3 s slower"))
         assertEquals("On target",peteTrackingMessage("SPEED_PHASE",345,"Now 2:25 · On target"))
         assertEquals("Follow the coaching note",peteTrackingMessage("SPEED_PHASE",0,null))
+        assertNull(peteLiveGoalKind("SPEED_PHASE",0))
+        assertEquals("SPEED_PHASE",peteLiveGoalKind("SPEED_PHASE",345))
         assertEquals("2 SPM above cap",peteTrackingMessage("RATE_CAP",0,"Now 26 SPM · 2 SPM above cap"))
         assertEquals("Row by feel",peteTrackingMessage("REFERENCE",0,null))
         assertNull(peteTrackingMessage("ROW_AGAINST",0,null))

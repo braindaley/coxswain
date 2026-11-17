@@ -57,6 +57,10 @@ internal fun peteLiveInstruction(kind: String?, value: Int, activeSpeed: Int, re
     }
 }
 
+/** A phase-limited pace goal no longer compares the rower to a target after its final phase. */
+internal fun peteLiveGoalKind(kind: String?, activeSpeed: Int): String? =
+    if (kind == "SPEED_PHASE" && activeSpeed <= 0) null else kind
+
 internal fun peteSourceDate(start: Long): String = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(start))
 
 /** The prescribed goal owns the main message, even when that metric is already in a tile. */
