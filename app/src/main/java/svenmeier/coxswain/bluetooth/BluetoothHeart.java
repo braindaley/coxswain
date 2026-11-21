@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
@@ -29,6 +30,7 @@ import java.util.ArrayDeque;
 import propoid.util.content.Preference;
 import svenmeier.coxswain.Coxswain;
 import svenmeier.coxswain.Heart;
+import svenmeier.coxswain.DiagnosticsLog;
 import svenmeier.coxswain.R;
 import svenmeier.coxswain.gym.Measurement;
 import svenmeier.coxswain.util.PermissionBlock;
@@ -40,6 +42,8 @@ public class BluetoothHeart extends Heart {
 
 	private static final int CONNECT_TIMEOUT_MILLIS = 10000;
     private static final int REMEMBERED_CONNECT_TIMEOUT_MILLIS = 15000;
+    private static final int RETRY_MILLIS = 5000;
+    private static final int READING_TIMEOUT_MILLIS = 15000;
 
 	private static final int BATTERY_LEVEL_NOTIFICATION_THRESHOLD = 25;
 
@@ -324,178 +328,198 @@ public class BluetoothHeart extends Heart {
 		}
 	}
 
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-	private class GattConnection extends BlueWriter implements Connection, Runnable {
+    private class GattConnection extends BlueWriter implements Connection, Runnable {
+        private final String address;
+        private BluetoothAdapter adapter;
+        private BluetoothGatt connected;
+        private BluetoothGattCharacteristic heartRateMeasurement;
+        private BluetoothGattCharacteristic batteryLevel;
+        private boolean receivedReading;
+        private boolean retrying;
+        private final Runnable retry = this::startAttempt;
 
-		private final String address;
-
-		private BluetoothAdapter adapter;
-
-		private BluetoothGatt connected;
-
-		private BluetoothGattCharacteristic heartRateMeasurement;
-		private BluetoothGattCharacteristic batteryLevel;
-
-		private GattConnection(String address) {
-			this.address = address;
-		}
+        private GattConnection(String address) { this.address = address; }
+        private boolean remembered() { return address.equals(devicePreference.get()); }
+        private boolean active(BluetoothGatt gatt) {
+            return adapter != null && !retrying && gatt == connected;
+        }
 
         private void select() {
-            // A temporary timeout or disconnect must not forget the user's choice.
             handler.post(() -> {
-                if (connections.peek() != this || adapter == null) return;
-                handler.removeCallbacks(this);
-                pop();
-                pop();
-                push(new SelectionConnection(true));
+                synchronized (GattConnection.this) {
+                    if (connections.peek() != this || adapter == null) return;
+                    pop();
+                    pop();
+                    push(new SelectionConnection(true));
+                }
             });
         }
 
-        private boolean remembered() { return address.equals(devicePreference.get()); }
-
-        private void scheduleTimeout() {
+        private void scheduleTimeout(int millis) {
             handler.removeCallbacks(this);
-            handler.postDelayed(this, remembered() ? REMEMBERED_CONNECT_TIMEOUT_MILLIS : CONNECT_TIMEOUT_MILLIS);
+            handler.postDelayed(this, millis);
+        }
+        private int connectionTimeout() {
+            return remembered() ? REMEMBERED_CONNECT_TIMEOUT_MILLIS : CONNECT_TIMEOUT_MILLIS;
         }
 
-		@Override
-		public synchronized void open() {
-			BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-			adapter = manager.getAdapter();
+        @Override public synchronized void open() {
+            BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+            adapter = manager.getAdapter();
+            toast(context.getString(R.string.bluetooth_heart_connecting, address));
+            startAttempt();
+        }
 
-			try {
-				toast(context.getString(R.string.bluetooth_heart_connecting, address));
+        private synchronized void startAttempt() {
+            if (adapter == null || connections.peek() != this) return;
+            retrying = false;
+            receivedReading = false;
+            if (!adapter.isEnabled()) {
+                failed("Bluetooth is switched off");
+                return;
+            }
+            try {
+                BluetoothDevice device = adapter.getRemoteDevice(address);
+                Log.d(Coxswain.TAG, "bluetooth heart connecting over LE " + address);
+                connected = device.connectGatt(context, false, this, BluetoothDevice.TRANSPORT_LE);
+                if (connected == null) failed("Connection could not be started");
+                else scheduleTimeout(connectionTimeout());
+            } catch (IllegalArgumentException invalid) {
+                failed("Saved heart-rate device address is invalid");
+            }
+        }
 
-				BluetoothDevice device = adapter.getRemoteDevice(address);
-				Log.d(Coxswain.TAG, "bluetooth heart connecting " + device.getAddress());
-                // autoConnect waits for a background sighting and can stall a remembered watch.
-                // A row needs an immediate connection attempt instead.
-				connected = device.connectGatt(context, false, this);
-                if (connected == null) select();
-                else scheduleTimeout();
-			} catch (IllegalArgumentException invalid) {
-				select();
-			}
-		}
-
-		@Override
-		public synchronized void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-			if (adapter == null || gatt != connected) {
-				return;
-			}
-
-			String address = gatt.getDevice().getAddress();
-
-			if (newState == BluetoothProfile.STATE_CONNECTED) {
-				Log.d(Coxswain.TAG, "bluetooth heart connected " + address);
-
-				connected = gatt;
-				connected.discoverServices();
-			} else if (newState == BluetoothProfile.STATE_DISCONNECTED ) {
-				if (connected != null && connected.getDevice().getAddress().equals(address)) {
-					Log.d(Coxswain.TAG, "bluetooth heart disconnected " + address);
-
-					if (adapter.isEnabled()) {
-						toast(context.getString(R.string.bluetooth_heart_disconnected, address));
-
-                        heartRateMeasurement = null;
-                        batteryLevel = null;
-                        if (remembered()) {
-                            connected.connect();
-                            scheduleTimeout();
-                        } else select();
-                    } else {
-                        close();
-					}
-				}
-			}
-		}
-
-		public synchronized void close() {
+        private synchronized void failed(String reason) {
+            if (adapter == null || retrying) return;
+            retrying = true;
             handler.removeCallbacks(this);
-			if (connected != null) {
-				connected.close();
-				connected = null;
-			}
+            Log.w(Coxswain.TAG, "bluetooth heart: " + reason);
+            DiagnosticsLog.recordHeart(context, reason + (remembered() ? " · Retrying saved sensor" : ""));
+            onHeartRate(0); // Never keep showing a cached BPM after the stream stops.
+            handler.post(() -> {
+                synchronized (GattConnection.this) {
+                    if (adapter == null || connections.peek() != this) return;
+                    releaseGatt();
+                    if (remembered()) handler.postDelayed(retry, RETRY_MILLIS);
+                    else select();
+                }
+            });
+        }
 
-			heartRateMeasurement = null;
+        private void releaseGatt() {
+            if (connected != null) {
+                connected.close();
+                connected = null;
+            }
+            heartRateMeasurement = null;
+            batteryLevel = null;
+            clearRequests();
+        }
 
-			adapter = null;
-		}
+        @Override public synchronized void close() {
+            handler.removeCallbacks(this);
+            handler.removeCallbacks(retry);
+            adapter = null;
+            releaseGatt();
+            onHeartRate(0);
+        }
 
-		@Override
-		public synchronized void onServicesDiscovered(final BluetoothGatt gatt, int status) {
-			if (connected == null || gatt != connected) {
-				return;
-			}
+        @Override public synchronized void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (!active(gatt)) return;
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                failed("Heart-rate connection failed (status " + status + ")");
+            } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.d(Coxswain.TAG, "bluetooth heart discovering services");
+                scheduleTimeout(connectionTimeout());
+                if (!gatt.discoverServices()) failed("Heart-rate service discovery could not start");
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                failed("Heart-rate connection was lost");
+            }
+        }
 
-			heartRateMeasurement = get(gatt, SERVICE_HEART_RATE, CHARACTERISTIC_HEART_RATE_MEASUREMENT);
-			if (heartRateMeasurement == null) {
-				Log.d(Coxswain.TAG, "bluetooth no heart rate measurement");
-			} else {
-				enableNotification(gatt, heartRateMeasurement);
-			}
+        @Override public synchronized void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (!active(gatt)) return;
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                failed("Heart-rate service discovery failed (status " + status + ")");
+                return;
+            }
+            heartRateMeasurement = get(gatt, SERVICE_HEART_RATE, CHARACTERISTIC_HEART_RATE_MEASUREMENT);
+            if (heartRateMeasurement == null) {
+                failed("Heart-rate sharing service was not found");
+                return;
+            }
+            batteryLevel = get(gatt, SERVICE_BATTERY, CHARACTERISTIC_BATTERY_LEVEL);
+            BluetoothGattDescriptor descriptor = heartRateMeasurement.getDescriptor(CLIENT_CHARACTERISTIC_DESCRIPTOR);
+            if (descriptor == null || !gatt.setCharacteristicNotification(heartRateMeasurement, true)) {
+                failed("Heart-rate notifications could not be enabled");
+                return;
+            }
+            scheduleTimeout(connectionTimeout());
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            if (!gatt.writeDescriptor(descriptor)) failed("Heart-rate notification subscription could not start");
+            // Finding a service is not proof of a working data stream. Keep the timeout
+            // until an actual heart-rate packet arrives, including after subscription succeeds.
+        }
 
-			batteryLevel = get(gatt, SERVICE_BATTERY, CHARACTERISTIC_BATTERY_LEVEL);
-			if (batteryLevel == null) {
-				Log.d(Coxswain.TAG, "bluetooth no battery level");
-			} else {
-				read(connected, batteryLevel);
-			}
+        @Override public synchronized void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (!active(gatt)) return;
+            super.onDescriptorWrite(gatt, descriptor, status);
+            if (heartRateMeasurement == null || descriptor.getCharacteristic() == null ||
+                    !descriptor.getCharacteristic().getUuid().equals(CHARACTERISTIC_HEART_RATE_MEASUREMENT)) return;
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                failed("Heart-rate notification subscription failed (status " + status + ")");
+                return;
+            }
+            Log.d(Coxswain.TAG, "bluetooth heart subscribed; waiting for readings");
+            if (!receivedReading) scheduleTimeout(connectionTimeout());
+            if (batteryLevel != null) read(gatt, batteryLevel);
+        }
 
-			if (heartRateMeasurement == null) {
-				toast(context.getString(R.string.bluetooth_heart_not_found, gatt.getDevice().getAddress()));
+        @Override @WorkerThread
+        public synchronized void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            handleReading(gatt, characteristic, characteristic.getValue());
+        }
 
-				select();
-			} else {
-				handler.removeCallbacks(this);
-                toast(context.getString(R.string.bluetooth_heart_connected, gatt.getDevice().getAddress()));
-			}
-		}
-		
-		@Override
-		@WorkerThread
-		public synchronized void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-			if (connected == null || gatt != connected) {
-				return;
-			}
+        @Override @WorkerThread
+        public synchronized void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value) {
+            handleReading(gatt, characteristic, value);
+        }
 
-			if (heartRateMeasurement != null && characteristic.getUuid().equals(heartRateMeasurement.getUuid())) {
-				int heartRate;
-				Fields fields = new Fields(characteristic, Fields.UINT8);
-				if (fields.isSet(0)) {
-					heartRate = fields.get(Fields.UINT16);
-				} else {
-					heartRate = fields.get(Fields.UINT8);
-				}
+        private void handleReading(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value) {
+            if (!active(gatt) || heartRateMeasurement == null ||
+                    !characteristic.getUuid().equals(CHARACTERISTIC_HEART_RATE_MEASUREMENT)) return;
+            if (value == null || value.length < 2) return;
+            boolean wide = (value[0] & 1) != 0;
+            if (wide && value.length < 3) return;
+            int bpm = value[1] & 0xff;
+            if (wide) bpm |= (value[2] & 0xff) << 8;
+            if (bpm <= 0) return;
+            if (!receivedReading) {
+                receivedReading = true;
+                DiagnosticsLog.recordHeart(context, "Heart-rate readings received");
+                toast(context.getString(R.string.bluetooth_heart_connected, address));
+            }
+            onHeartRate(bpm);
+            scheduleTimeout(READING_TIMEOUT_MILLIS);
+        }
 
-				onHeartRate(heartRate);
-			}
-		}
+        @Override public synchronized void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (!active(gatt)) return;
+            if (status == BluetoothGatt.GATT_SUCCESS && batteryLevel != null &&
+                    characteristic.getUuid().equals(batteryLevel.getUuid()) && characteristic.getValue() != null &&
+                    characteristic.getValue().length > 0) {
+                onBatteryLevel(characteristic.getValue()[0] & 0xff);
+            }
+            super.onCharacteristicRead(gatt, characteristic, status);
+        }
 
-		@Override
-		public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-			if (batteryLevel != null && characteristic.getUuid().equals(batteryLevel.getUuid())) {
-				int level = batteryLevel.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-
-				onBatteryLevel(level);
-			}
-
-			super.onCharacteristicRead(gatt, characteristic, status);
-		}
-
-		/**
-		 * @see BluetoothHeart#CONNECT_TIMEOUT_MILLIS
-		 */
-		@Override
-		public void run() {
-			if (connected != null && heartRateMeasurement == null) {
-				toast(context.getString(R.string.bluetooth_heart_failed, connected.getDevice().getAddress()));
-
-				select();
-			}
-		}
-	}
+        @Override public synchronized void run() {
+            if (adapter != null && !retrying) {
+                failed(receivedReading ? "Heart-rate readings stopped arriving" :
+                        "No heart-rate reading arrived before the connection timed out");
+            }
+        }
+    }
 
 	private void onBatteryLevel(int level) {
 		if (level <= BATTERY_LEVEL_NOTIFICATION_THRESHOLD) {

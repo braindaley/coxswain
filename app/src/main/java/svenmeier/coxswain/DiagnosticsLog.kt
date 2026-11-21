@@ -9,6 +9,15 @@ object DiagnosticsLog {
     private const val FILE = "diagnostics"
     private const val MESSAGE = "last_message"
     private const val TIME = "last_time"
+    private const val HEART_MESSAGE = "heart_message"
+    private const val HEART_TIME = "heart_time"
+
+    @JvmStatic fun recordHeart(context: Context, message: String) {
+        context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
+            putString(HEART_MESSAGE, message)
+            putLong(HEART_TIME, System.currentTimeMillis())
+        }
+    }
 
     @JvmStatic fun record(context: Context, message: String) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
@@ -19,8 +28,11 @@ object DiagnosticsLog {
 
     @JvmStatic fun latest(context: Context): String {
         val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-        val message = preferences.getString(MESSAGE, null) ?: return "No recent issues recorded"
-        val time = preferences.getLong(TIME, 0L)
-        return "$message · ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(time))}"
+        return listOf(MESSAGE to TIME, HEART_MESSAGE to HEART_TIME).mapNotNull { (key, timeKey) ->
+            preferences.getString(key, null)?.let { message ->
+                val time = preferences.getLong(timeKey, 0L)
+                "$message · ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(time))}"
+            }
+        }.joinToString("\n").ifBlank { "No recent issues recorded" }
     }
 }

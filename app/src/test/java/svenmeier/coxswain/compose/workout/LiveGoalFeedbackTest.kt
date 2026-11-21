@@ -24,10 +24,13 @@ class LiveGoalFeedbackTest {
         read(472,1032,35)
         val value = read(473,1035,44)
         assertEquals(0,value.speed)
-        assertEquals(360,read(474,1039,57).speed) // Recent distance, independent of the stale monitor speed.
-        repeat(10) { assertEquals(360,read(474,1039,57).speed) }
-        assertEquals(0,read(480,1035,44).speed) // No samples spanning the gap yet.
-        assertEquals(0,read(481,1035,44).speed) // Stationary, despite a stale positive speed.
+        assertEquals(0,read(474,1039,57).speed) // Still gathering the current 8-second startup window.
+        read(475,1041,57)
+        read(476,1045,79)
+        assertEquals(350,read(477,1049,90).speed) // Recent distance, independent of the stale monitor speed.
+        repeat(10) { assertEquals(350,read(477,1049,90).speed) }
+        assertEquals(0,read(484,1049,44).speed) // No samples spanning the gap yet.
+        assertEquals(0,read(485,1049,44).speed) // Stationary, despite a stale positive speed.
     }
 
     @Test fun splitTargetsUsePaceForBottomFeedback() {

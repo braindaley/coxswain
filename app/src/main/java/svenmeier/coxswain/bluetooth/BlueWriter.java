@@ -40,6 +40,12 @@ public class BlueWriter extends BluetoothGattCallback {
 
 	private Request current = null;
 
+    /** A new GATT connection cannot complete requests belonging to the old connection. */
+    protected final void clearRequests() {
+        requests.clear();
+        current = null;
+    }
+
 	private interface Request {
 
 		void request();

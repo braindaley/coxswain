@@ -23,6 +23,12 @@ class SettingsFunctionalityTest {
             val heartZones = fragment.findPreference<Preference>("heart_rate_zones")!!
             assertTrue(heartZones.isVisible)
             assertNotNull(heartZones.onPreferenceClickListener)
+            val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
+            val sensorKey = activity.getString(R.string.preference_bluetooth_heart_device)
+            prefs.edit().putString(sensorKey,"AA:BB:CC:DD:EE:FF").commit()
+            val forget = fragment.findPreference<Preference>("forget_heart_rate_sensor")!!
+            assertTrue(forget.onPreferenceClickListener!!.onPreferenceClick(forget))
+            assertNull(prefs.getString(sensorKey,null))
             val display = activity.getSharedPreferences("live_row_display", Context.MODE_PRIVATE)
             display.edit().putString("metrics", "custom").commit()
             val reset = fragment.findPreference<Preference>(activity.getString(R.string.preference_workout_bindings_reset))!!

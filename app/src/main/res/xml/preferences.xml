@@ -243,6 +243,10 @@
             android:entryValues="@array/heart_sensor_values"
             />
 
+        <Preference android:key="forget_heart_rate_sensor"
+            android:title="@string/forget_heart_rate_sensor_title"
+            android:summary="@string/forget_heart_rate_sensor_summary" />
+
         <CheckBoxPreference
             android:key="@string/preference_hardware_legacy"
             android:title="@string/preference_hardware_legacy_title"

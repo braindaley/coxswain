@@ -109,6 +109,12 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        findPreference("forget_heart_rate_sensor").setOnPreferenceClickListener(preference -> {
+            propoid.util.content.Preference.getString(requireContext(), R.string.preference_bluetooth_heart_device).set(null);
+            Toast.makeText(requireContext(), R.string.settings_reconnect, Toast.LENGTH_LONG).show();
+            return true;
+        });
+
         Preference healthConnect = findPreference("preference_health_connect");
         if (healthConnect != null) {
             healthConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

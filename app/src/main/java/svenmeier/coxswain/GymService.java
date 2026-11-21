@@ -180,6 +180,7 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         gym.connected = true;
         gym.connecting = false;
         gym.connectedRowerName = rower.getName();
+        if (this.heart != null) this.heart.destroy();
         this.heart = Heart.create(GymService.this, rower.getMeasurement(), this);
         gym.heartSourceName = this.heart.getClass().getSimpleName();
 
@@ -226,6 +227,12 @@ public class GymService extends Service implements Gym.Listener, Rower.Callback,
         endRowing();
 
         stopSelf();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (rower != null) endRowing();
+        super.onDestroy();
     }
 
     private class Foreground {
