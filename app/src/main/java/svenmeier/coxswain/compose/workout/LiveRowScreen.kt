@@ -313,6 +313,8 @@ private fun MetricGrid(
     val exactSplit = gym.planGoalValue.takeIf { gym.planGoalKind in listOf("SPEED", "SPEED_PHASE") && it > 0 }
     val goal = targetBinding?.let { goalDisplay(it, active, feedbackMeasurement, gym.hasPlanRateCap(), exactSplit) }
     val target = goal?.target?.let { if (targetBinding == ValueBinding.STROKE_RATE && !it.endsWith("SPM")) "$it SPM" else it }
+    val workAverageDisplay = remember(gym.sessionGeneration) { StrokePaceValue() }
+    val workAverageSplit = workAverageDisplay.update(gym.getMeasurement(),getValueForBinding(ValueBinding.AVERAGE_SPLIT,gym))
     BoxWithConstraints(modifier.background(Color(0xFF31505D))) {
         val rows = (metrics.size + 1) / 2
         val cellWidth = (maxWidth - 1.dp) / 2
@@ -320,7 +322,9 @@ private fun MetricGrid(
         val density = LocalDensity.current
         val textMeasurer = rememberTextMeasurer()
         val values = metrics.map { binding ->
-            val rawValue = if (binding == targetBinding) when (binding) {
+            val rawValue = if (binding == ValueBinding.AVERAGE_SPLIT) workAverageSplit
+            else if (binding == ValueBinding.SPEED) feedbackMeasurement.speed
+            else if (binding == targetBinding) when (binding) {
                 ValueBinding.STROKE_RATE -> feedbackMeasurement.strokeRate
                 ValueBinding.POWER -> feedbackMeasurement.power
                 else -> getValueForBinding(binding, gym)
@@ -380,8 +384,11 @@ fun MetricCell(
 ) {
     val context = LocalContext.current
     val rawValue = getValueForBinding(binding, gym)
+    val workAverageDisplay = remember(gym.sessionGeneration,binding) { StrokePaceValue() }
+    val heldValue = if (binding == ValueBinding.AVERAGE_SPLIT)
+        workAverageDisplay.update(gym.getMeasurement(),rawValue) else rawValue
     val valueStr = if (binding == ValueBinding.PULSE) binding.format(context, rawValue, false)
-        else displayValue ?: binding.format(context, rawValue, false)
+        else displayValue ?: binding.format(context, heldValue, false)
     val (titleLabel, unitLabel) = getMetricTitleAndUnit(binding, context)
 
     val heartZones = if (binding == ValueBinding.PULSE) remember(gym.current) {
@@ -879,7 +886,7 @@ internal fun getValueForBinding(binding: ValueBinding, gym: Gym): Int {
         ValueBinding.AVERAGE_SPLIT -> {
             // Work totals exclude both completed rests and the rest in progress.
             val meters = gym.planLiveDistance
-            if (meters > 0) (gym.planActiveSeconds * 500L / meters).toInt() else 0
+            if (meters > 0) (gym.planActiveSeconds * 500.0 / meters).roundToInt() else 0
         }
         ValueBinding.DELTA_DISTANCE -> {
             val pace = gym.pace

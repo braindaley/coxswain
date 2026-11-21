@@ -15,7 +15,7 @@ class LiveGoalFeedbackTest {
         // Recorded second effort from the connected rower's 3 x 1,000m workout.
         val smoother = LiveGoalSmoother(Measurement().apply { duration=468;distance=1020 })
         fun read(t: Int, meters: Int, monitorSpeed: Int) = smoother.update(Measurement().apply {
-            duration=t;distance=meters;speed=monitorSpeed
+            duration=t;distance=meters;speed=monitorSpeed;strokes=(t-469)/2+1
         })
         read(469,1021,0)
         val rawSpeed14 = read(470,1024,14)

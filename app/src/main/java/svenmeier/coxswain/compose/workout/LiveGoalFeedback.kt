@@ -8,6 +8,7 @@ import kotlin.math.roundToInt
 internal class LiveGoalSmoother(initial: Measurement? = null) {
     private val useDistance = initial != null
     private val pace = LivePaceAverage()
+    private val paceDisplay = StrokePaceValue()
     private val samples = java.util.TreeMap<Int, Measurement>().apply {
         initial?.let { put(it.duration, Measurement(it)) }
     }
@@ -16,7 +17,8 @@ internal class LiveGoalSmoother(initial: Measurement? = null) {
         samples[raw.duration] = Measurement(raw)
         while (samples.isNotEmpty() && samples.firstKey() < raw.duration - 4) samples.pollFirstEntry()
         return Measurement(raw).apply {
-            speed = if (useDistance || raw.distance > 0) pace.update(raw) else average(raw.speed) { it.speed }
+            speed = if (useDistance || raw.distance > 0) paceDisplay.update(raw, pace.update(raw))
+                else average(raw.speed) { it.speed }
             strokeRate = average(raw.strokeRate) { it.strokeRate }
             power = average(raw.power) { it.power }
         }
